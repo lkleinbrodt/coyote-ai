@@ -1,7 +1,10 @@
 import coyoteLogo from "./assets/coyote_logo.png";
 import "./App.css";
+import { useState } from "react";
 
 function App() {
+  const [count, setCount] = useState(0);
+
   return (
     <>
       <div>
@@ -12,6 +15,7 @@ function App() {
       <h1>Coyote AI</h1>
       <div className="card">
         <p>Welcome to Coyote AI</p>
+        <button onClick={() => setCount(count + 1)}>Count: {count}</button>
       </div>
     </>
   );
