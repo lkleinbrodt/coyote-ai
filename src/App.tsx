@@ -1,9 +1,14 @@
 import coyoteLogo from "./assets/coyote_logo.png";
+import cheffrey from "./assets/chef_hat_stamp.png";
+import guitarpic from "./assets/guitarpic.png";
 import "./App.css";
 import { useState } from "react";
 
 function App() {
-  const [count, setCount] = useState(0);
+  // Function to handle image click
+  const handleImageClick = (url) => {
+    window.open(url, "_blank"); // Open link in a new tab
+  };
 
   return (
     <>
@@ -13,9 +18,20 @@ function App() {
         </a>
       </div>
       <h1>Coyote AI</h1>
-      <div className="card">
-        <p>Welcome to Coyote AI</p>
-        <button onClick={() => setCount(count + 1)}>Count: {count}</button>
+      <div className="container">
+        <div className="image-container">
+          <h3>Cheffrey</h3>
+          <img
+            src={cheffrey}
+            className="logo"
+            alt="Cheffrey"
+            onClick={() => handleImageClick("https://www.cheffrey.org/")}
+          />
+        </div>
+        <div className="image-container">
+          <h3>GuitarPic</h3>
+          <img src={guitarpic} className="logo" alt="GuitarPic" />
+        </div>
       </div>
     </>
   );

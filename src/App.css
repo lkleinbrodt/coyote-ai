@@ -40,3 +40,25 @@
 .read-the-docs {
   color: #888;
 }
+
+.logo {
+  width: 200px;
+  height: auto;
+}
+
+.container {
+  display: flex;
+  justify-content: space-around;
+  gap: 10em;
+}
+
+.image-container {
+  text-align: center;
+}
+
+.image-container img {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto;
+  cursor: pointer;
+}
