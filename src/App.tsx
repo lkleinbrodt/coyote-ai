@@ -2,11 +2,10 @@ import coyoteLogo from "./assets/coyote_logo.png";
 import cheffrey from "./assets/chef_hat_stamp.png";
 import guitarpic from "./assets/guitarpic.png";
 import "./App.css";
-import { useState } from "react";
 
 function App() {
   // Function to handle image click
-  const handleImageClick = (url) => {
+  const handleImageClick = (url: string | URL | undefined) => {
     window.open(url, "_blank"); // Open link in a new tab
   };
 
