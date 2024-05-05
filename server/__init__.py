@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_admin import Admin
+from flask_bootstrap import Bootstrap5
 from .routes import main
 from lyrica.routes import lyrica
 
@@ -16,3 +17,4 @@ app.config.from_object(Config)
 
 app.register_blueprint(lyrica)
 app.register_blueprint(main)
+bootstrap = Bootstrap5(app)

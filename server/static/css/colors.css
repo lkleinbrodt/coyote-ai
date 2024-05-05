@@ -1,0 +1,26 @@
+/* :root {
+  --primary-color: #8D8741;
+  --secondary-color: #659DBD;
+  --tertiary-color: #DAAD86;
+  --quaternary-color: #BC986A;
+  --quinary-color: #FBEEC1;
+  --background-color: #e1e1e1; 
+  --grey-color: #888888;
+  --light-grey-color: #f0f0f0;
+} */
+
+:root {
+  --background-color: #faf1e4;
+  --background-color-rgb: 250, 241, 228;
+  --primary-color: #344f53;
+  --primary-color-rgb: 67, 83, 52;
+  --secondary-color: #9eb384;
+  --secondary-color-rgb: 158, 179, 132;
+  --tertiary-color: #cedebd;
+  --tertiary-color-rgb: 206, 222, 189;
+  --grey-color: #888888;
+  --grey-color-rgb: 136, 136, 136;
+  --light-grey-color: #f0f0f0;
+  --light-grey-rgb: 240, 240, 240;
+  --bad-button-color: #daa07b;
+}

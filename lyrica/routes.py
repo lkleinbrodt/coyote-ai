@@ -1,6 +1,6 @@
 from flask import jsonify, Blueprint
 from server.config import create_logger
-from src import *
+from lyrica.src import *
 
 
 logger = create_logger(__name__, level="DEBUG")

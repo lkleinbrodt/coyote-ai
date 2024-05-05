@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/colors.css') }}"
+    />
+    {{ bootstrap.load_css() }} {% include 'fav_icon.html' %}
+
+    <style>
+      body {
+        background-color: var(--background-color);
+      }
+
+      .login-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+      }
+      .container {
+        display: flex;
+        justify-content: center;
+        gap: 200px;
+      }
+
+      .image-container {
+        text-align: center;
+      }
+
+      .image-container img {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto;
+        cursor: pointer;
+      }
+
+      .brand-title {
+        font-family: "Roboto", serif;
+        font-weight: bold;
+        font-size: 5em;
+        color: var(--primary-color);
+        margin-bottom: 40px;
+        padding: 5px 10px; /* Optional padding for better visibility */
+      }
+
+      .tagline {
+        font-family: "Robot", sans-serif;
+        font-style: italic;
+        color: var(--primary-color);
+        margin-bottom: 20px;
+      }
+
+      .login-button {
+        color: var(--primary-color);
+        font-size: 2em;
+        padding: 8px 30px; /* Initial padding for the button */
+        border-radius: 10px;
+        transition: background-color 0.3s ease;
+        background-color: rgba(0, 0, 0, 0);
+        border: 2.5px solid;
+        transition: background-color 0.5s ease, border 0.5s ease,
+          color 0.5s ease;
+      }
+
+      .login-button:hover {
+        background-color: rgba(
+          136,
+          136,
+          136,
+          0.2
+        ); /* Light purple background color with transparency */
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .shadow-line {
+        box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1); /* Added shadow for a better look */
+      }
+
+      @media (max-width: 768px) {
+        .brand-title {
+          font-size: 5em;
+        }
+
+        .tagline {
+          font-size: 1.4em;
+        }
+
+        .login-button {
+          font-size: 1.3em;
+        }
+      }
+
+      .logo {
+        width: 200px;
+        height: auto;
+      }
+
+      h3 {
+        font-family: "Roboto", sans-serif;
+        font-weight: bold;
+        font-size: 1.5em;
+        color: var(--primary-color);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <img
+        src="{{ url_for('static', filename='icons/coyote_logo.png') }}"
+        alt="Coyote AI logo"
+        width="200"
+        height="200"
+      />
+      <h1 class="brand-title">Coyote AI</h1>
+      <div class="container">
+        <div class="image-container">
+          <h3>Cheffrey</h3>
+          <a href="https://www.cheffrey.org/">
+            <img
+              src="{{ url_for('static', filename='icons/chef_hat_stamp.png') }}"
+              alt="Cheffrey"
+              width="200"
+              height="200"
+            />
+          </a>
+        </div>
+        <div class="image-container">
+          <h3>GuitarPic</h3>
+          <a href="">
+            <img
+              src="{{ url_for('static', filename='icons/guitarpic.png') }}"
+              alt="GuitarPic"
+              width="200"
+              height="200"
+            />
+          </a>
+        </div>
+        <div class="image-container">
+          <h3>GuitarPic</h3>
+          <a href="">
+            <img
+              src="{{ url_for('static', filename='icons/guitarpic.png') }}"
+              alt="GuitarPic"
+              width="200"
+              height="200"
+            />
+          </a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

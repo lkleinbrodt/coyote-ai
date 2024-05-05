@@ -3,7 +3,7 @@ import random
 
 # from server.models import User
 from server.config import create_logger, Config
-from flask import request, jsonify, url_for, Blueprint
+from flask import request, jsonify, url_for, Blueprint, render_template
 
 # from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import (
@@ -24,8 +24,7 @@ main = Blueprint("main", __name__)
 
 @main.route("/")
 def home():
-    logger.debug("Home route accessed")
-    return jsonify({"message": "Hello from Flask!"})
+    return render_template("index.html")
 
 
 # @app.route("/login", methods=["POST"])

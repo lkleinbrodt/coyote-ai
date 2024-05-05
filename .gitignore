@@ -1,3 +1,4 @@
+.env
 venv
 __pycache__/
 # Logs
@@ -24,3 +25,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+

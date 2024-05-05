@@ -3,7 +3,7 @@ import json
 import openai
 from lyricsgenius import Genius
 from openai import OpenAI
-from VectorDB import Dictbased_VectorDB
+from lyrica.VectorDB import Dictbased_VectorDB
 
 from dotenv import load_dotenv
 
