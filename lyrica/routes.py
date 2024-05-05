@@ -1,8 +1,8 @@
 from flask import jsonify, Blueprint, request, Response, stream_with_context
 from server.config import create_logger
-from lyrica import src
-from flask_cors import CORS, cross_origin
+from lyrica import ArtistClient
 import json
+import time
 
 logger = create_logger(__name__, level="DEBUG")
 
@@ -18,42 +18,47 @@ def home():
 @lyrica.route("get-top-lyrics", methods=["POST"])
 def get_top_lyrics():
     artist_name = request.json.get("artist")
-    artist_id = src.get_artist_id(artist_name)
-    artist_songs = src.get_artist_songs(artist_id, max_songs=50)
 
-    artist_data = src.load_artist(artist_id)
+    artist = ArtistClient.ArtistClient(artist_name=artist_name)
 
-    def yield_lyrics(artist_songs):
-        top_lyrics = []
-        for song in artist_songs:
-            song_id = str(song["id"])
-            if song_id not in artist_data:
-                song_info = {"title": song["title"], "url": song["url"]}
+    N_SONG_TARGET = 10
 
-                logger.info(f'pulling song info for {song["title"]}')
+    def yield_lyrics():
+        top_lyrics = artist.get_top_lyrics()
+        if top_lyrics is None:
+            top_lyrics = []
 
-                lyrics = src.get_song_lyrics(song_url=song["url"])
-                bars = lyrics.split("\n\n")
-                base_id = str(song_id)
-                bar_info = {}
-                for i, bar in enumerate(bars):
-                    response = src.ai_client.embeddings.create(
-                        input=bar, model="text-embedding-ada-002"
-                    )
-                    bar_info[int(base_id + str(i))] = {
-                        "text": bar,
-                        "embedding": response.data[0].embedding,
+        # find the number of songs related to this artist that have lyridcs
+        # artist is related to songs which is related to lyrics
+
+        n_songs_with_lyrics = len(
+            [song for song in artist.artist.songs if len(song.lyrics) > 0]
+        )
+
+        out = json.dumps({"n_songs": n_songs_with_lyrics, "top_lyrics": top_lyrics})
+
+        yield out
+
+        if len(artist.artist.songs) < N_SONG_TARGET:
+            logger.info(f"Getting more songs for {artist.artist.name}")
+            artist.get_songs(N_SONG_TARGET - len(artist.artist.songs))
+
+        for i in range(N_SONG_TARGET):
+            song = artist.artist.songs[i]
+            if len(song.lyrics) == 0:
+                logger.info(f"Getting lyrics for {song.title}")
+                artist.get_lyrics(song.id)
+                n_songs_with_lyrics += 1
+
+                out = json.dumps(
+                    {
+                        "n_songs": n_songs_with_lyrics,
+                        "top_lyrics": artist.get_top_lyrics(),
                     }
+                )
 
-                song_info["lyrics"] = bar_info
-                artist_data[song_id] = song_info
+                time.sleep(2)
 
-                src.save_artist(artist_id, artist_data)
+                yield out
 
-            if len(artist_data) >= 2:
-                top_lyrics = src.get_top_lyric(artist_id)
-            out = json.dumps({"n_songs": len(artist_data), "lyrics": top_lyrics})
-            yield out
-        logger.info("done finding top lyrics")
-
-    return Response(stream_with_context(yield_lyrics(artist_songs)))
+    return Response(stream_with_context(yield_lyrics()))
