@@ -9,12 +9,6 @@ logger = create_logger(__name__, level="DEBUG")
 lyrica = Blueprint("lyrica", __name__, url_prefix="/lyrica")
 
 
-@lyrica.route("/")
-def home():
-    logger.debug("Home route accessed")
-    return jsonify({"message": "Hello from Lyrica Flask!"})
-
-
 @lyrica.route("/search-artist/<artist_name>", methods=["GET"])
 def search_artist(artist_name: str):
 
