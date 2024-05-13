@@ -1,6 +1,6 @@
 from io import BytesIO
 import boto3
-from config import Config
+from ..config import Config
 import json
 
 
@@ -15,9 +15,12 @@ def create_s3_client() -> boto3.client:
 
 class S3:
 
-    def __init__(self):
+    def __init__(self, bucket=None):
         self.s3 = create_s3_client()
-        self.bucket = Config.S3_BUCKET
+        if bucket is None:
+            self.bucket = Config.S3_BUCKET
+        else:
+            self.bucket = bucket
 
     def load_csv(self, path):
         import pandas as pd

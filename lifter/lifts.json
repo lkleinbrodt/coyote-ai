@@ -1,0 +1,56 @@
+{
+    "Glute Dominant": [
+        "Glute Bridge",
+        "Glute March",
+        "Hip Thrust"
+    ],
+    "Horizontal Pull": [
+        "DB Row",
+        "Seated Row",
+        "Cable Row",
+        "Inverted Row"
+    ],
+    "Vertical Pull": [
+        "Lat Pulldown",
+        "Pull Up",
+        "Chin Up",
+        "Goblet Squat"
+    ],
+    "Quad Dominant": [
+        "Box Squat",
+        "Step Up",
+        "Goblet Squat",
+        "Walking Lunge"
+    ],
+    "Horizontal Push": [
+        "Bench Press",
+        "Close Grip Bench"
+    ],
+    "Vertical Push": [
+        "Overhead Press",
+        "Military Press",
+        "Incline press"
+    ],
+    "Hip Dominant": [
+        "RDL",
+        "Back Extension",
+        "KB Swing",
+        "Deadlift",
+        "Good Morning"
+    ],
+    "Glute Accessory": [
+        "Side lying abduction",
+        "Clamshell",
+        "X Band Walk"
+    ],
+    "Linear Core": [
+        "Front Plank",
+        "Crunch",
+        "RKDC Plank"
+    ],
+    "Lateral Core": [
+        "Side Plank",
+        "Side Crunch",
+        "Rope Horizontal Chop"
+    ]
+}

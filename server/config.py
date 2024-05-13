@@ -14,6 +14,8 @@ class Config:
     ENV = os.environ.get("ENV", "dev").lower()
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(ROOT_DIR, "app.db")
     JWT_SECRET_KEY = SECRET_KEY
+    AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 
     # This is for if we want errors to be emailed to us
     MAIL_SERVER = os.environ.get("MAIL_SERVER")

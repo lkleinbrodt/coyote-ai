@@ -22,10 +22,12 @@ CORS(
 
 from .routes import main
 from lyrica.routes import lyrica
+from lifter.routes import lifter
 
 from flask_admin.contrib.sqla import ModelView
 
 app.register_blueprint(lyrica)
+app.register_blueprint(lifter)
 app.register_blueprint(main)
 bootstrap = Bootstrap5(app)
 

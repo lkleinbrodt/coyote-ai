@@ -40,6 +40,20 @@ ai_client = OpenAI()
 #         json.dump(data, f)
 
 
+def name_to_id(artist_name: str) -> str:
+    results = genius.search_artists(artist_name)
+    top_result = results["sections"][0]
+
+    if len(top_result["hits"]) == 0:
+        logger.error(f"Could not find artist: {artist_name}")
+        logger.error(top_result)
+        raise ValueError(f"Could not find artist: {artist_name}")
+
+    artist_id = top_result["hits"][0]["result"]["id"]
+
+    return str(artist_id)
+
+
 def get_song_lyrics(song_url=None, song_id=None):
     logger.info(f"getting song lyrics for: {song_id}: {song_url}")
     if song_url:
@@ -98,8 +112,9 @@ class ArtistClient:
             self.artist_id = artist_id
         elif artist_name is not None:
             try:
-                self.artist_id = self.name_to_id(artist_name)
-            except:
+                self.artist_id = name_to_id(artist_name)
+            except ValueError as e:
+                logger.exception(e)
                 raise ValueError("Could not find artist")
         else:
             raise ValueError("Either artist_id or artist_name must be provided")
@@ -111,7 +126,7 @@ class ArtistClient:
             try:
                 genius_artist = genius.artist(artist_id=self.artist_id)["artist"]
             except:
-                raise ValueError("Could not find artist")
+                raise ValueError(f"Could not find artist: {artist_id}")
             self.artist = Artist(
                 id=self.artist_id,
                 name=genius_artist["name"],
@@ -122,13 +137,6 @@ class ArtistClient:
             db.session.commit()
 
         self.vdb = self.create_vbd()
-
-    def name_to_id(self, artist_name: str) -> str:
-        results = genius.search_artists(artist_name)
-        top_result = results["sections"][0]
-        artist_id = top_result["hits"][0]["result"]["id"]
-
-        return str(artist_id)
 
     def create_vbd(self):
         embedding_dict = {}

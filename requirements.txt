@@ -11,3 +11,5 @@ flask_cors
 lyricsgenius
 openai
 numpy
+boto3
+pandas
