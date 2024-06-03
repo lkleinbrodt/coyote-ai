@@ -12,7 +12,16 @@ ROOT_DIR = Path(os.path.abspath(os.path.dirname(__file__))).parent
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
     ENV = os.environ.get("ENV", "dev").lower()
-    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(ROOT_DIR, "app.db")
+
+    if ENV == "dev":
+        SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(ROOT_DIR, "app.db")
+    else:
+        SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
+            "postgres://", "postgresql://"
+        )
+
+    LIFTER_BUCKET = "coyote-lifter"
     JWT_SECRET_KEY = SECRET_KEY
     AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")

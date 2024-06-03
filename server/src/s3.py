@@ -59,3 +59,9 @@ class S3:
     def save_json(self, obj, path):
         self.s3.put_object(Body=json.dumps(obj), Bucket=self.bucket, Key=path)
         return True
+
+    def write_csv(self, df, path):
+        csv_buffer = BytesIO()
+        df.to_csv(csv_buffer, index=False)
+        self.s3.put_object(Body=csv_buffer.getvalue(), Bucket=self.bucket, Key=path)
+        return True
