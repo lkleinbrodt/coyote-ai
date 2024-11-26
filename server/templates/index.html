@@ -14,170 +14,129 @@
         background-color: var(--background-color);
       }
 
-      .screen-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        margin: 0;
-      }
-
-      .brand-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-bottom: 20px;
-      }
-
-      .logo {
-        width: 200px;
-        height: auto;
-      }
-
       .brand-title {
         font-family: "Roboto", serif;
         font-weight: bold;
-        font-size: 5em;
         color: var(--primary-color);
-        padding: 5px 10px; /* Optional padding for better visibility */
-      }
-
-      hr {
-        width: 80%;
-        margin: 0;
-        border: 1px solid var(--primary-color);
-      }
-
-      .links-container {
-        display: flex;
-        justify-content: center;
-        gap: 200px;
-      }
-
-      .image-container {
-        text-align: center;
-        transition: transform 0.5s ease;
-      }
-
-      .image-container:hover {
-        transform: scale(1.1);
-      }
-
-      .image-container img {
-        width: 100px;
-        height: 100px;
-        margin: 0 auto;
-        cursor: pointer;
       }
 
       .tagline {
         font-family: "Robot", sans-serif;
         font-style: italic;
-        font-size: 1.25em;
         color: var(--primary-color);
-        margin-bottom: 20px;
-      }
-
-      .shadow-line {
-        box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1); /* Added shadow for a better look */
-      }
-
-      @media (max-width: 768px) {
-        .brand-title {
-          font-size: 2.5em;
-          margin-bottom: 10px;
-        }
-
-        .tagline {
-          font-size: 1.4em;
-        }
-
-        .brand-container {
-          margin-bottom: 0px;
-        }
-
-        .image-container img {
-          width: 50px;
-          height: 50px;
-        }
-
-        .links-container {
-          flex-direction: column;
-          gap: 20px;
-          margin-top: 20px;
-        }
-
-        .image-container {
-          margin-bottom: 0px;
-        }
-
-        .link-title {
-          font-size: 1.2em;
-        }
-
-        .shadow-line {
-          box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
-        }
       }
 
       .link-title {
         font-family: "Roboto", sans-serif;
-        font-weight: bold;
-        font-size: 1.5em;
         color: var(--primary-color);
-        text-decoration: none; /* Remove underline from link titles */
+        font-size: 2.5rem;
       }
 
-      .links-container a {
-        text-decoration: none; /* Remove underline from links */
+      .product-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+        border-radius: 15px;
+        background-color: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        padding: 2rem;
+      }
+
+      .product-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .product-icon {
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s ease;
+      }
+
+      .product-card:hover .product-icon {
+        transform: scale(1.1);
+      }
+
+      .product-description {
+        color: var(--primary-color);
+        opacity: 1;
+        font-size: 1.2rem;
+        margin-top: 1rem;
       }
     </style>
   </head>
   <body>
-    <div class="screen-container">
-      <div class="brand-container">
-        <img
-          src="{{ url_for('static', filename='icons/coyote_logo.png') }}"
-          class="logo"
-          alt="Coyote AI logo"
-        />
-        <h1 class="brand-title">Coyote AI</h1>
-        <p class="tagline">Let AI lighten your load</p>
-      </div>
-      <div class="links-container">
-        <a href="https://www.cheffrey.org/">
-          <div class="image-container">
-            <h3 class="link-title">Cheffrey</h3>
-            <img
-              src="{{ url_for('static', filename='icons/chef_hat_stamp.png') }}"
-              alt="Cheffrey"
-              width="200"
-              height="200"
-            />
-          </div>
-        </a>
-        <div class="image-container">
-          <a href="https://reminder-mate.vercel.app/">
-            <h3 class="link-title">Reminder-Mate</h3>
-            <img
-              src="{{ url_for('static', filename='icons/Reminder-Mate zoomed Background Removed.png') }}"
-              alt="Reminder-Mate"
-              width="800"
-              height="800"
-            />
-          </a>
+    <div
+      class="min-vh-100 d-flex align-items-center justify-content-center py-5"
+    >
+      <div class="container">
+        <div class="text-center mb-5">
+          <img
+            src="{{ url_for('static', filename='icons/coyote_logo.png') }}"
+            class="img-fluid mb-3"
+            alt="Coyote AI logo"
+            style="max-width: 200px"
+          />
+          <h1 class="brand-title display-4">Coyote AI</h1>
+          <p class="tagline lead mb-0">Let AI lighten your load</p>
         </div>
-        <div class="image-container">
-          <a href="">
-            <h3 class="link-title">GuitarPic</h3>
-            <img
-              src="{{ url_for('static', filename='icons/guitarpic.png') }}"
-              alt="GuitarPic"
-              width="200"
-              height="200"
-            />
-          </a>
+
+        <div class="row justify-content-center align-items-stretch g-4">
+          <div class="col-md-4 col-sm-12">
+            <div class="product-card text-center h-100">
+              <a
+                href="https://reminder-mate.vercel.app/"
+                class="text-decoration-none"
+              >
+                <img
+                  src="{{ url_for('static', filename='icons/Reminder-Mate zoomed Background Removed.png') }}"
+                  alt="Reminder-Mate"
+                  class="product-icon"
+                />
+                <h3 class="link-title fw-bold">Reminder-Mate</h3>
+                <p class="product-description">
+                  Get reminders for your tasks and events
+                </p>
+              </a>
+            </div>
+          </div>
+
+          <div class="col-md-4 col-sm-12">
+            <a
+              href="https://apps.apple.com/us/app/cheffrey/id6503424946"
+              class="text-decoration-none"
+            >
+              <div class="product-card text-center h-100">
+                <img
+                  src="{{ url_for('static', filename='icons/chef_hat_stamp.png') }}"
+                  alt="Cheffrey"
+                  class="product-icon"
+                />
+                <h3 class="link-title fw-bold">Cheffrey</h3>
+                <p class="product-description">
+                  Your AI sous-chef helps you discover, share, and create
+                </p>
+              </div>
+            </a>
+          </div>
+
+          <div class="col-md-4 col-sm-12">
+            <div class="product-card text-center h-100">
+              <a href="" class="text-decoration-none">
+                <img
+                  src="{{ url_for('static', filename='icons/guitarpic.png') }}"
+                  alt="GuitarPic"
+                  class="product-icon"
+                />
+                <h3 class="link-title fw-bold">GuitarPic</h3>
+                <p class="product-description">
+                  Selling your guitar just got a lot easier
+                </p>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
