@@ -15,13 +15,12 @@ lifter = Blueprint("lifter", __name__, url_prefix="/lifter")
 
 def load_lifts_from_s3():
     s3_client = S3(bucket=S3_BUCKET)
-    lifts_str = s3_client.get_object("lifts.json")
-    return json.loads(lifts_str)
+    return s3_client.load_json("lifts.json")
 
 
 def save_lifts_to_s3(lifts_dict):
     s3_client = S3(bucket=S3_BUCKET)
-    s3_client.put_object("lifts.json", json.dumps(lifts_dict))
+    s3_client.save_json(lifts_dict, "lifts.json")
 
 
 @lifter.route("/")
