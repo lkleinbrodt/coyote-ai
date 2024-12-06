@@ -13,6 +13,17 @@ logger = create_logger(__name__, level="DEBUG")
 lifter = Blueprint("lifter", __name__, url_prefix="/lifter")
 
 
+def load_lifts_from_s3():
+    s3_client = S3(bucket=S3_BUCKET)
+    lifts_str = s3_client.get_object("lifts.json")
+    return json.loads(lifts_str)
+
+
+def save_lifts_to_s3(lifts_dict):
+    s3_client = S3(bucket=S3_BUCKET)
+    s3_client.put_object("lifts.json", json.dumps(lifts_dict))
+
+
 @lifter.route("/")
 def home():
     logger.debug("Home route accessed")
@@ -21,8 +32,7 @@ def home():
 
 @lifter.route("/get-types", methods=["GET"])
 def get_types():
-    with open("./lifter/lifts.json", "r") as f:
-        lifts = json.load(f)
+    lifts = load_lifts_from_s3()
     return jsonify(list(lifts.keys()))
 
 
@@ -30,9 +40,7 @@ def get_types():
 def get_lifts():
     lift_type = request.args.get("type")
 
-    # load lifts from a json "./lifter/lifts.json"
-    with open("./lifter/lifts.json", "r") as f:
-        lifts = json.load(f)
+    lifts = load_lifts_from_s3()
 
     if lift_type is not None:
         if lift_type not in lifts:
@@ -63,7 +71,7 @@ def get_last_lifts():
             return jsonify({"error": "Error loading data"}), 500
 
     if lift is not None:
-        data = data[data["lift"] == lift]
+        data = data[data["name"] == lift]
 
     if user is not None:
         data = data[data["user"].str.lower() == user]
@@ -147,6 +155,29 @@ def save_workout():
     s3_client.write_csv(data, "lifts.csv")
 
     return jsonify({"message": "Workout saved"}), 200
+
+
+@lifter.route("/add-lift", methods=["POST"])
+def add_lift():
+    # user provides a lift type and a lift name
+    # grab lift json
+    # check that the lift type is valid
+    # add the name to that lift type
+    # return success
+
+    lift_type = request.json["type"]
+    lift_name = request.json["name"]
+
+    lifts = load_lifts_from_s3()
+
+    if lift_type not in lifts:
+        return jsonify({"error": "Invalid lift type"}), 400
+
+    lifts[lift_type].append(lift_name)
+
+    save_lifts_to_s3(lifts)
+
+    return jsonify({"message": "Lift added"}), 200
 
 
 @lifter.route("/health", methods=["GET"])
