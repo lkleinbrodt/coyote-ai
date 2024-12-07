@@ -4,12 +4,18 @@ import React, { useEffect, useState } from "react";
 
 import Message from "../components/Message";
 
-const Chat = () => {
-  const [chatMessages, setChatMessages] = useState([]);
-  const [currentResponse, setCurrentResponse] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+// Add interface for chat message structure
+interface ChatMessage {
+  sender: "user" | "assistant";
+  message: string;
+}
 
-  const messagesEndRef = React.useRef(null);
+export default function Chat() {
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [currentResponse, setCurrentResponse] = useState<string>("");
+  const [, setIsLoading] = useState<boolean>(false);
+
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
   // Add scroll to bottom effect
   const scrollToBottom = () => {
@@ -21,7 +27,9 @@ const Chat = () => {
     scrollToBottom();
   }, [chatMessages, currentResponse]);
 
-  const handleStream = async (messages) => {
+  const handleStream = async (
+    messages: { role: string; content: string }[]
+  ) => {
     try {
       const response = await fetch("/api/twenty-questions/chat", {
         method: "POST",
@@ -33,6 +41,10 @@ const Chat = () => {
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      if (!response.body) {
+        throw new Error("No response body");
       }
 
       const reader = response.body.getReader();
@@ -61,10 +73,13 @@ const Chat = () => {
     setIsLoading(false);
   };
 
-  const handleUserInput = async (event) => {
-    if (event.key === "Enter" && event.target.value.trim()) {
-      const userMessage = event.target.value;
-      event.target.value = ""; // Clear input
+  const handleUserInput = async (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    const target = event.target as HTMLInputElement;
+    if (event.key === "Enter" && target.value.trim()) {
+      const userMessage = target.value;
+      target.value = ""; // Clear input
 
       // Add user message to chat
       setChatMessages((prev) => [
@@ -112,6 +127,4 @@ const Chat = () => {
       </div>
     </div>
   );
-};
-
-export default Chat;
+}

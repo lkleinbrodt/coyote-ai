@@ -26,13 +26,6 @@ from itsdangerous import URLSafeTimedSerializer
 serializer = URLSafeTimedSerializer(Config.SECRET_KEY)
 logger = create_logger(__name__, level="DEBUG")
 
-main = Blueprint("main", __name__)
-
-
-@main.route("/")
-def home():
-    return send_from_directory("static", "index.html")
-
 
 # @app.route("/login", methods=["POST"])
 # def login():
