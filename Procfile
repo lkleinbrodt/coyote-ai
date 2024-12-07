@@ -1,1 +1,1 @@
-web: build_and_run.sh
+web: sh build_and_run.sh

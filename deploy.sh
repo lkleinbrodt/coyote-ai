@@ -4,4 +4,6 @@ npm install
 npm run build
 cp -r dist ../
 cd ..
-gunicorn backend.app:app
+git add ./dist
+git commit -m "Deploy"
+git push heroku main
