@@ -1,6 +1,6 @@
 ## an SMTP mailbot for sending emails on behalf of the application
 
-from server.config import Config
+from backend.config import Config
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart

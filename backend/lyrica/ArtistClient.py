@@ -4,12 +4,12 @@ import numpy as np
 import openai
 from lyricsgenius import Genius
 from openai import OpenAI
-from lyrica.VectorDB import Dictbased_VectorDB
-from server.config import create_logger
+from backend.lyrica.VectorDB import Dictbased_VectorDB
+from backend.config import create_logger
 from dotenv import load_dotenv
 from functools import lru_cache
-from lyrica.models import Artist, Song, Lyric
-from server import db
+from backend.lyrica.models import Artist, Song, Lyric
+from backend import db
 
 load_dotenv()
 

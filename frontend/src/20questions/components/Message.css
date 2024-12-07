@@ -1,0 +1,26 @@
+.message {
+  border-radius: 30px;
+  display: flex;
+  flex-direction: row;
+  width: fit-content;
+}
+
+.message.user {
+  margin-left: auto;
+  align-items: flex-end;
+}
+
+.message.assistant {
+  margin-right: auto;
+  align-items: flex-start;
+}
+
+.message.content {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+}
+
+.message.user {
+  background-color: lightgrey;
+}

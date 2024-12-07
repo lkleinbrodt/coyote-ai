@@ -1,6 +1,6 @@
 import sqlalchemy as sa
 from sqlalchemy.orm import relationship
-from server import db
+from backend import db
 import numpy as np
 
 

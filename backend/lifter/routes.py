@@ -1,10 +1,10 @@
 from flask import jsonify, Blueprint, request, Response, stream_with_context
-from server.config import create_logger
+from backend.config import create_logger
 import json
 import pandas as pd
-from server.src.s3 import S3
+from backend.src.s3 import S3
 from botocore.errorfactory import ClientError
-from server.config import Config
+from backend.config import Config
 
 S3_BUCKET = Config.LIFTER_BUCKET
 

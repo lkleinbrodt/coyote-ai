@@ -1,6 +1,6 @@
 from flask import jsonify, Blueprint, request, Response, stream_with_context
-from server.config import create_logger
-from lyrica import ArtistClient
+from backend.config import create_logger
+from backend.lyrica import ArtistClient
 import json
 import time
 

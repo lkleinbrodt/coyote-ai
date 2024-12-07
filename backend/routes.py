@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import random
 
 # from server.models import User
-from server.config import create_logger, Config
+from backend.config import create_logger, Config
 from flask import (
     request,
     jsonify,
@@ -20,7 +20,7 @@ from flask_jwt_extended import (
     current_user,
     get_jwt_identity,
 )
-from server.src.MailBot import MailBot
+from backend.src.MailBot import MailBot
 from itsdangerous import URLSafeTimedSerializer
 
 serializer = URLSafeTimedSerializer(Config.SECRET_KEY)
