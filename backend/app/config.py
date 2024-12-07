@@ -41,6 +41,8 @@ class Config:
     SESSION_TYPE = "filesystem"
     SESSION_COOKIE_SAMESITE = None  ## Allow cross-origin requests to include the session cookie. Warning: has security implications
 
+    TWENTY_QUESTIONS_OPENAI_API_KEY = os.environ.get("TWENTY_QUESTIONS_OPENAI_API_KEY")
+
 
 def create_logger(
     name: str, level: str = "INFO", file: Optional[str] = None

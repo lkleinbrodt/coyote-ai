@@ -3,7 +3,14 @@ import random
 
 # from server.models import User
 from server.config import create_logger, Config
-from flask import request, jsonify, url_for, Blueprint, render_template
+from flask import (
+    request,
+    jsonify,
+    url_for,
+    Blueprint,
+    render_template,
+    send_from_directory,
+)
 
 # from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import (
@@ -24,7 +31,7 @@ main = Blueprint("main", __name__)
 
 @main.route("/")
 def home():
-    return render_template("index.html")
+    return send_from_directory("frontend/dist", "index.html")
 
 
 # @app.route("/login", methods=["POST"])

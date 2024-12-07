@@ -10,7 +10,8 @@ from flask_bootstrap import Bootstrap5
 from flask_cors import CORS
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="frontend/dist")
+
 app.config.from_object(Config)
 # jwt = JWTManager(app)
 db = SQLAlchemy(app)
