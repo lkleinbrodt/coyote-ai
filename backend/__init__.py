@@ -6,7 +6,7 @@ from flask_cors import CORS
 
 from backend.extensions import db, jwt, migrate
 
-app = Flask(__name__, static_folder="static")
+app = Flask(__name__, static_folder="static", static_url_path="")
 
 app.config.from_object(Config)
 db.init_app(app)
@@ -22,13 +22,9 @@ from flask import send_from_directory
 import os
 
 
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def serve(path):
-    if path != "" and os.path.exists(app.static_folder + "/" + path):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, "index.html")
+@app.route("/")
+def index():
+    return app.send_static_file("index.html")
 
 
 from .twenty_questions.routes import twenty_questions
