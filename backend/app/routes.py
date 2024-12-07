@@ -31,7 +31,7 @@ main = Blueprint("main", __name__)
 
 @main.route("/")
 def home():
-    return send_from_directory("frontend/dist", "index.html")
+    return send_from_directory("static", "index.html")
 
 
 # @app.route("/login", methods=["POST"])
