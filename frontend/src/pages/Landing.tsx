@@ -10,19 +10,19 @@ const Landing: React.FC = () => {
     {
       title: "Reminder-Mate",
       description: "Get reminders for your tasks and events",
-      icon: "/src/assets/icons/reminder-mate.png",
+      icon: "icons/reminder-mate.png",
       link: "https://reminder-mate.vercel.app/",
     },
     {
       title: "Cheffrey",
       description: "Your AI sous-chef helps you discover, share, and create",
-      icon: "/src/assets/icons/chef_hat_stamp.png",
+      icon: "icons/chef_hat_stamp.png",
       link: "https://apps.apple.com/us/app/cheffrey/id6503424946",
     },
     {
       title: "GuitarPic",
       description: "Selling your guitar just got a lot easier",
-      icon: "/src/assets/icons/guitarpic.png",
+      icon: "icons/guitarpic.png",
       link: "",
     },
   ];
@@ -32,7 +32,7 @@ const Landing: React.FC = () => {
       <div className="container">
         <div className="text-center mb-5">
           <img
-            src="/src/assets/icons/coyote_logo.png"
+            src="icons/coyote_logo.png"
             className="img-fluid mb-3 mx-auto"
             alt="Coyote AI logo"
             style={{ maxWidth: "200px" }}
