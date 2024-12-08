@@ -1,0 +1,21 @@
+body {
+  background-color: hsl(var(--background));
+}
+
+.brand-title {
+  font-family: "Roboto", serif;
+  font-weight: bold;
+  color: hsl(var(--primary));
+}
+
+.tagline {
+  font-family: "Roboto", sans-serif;
+  font-style: italic;
+  color: hsl(var(--primary));
+}
+
+.link-title {
+  font-family: "Roboto", sans-serif;
+  color: hsl(var(--primary));
+  font-size: 2.5rem;
+}

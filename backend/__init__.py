@@ -28,9 +28,10 @@ def index():
 
 
 from .twenty_questions.routes import twenty_questions
+from .routes import server_bp
 
 api_bp = Blueprint("api", __name__)
 
 api_bp.register_blueprint(twenty_questions)
-
+app.register_blueprint(server_bp, url_prefix="/")
 app.register_blueprint(api_bp, url_prefix="/api")

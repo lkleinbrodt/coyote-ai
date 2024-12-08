@@ -43,6 +43,13 @@ class Config:
 
     TWENTY_QUESTIONS_OPENAI_API_KEY = os.environ.get("TWENTY_QUESTIONS_OPENAI_API_KEY")
 
+    OAUTH_CREDENTIALS = {
+        "google": {
+            "id": os.environ.get("GOOGLE_CLIENT_ID"),
+            "secret": os.environ.get("GOOGLE_CLIENT_SECRET"),
+        }
+    }
+
 
 def create_logger(
     name: str, level: str = "INFO", file: Optional[str] = None

@@ -13,3 +13,4 @@ openai
 numpy
 boto3
 pandas
+rauth==0.7.3
