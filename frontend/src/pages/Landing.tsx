@@ -41,11 +41,6 @@ const Landing: React.FC = () => {
           <p className="tagline lead mb-0">Let AI lighten your load</p>
           {user && <p className="tagline lead mb-0">Hello {user.name}!</p>}
         </div>
-        <div className="text-center mb-5">
-          <a href="/chat" className="btn btn-primary btn-lg">
-            Start Chatting
-          </a>
-        </div>
 
         <div className="row justify-content-center align-items-stretch g-4">
           {products.map((product, index) => (
