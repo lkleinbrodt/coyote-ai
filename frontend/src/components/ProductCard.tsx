@@ -6,14 +6,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import { Icon } from "@mdi/react";
 import React from "react";
 
 interface ProductCardProps {
   title: string;
   description: string;
   icon: string | string;
-  iconType: "image" | "material";
+
   link: string;
 }
 
@@ -21,13 +20,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
   title,
   description,
   icon,
-  iconType,
+
   link,
 }) => {
   const renderIcon = () => {
-    if (iconType === "material") {
-      return <Icon path={icon} size={2} />;
-    }
     return (
       <img
         src={icon}
