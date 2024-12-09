@@ -1,8 +1,14 @@
 import "./LoginPage.css";
 
+import { useLocation } from "react-router-dom";
+
 const Login = () => {
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
   const handleSignIn = () => {
-    window.location.href = "http://127.0.0.1:5002/authorize/google";
+    const nextPath = encodeURIComponent(from);
+    const baseUrl = import.meta.env.VITE_AUTH_BASE_URL;
+    window.location.href = `${baseUrl}/authorize/google?next=${nextPath}`;
   };
 
   return (

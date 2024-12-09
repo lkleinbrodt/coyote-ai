@@ -20,6 +20,7 @@ interface AuthContextType {
   user: User | null;
   setUser: (user: User | null) => void;
   loading: boolean;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,8 +46,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const logout = () => {
+    setUser(null);
+    Cookies.remove("user");
+  };
+
   return (
-    <AuthContext.Provider value={{ user, setUser: handleSetUser, loading }}>
+    <AuthContext.Provider
+      value={{ user, setUser: handleSetUser, loading, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

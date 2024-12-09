@@ -8,11 +8,12 @@ const Landing: React.FC = () => {
   const { user } = useAuth();
   const products = [
     {
-      title: "Reminder-Mate",
-      description: "Get reminders for your tasks and events",
-      icon: "icons/reminder-mate.png",
-      link: "https://reminder-mate.vercel.app/",
+      title: "PoeltlGPT",
+      description: "Play a game of NBA themed 20-questions against an AI",
+      icon: "icons/AI Basketball.png",
+      link: "/poeltl",
     },
+
     {
       title: "Cheffrey",
       description: "Your AI sous-chef helps you discover, share, and create",
@@ -20,10 +21,10 @@ const Landing: React.FC = () => {
       link: "https://apps.apple.com/us/app/cheffrey/id6503424946",
     },
     {
-      title: "GuitarPic",
-      description: "Selling your guitar just got a lot easier",
-      icon: "icons/guitarpic.png",
-      link: "",
+      title: "Reminder-Mate",
+      description: "Get reminders for your tasks and events",
+      icon: "icons/reminder-mate.png",
+      link: "https://reminder-mate.vercel.app/",
     },
   ];
 

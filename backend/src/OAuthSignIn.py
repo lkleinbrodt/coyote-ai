@@ -20,7 +20,7 @@ class OAuthSignIn(object):
 
     def get_callback_url(self):
         return url_for(
-            "server.oauth_callback", provider=self.provider_name, _external=True
+            "auth.oauth_callback", provider=self.provider_name, _external=True
         )
 
     @classmethod
@@ -45,12 +45,13 @@ class GoogleSignIn(OAuthSignIn):
             base_url="https://www.googleapis.com/oauth2/v1/",
         )
 
-    def authorize(self):
+    def authorize(self, next_path="/"):
         return redirect(
             self.service.get_authorize_url(
                 scope="openid email profile",
                 response_type="code",
                 redirect_uri=self.get_callback_url(),
+                state=next_path,
             )
         )
 

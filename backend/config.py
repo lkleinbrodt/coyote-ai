@@ -50,6 +50,8 @@ class Config:
         }
     }
 
+    BASE_URL = os.environ.get("BASE_URL", "http://localhost:5173")
+
 
 def create_logger(
     name: str, level: str = "INFO", file: Optional[str] = None

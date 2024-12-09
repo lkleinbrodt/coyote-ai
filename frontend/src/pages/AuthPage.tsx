@@ -1,45 +1,39 @@
+import { Navigate, useSearchParams } from "react-router-dom";
+
 import Cookies from "js-cookie"; // To store the token as a cookie
-import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Import useRouter to access URL params
+import { isValidRedirectPath } from "../utils/routes";
 
 const AuthPage = () => {
-  const navigate = useNavigate(); // Get the router instance
-  const { user, setUser } = useAuth(); // Destructure setUser from useAuth hook
+  const [searchParams] = useSearchParams();
+  const accessToken = searchParams.get("access_token");
+  const next = searchParams.get("next") || "/";
 
-  useEffect(() => {
-    const { searchParams } = new URL(window.location.href); // Get URL search parameters
-    const token = searchParams.get("access_token"); // Get the access_token from URL params
+  // Validate the access token exists
+  if (!accessToken) {
+    return <Navigate to="/login" replace />;
+  }
 
-    if (!token) {
-      // Redirect to login page if no token is present
-      // navigate("/login");
-      console.log("No token found, redirecting to login");
-      return;
-    }
+  // Validate the next path
+  const redirectTo = isValidRedirectPath(next) ? next : "/";
 
-    // Store the token in a secure cookie
-    Cookies.set("accessToken", token, { secure: true, sameSite: "strict" });
-    const user = JSON.parse(atob(token.split(".")[1]));
-    const userInfo = user.sub;
-    const userDict = {
-      id: userInfo.id,
-      email: userInfo.email,
-      name: userInfo.name,
-      image: userInfo.picture,
-      token: token,
-    };
+  // Store the token in a secure cookie
+  Cookies.set("accessToken", accessToken, { secure: true, sameSite: "strict" });
+  const user = JSON.parse(atob(accessToken.split(".")[1]));
+  const userInfo = user.sub;
+  const userDict = {
+    id: userInfo.id,
+    email: userInfo.email,
+    name: userInfo.name,
+    image: userInfo.picture,
+    token: accessToken,
+  };
 
-    Cookies.set("user", JSON.stringify(userDict), {
-      secure: true,
-      sameSite: "strict",
-    });
+  Cookies.set("user", JSON.stringify(userDict), {
+    secure: true,
+    sameSite: "strict",
+  });
 
-    setUser(userInfo);
-    navigate("/");
-  }, [navigate, setUser]);
-  //TODO: Add loading screen
-  return <div>Loading... {JSON.stringify(user)}</div>;
+  return <Navigate to={redirectTo} replace />;
 };
 
 export default AuthPage;

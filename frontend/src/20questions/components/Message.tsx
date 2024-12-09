@@ -11,10 +11,7 @@ interface MessageProps {
 const AssistantAvatar = () => {
   return (
     <Avatar>
-      <AvatarImage
-        src="https://api.iconify.design/mdi:robot.svg"
-        alt="AI Assistant"
-      />
+      <AvatarImage src="icons/AI Basketball.png" alt="AI Assistant" />
       <AvatarFallback>AI</AvatarFallback>
     </Avatar>
   );

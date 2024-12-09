@@ -6,12 +6,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import { Icon } from "@mdi/react";
 import React from "react";
 
 interface ProductCardProps {
   title: string;
   description: string;
-  icon: string;
+  icon: string | string;
+  iconType: "image" | "material";
   link: string;
 }
 
@@ -19,25 +21,28 @@ const ProductCard: React.FC<ProductCardProps> = ({
   title,
   description,
   icon,
+  iconType,
   link,
 }) => {
+  const renderIcon = () => {
+    if (iconType === "material") {
+      return <Icon path={icon} size={2} />;
+    }
+    return (
+      <img
+        src={icon}
+        alt={title}
+        className="img-fluid max-w-[200px] max-h-[200px] object-contain"
+      />
+    );
+  };
+
   return (
     <Card
       className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200"
       onClick={() => (window.location.href = link)}
     >
-      <CardHeader>
-        <img
-          src={icon}
-          alt={title}
-          style={{
-            width: "100px",
-            height: "100px",
-            display: "block",
-            margin: "0 auto",
-          }}
-        />
-      </CardHeader>
+      <CardHeader>{renderIcon()}</CardHeader>
       <CardContent>
         <CardTitle className="text-center h3">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
