@@ -27,6 +27,16 @@ def index():
     return send_from_directory("../dist", "index.html")
 
 
+@app.route("/<path:path>")
+def static_proxy(path):
+    # Send everything else to React
+    file_path = f"{app.static_folder}/{path}"
+    try:
+        return send_from_directory(app.static_folder, path)
+    except FileNotFoundError:
+        return send_from_directory(app.static_folder, "index.html")
+
+
 from .twenty_questions.routes import twenty_questions
 from .routes import auth_bp
 

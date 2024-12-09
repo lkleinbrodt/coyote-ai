@@ -1,10 +1,10 @@
 import "./Poeltl.css";
 
+import { ChatMessage, useChat } from "../hooks/useChat";
 import React, { useEffect, useState } from "react";
 
 import Message from "../components/Message";
 import PersonPicker from "../components/PersonPicker";
-import { useChat } from "../hooks/useChat";
 
 export default function Poeltl() {
   const [person, setPerson] = useState<string>("");
@@ -55,7 +55,7 @@ export default function Poeltl() {
         { role: "user", content: userMessage },
       ];
 
-      handleStream(messages);
+      handleStream(messages as ChatMessage[]);
     }
   };
 

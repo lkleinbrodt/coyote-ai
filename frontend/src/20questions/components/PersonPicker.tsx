@@ -1,7 +1,6 @@
 import "./PersonPicker.css";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React from "react";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 
 interface PersonPickerProps {
