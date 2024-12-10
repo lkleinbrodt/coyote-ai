@@ -12,7 +12,7 @@ import NotFound from "./pages/NotFound";
 import Poeltl from "./20questions/pages/Poeltl";
 import Privacy from "./pages/Privacy";
 import PrivateRoute from "./components/PrivateRoute";
-import SettingsDropdown from "./components/SettingsDropdown";
+// import SettingsDropdown from "./components/SettingsDropdown";
 import { ThemeProvider } from "./components/theme-provider";
 
 function App() {
@@ -20,7 +20,6 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
-          <SettingsDropdown />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />

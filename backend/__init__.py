@@ -6,7 +6,7 @@ from flask_cors import CORS
 from flask_session import Session
 from backend.extensions import db, jwt, migrate
 
-app = Flask(__name__, static_folder="../dist", static_url_path="")
+app = Flask(__name__, static_folder="./dist", static_url_path="")
 
 app.config.from_object(Config)
 db.init_app(app)
@@ -24,13 +24,11 @@ import os
 
 @app.route("/")
 def index():
-    return send_from_directory("../dist", "index.html")
+    return send_from_directory(app.static_folder, "index.html")
 
 
 @app.route("/<path:path>")
 def static_proxy(path):
-    # Send everything else to React
-    file_path = f"{app.static_folder}/{path}"
     try:
         return send_from_directory(app.static_folder, path)
     except FileNotFoundError:
