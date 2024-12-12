@@ -5,7 +5,7 @@ from flask import request
 from backend.config import Config, ROOT_DIR
 from flask_cors import CORS
 from flask_session import Session
-from backend.extensions import db, jwt, migrate
+from backend.extensions import jwt
 from flask import render_template
 from flask import Blueprint
 from flask import send_from_directory
@@ -24,8 +24,6 @@ def create_app():
     )
 
     app.config.from_object(Config)
-    db.init_app(app)
-    migrate.init_app(app, db)
 
     CORS(
         app,
