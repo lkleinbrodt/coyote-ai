@@ -3,7 +3,6 @@ import "./Poeltl.css";
 import { ChatMessage, useChat } from "../hooks/useChat";
 import React, { useEffect, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import Message from "../components/Message";
 import PersonPicker from "../components/PersonPicker";
 import { Progress } from "@/components/ui/progress";

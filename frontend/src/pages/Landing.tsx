@@ -1,12 +1,11 @@
 import "./Landing.css";
 
-import { Button } from "@/components/ui/button";
 import ProductCard from "../components/ProductCard";
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Landing: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const products = [
     {
       title: "Poeltl-Chat",
