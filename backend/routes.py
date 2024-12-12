@@ -1,4 +1,5 @@
-from backend.config import create_logger, Config
+from backend.config import Config
+from backend.extensions import create_logger
 from flask import (
     Blueprint,
     redirect,
@@ -9,26 +10,31 @@ from flask_jwt_extended import (
     create_access_token,
 )
 from backend.src.OAuthSignIn import OAuthSignIn
-from itsdangerous import URLSafeTimedSerializer
+from flask import current_app
 
-serializer = URLSafeTimedSerializer(Config.SECRET_KEY)
 logger = create_logger(__name__, level="DEBUG")
 
 
-auth_bp = Blueprint("auth", __name__)
+auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 
 @auth_bp.route("/authorize/<provider>")
 def oauth_authorize(provider):
     # TODO: if user is already logged in, redirect to index
+
     oauth = OAuthSignIn.get_provider(provider)
     return oauth.authorize(next_path=request.args.get("next", "/"))
 
 
 @auth_bp.route("/callback/<provider>")
 def oauth_callback(provider):
+
     oauth = OAuthSignIn.get_provider(provider)
-    social_id, name, email, picture = oauth.callback()
+    try:
+        social_id, name, email, picture = oauth.callback()
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "No social id found"}), 400
     next_path = request.args.get("state", "/")
 
     if social_id is None:
@@ -47,7 +53,5 @@ def oauth_callback(provider):
         }
     )
 
-    redirect_url = (
-        f"{Config.BASE_URL}/auth?access_token={access_token}&next={next_path}"
-    )
+    redirect_url = f"{current_app.config['BASE_URL']}/auth?access_token={access_token}&next={next_path}"
     return redirect(redirect_url)

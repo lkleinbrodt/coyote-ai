@@ -1,19 +1,19 @@
 import "./Landing.css";
 
+import { Button } from "@/components/ui/button";
 import ProductCard from "../components/ProductCard";
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Landing: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const products = [
     {
-      title: "PoeltlGPT",
+      title: "Poeltl-Chat",
       description: "Play a game of NBA themed 20-questions against an AI",
       icon: "icons/AI Basketball.png",
       link: "/poeltl",
     },
-
     {
       title: "Cheffrey",
       description: "Your AI sous-chef helps you discover, share, and create",
@@ -29,25 +29,25 @@ const Landing: React.FC = () => {
   ];
 
   return (
-    <div className="min-vh-100 d-flex align-items-center justify-content-center py-5">
-      <div className="container">
-        <div className="text-center mb-5">
-          <img
-            src="icons/coyote_logo.png"
-            className="img-fluid mb-3 mx-auto"
-            alt="Coyote AI logo"
-            style={{ maxWidth: "200px" }}
-          />
-          <h1 className="brand-title display-4">Coyote AI</h1>
-          <p className="tagline lead mb-0">Let AI lighten your load</p>
-          {user && <p className="tagline lead mb-0">Hello {user.name}!</p>}
-        </div>
+    <div>
+      <div className="hero-section">
+        <img
+          src="icons/coyote_logo.png"
+          className="logo"
+          alt="Coyote AI logo"
+        />
+        <h1 className="title">Welcome to Coyote AI</h1>
+        {user ? (
+          <div className="flex flex-col justify-center items-center">
+            <span className="welcome-message">{user.name}</span>
+          </div>
+        ) : (
+          <button className="login-button">Login</button>
+        )}
 
-        <div className="row justify-content-center align-items-stretch g-4">
+        <div className="product-section">
           {products.map((product, index) => (
-            <div key={index} className="col-md-4 col-sm-12">
-              <ProductCard {...product} />
-            </div>
+            <ProductCard key={index} {...product} />
           ))}
         </div>
       </div>

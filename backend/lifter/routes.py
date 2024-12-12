@@ -1,5 +1,5 @@
 from flask import jsonify, Blueprint, request, Response, stream_with_context
-from backend.config import create_logger
+from backend.extensions import create_logger
 import json
 import pandas as pd
 from backend.src.s3 import S3

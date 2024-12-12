@@ -1,15 +1,20 @@
 import "./LoginPage.css";
 
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 const Login = () => {
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
+  const { login } = useAuth();
   const handleSignIn = () => {
-    const nextPath = encodeURIComponent(from);
-    const baseUrl = import.meta.env.VITE_AUTH_BASE_URL;
-    window.location.href = `${baseUrl}/authorize/google?next=${nextPath}`;
+    login(from);
   };
+
+  useEffect(() => {
+    handleSignIn();
+  });
 
   return (
     <div className="loginContainer">

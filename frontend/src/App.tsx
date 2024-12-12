@@ -8,18 +8,19 @@ import AuthPage from "./pages/AuthPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import Landing from "./pages/Landing";
 import Login from "./pages/LoginPage";
+import NavBar from "./components/NavBar";
 import NotFound from "./pages/NotFound";
 import Poeltl from "./20questions/pages/Poeltl";
 import Privacy from "./pages/Privacy";
 import PrivateRoute from "./components/PrivateRoute";
-// import SettingsDropdown from "./components/SettingsDropdown";
 import { ThemeProvider } from "./components/theme-provider";
 
 function App() {
   return (
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <AuthProvider>
         <BrowserRouter>
+          <NavBar />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />

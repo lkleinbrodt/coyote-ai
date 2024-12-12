@@ -20,9 +20,11 @@ const AssistantAvatar = () => {
 function Message({ sender, message }: MessageProps) {
   return (
     <div className={`message ${sender}`}>
-      <div className={`message header ${sender}`}>
-        {sender === "user" ? null : <AssistantAvatar />}
-      </div>
+      {sender === "assistant" && (
+        <div className={`message header ${sender}`}>
+          <AssistantAvatar />
+        </div>
+      )}
       <div className={`message content ${sender}`}>{message}</div>
     </div>
   );

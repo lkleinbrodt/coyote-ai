@@ -3,8 +3,10 @@ import "./Poeltl.css";
 import { ChatMessage, useChat } from "../hooks/useChat";
 import React, { useEffect, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import Message from "../components/Message";
 import PersonPicker from "../components/PersonPicker";
+import { Progress } from "@/components/ui/progress";
 
 export default function Poeltl() {
   const [person, setPerson] = useState<string>("");
@@ -46,6 +48,7 @@ export default function Poeltl() {
       target.value = "";
 
       addMessage(userMessage, "user");
+      setInputLength(0);
 
       const messages = [
         ...chatMessages.map((msg) => ({
@@ -68,14 +71,13 @@ export default function Poeltl() {
   return (
     <div className="app-container">
       <div className="container d-flex flex-column align-items-center flex-col">
-        <div className="person-picker-container">
+        <div className="header gap-2">
           <PersonPicker
             onPersonSelected={handlePersonSelected}
             disabled={false}
           />
-        </div>
-        <div className="guess-counter">
-          Guesses: {chatMessages.filter((msg) => msg.role === "user").length}
+          <Progress value={(nGuesses / 20) * 100} />
+          <h4 className="text-muted-foreground">{nGuesses} / 20</h4>
         </div>
       </div>
       <div className="chat-container">

@@ -21,6 +21,7 @@ interface AuthContextType {
   setUser: (user: User | null) => void;
   loading: boolean;
   logout: () => void;
+  login: (from: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,9 +52,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     Cookies.remove("user");
   };
 
+  const login = (from: string) => {
+    if (!from) {
+      from = "/";
+    }
+    const nextPath = encodeURIComponent(from);
+    const baseUrl = import.meta.env.VITE_AUTH_BASE_URL;
+    window.location.href = `${baseUrl}/auth/authorize/google?next=${nextPath}`;
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, setUser: handleSetUser, loading, logout }}
+      value={{ user, setUser: handleSetUser, loading, logout, login }}
     >
       {children}
     </AuthContext.Provider>

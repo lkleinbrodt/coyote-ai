@@ -1,15 +1,8 @@
 from flask import jsonify, Blueprint, request, Response, stream_with_context
-from backend.config import create_logger
-import json
-import pandas as pd
-from backend.src.s3 import S3
-from botocore.errorfactory import ClientError
+from backend.extensions import create_logger
 from backend.config import Config
-from flask_session import Session
 from openai import OpenAI
 import random
-
-S3_BUCKET = Config.LIFTER_BUCKET
 
 logger = create_logger(__name__, level="DEBUG")
 

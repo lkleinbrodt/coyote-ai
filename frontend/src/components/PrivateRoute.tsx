@@ -1,9 +1,9 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 
 import { useAuth } from "@/contexts/AuthContext";
 
-const PrivateRoute = () => {
-  const { user, loading } = useAuth();
+export default function PrivateRoute() {
+  const { user, loading, login } = useAuth();
   const location = useLocation();
 
   // Wait for the authentication check to complete
@@ -12,10 +12,9 @@ const PrivateRoute = () => {
   }
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    login(location.pathname);
+    return null;
   }
 
   return <Outlet />;
-};
-
-export default PrivateRoute;
+}

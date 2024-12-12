@@ -1,5 +1,3 @@
-import "./PersonPicker.css";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 
@@ -34,15 +32,19 @@ export default function PersonPicker({
 
   return (
     <div
-      className="pick-person-container d-flex align-items-center justify-content-center flex-column"
+      className="d-flex align-items-center justify-content-center flex-column"
       onClick={!disabled ? getPerson : undefined}
       role="button"
       tabIndex={0}
     >
       <div className={`pick-person-icon ${disabled ? "disabled" : ""}`}>
-        <FontAwesomeIcon icon={faUser} size="4x" />
+        <FontAwesomeIcon
+          icon={faUser}
+          size="4x"
+          color={`hsl(var(--foreground))`}
+        />
       </div>
-      <div className="pick-person-text">
+      <div className="text-muted-foreground">
         {disabled ? "Loading..." : "Pick a new person"}
       </div>
     </div>

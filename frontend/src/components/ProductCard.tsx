@@ -35,13 +35,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200"
+      className="cursor-pointer shadow-none hover:shadow-lg hover:scale-105 transition-all duration-200 bg-transparent border-0"
       onClick={() => (window.location.href = link)}
     >
       <CardHeader>{renderIcon()}</CardHeader>
       <CardContent>
-        <CardTitle className="text-center h3">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardTitle className="text-center h3 text-white">{title}</CardTitle>
+        <CardDescription className="text-left text-white">
+          {description}
+        </CardDescription>
       </CardContent>
     </Card>
   );

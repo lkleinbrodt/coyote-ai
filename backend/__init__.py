@@ -2,7 +2,7 @@ from logging.handlers import SMTPHandler
 from logging import ERROR
 from flask import Flask
 from flask import request
-from backend.config import Config, ROOT_DIR
+from backend.config import Config
 from flask_cors import CORS
 from flask_session import Session
 from backend.extensions import jwt
@@ -15,15 +15,15 @@ from .routes import auth_bp
 import os
 
 
-def create_app():
+def create_app(config_class: Config):
 
     app = Flask(
         __name__,
-        static_folder=ROOT_DIR / "dist",
+        static_folder=config_class.ROOT_DIR / "dist",
         static_url_path="",
     )
 
-    app.config.from_object(Config)
+    app.config.from_object(config_class)
 
     CORS(
         app,
@@ -43,6 +43,19 @@ def create_app():
 
     api_bp.register_blueprint(twenty_questions)
     api_bp.register_blueprint(lifter)
-    app.register_blueprint(auth_bp, url_prefix="/")
+    api_bp.register_blueprint(auth_bp)
     app.register_blueprint(api_bp, url_prefix="/api")
+
+    if not app.debug:
+        mail_handler = SMTPHandler(
+            mailhost=(app.config["MAIL_SERVER"], app.config["MAIL_PORT"]),
+            fromaddr=app.config["MAIL_USERNAME"],
+            toaddrs=app.config["ADMIN_EMAILS"],
+            subject="Coyote-AI Application Error",
+            credentials=(app.config["MAIL_USERNAME"], app.config["MAIL_PASSWORD"]),
+            secure=(),
+        )
+        mail_handler.setLevel(ERROR)
+        app.logger.addHandler(mail_handler)
+
     return app
