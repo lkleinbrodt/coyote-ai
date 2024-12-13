@@ -36,12 +36,10 @@ const Landing: React.FC = () => {
           alt="Coyote AI logo"
         />
         <h1 className="title">Welcome to Coyote AI</h1>
-        {user ? (
+        {user && (
           <div className="flex flex-col justify-center items-center">
-            <span className="welcome-message">{user.name}</span>
+            <span className="welcome-message text-center">{user.name}</span>
           </div>
-        ) : (
-          <button className="login-button">Login</button>
         )}
 
         <div className="product-section">

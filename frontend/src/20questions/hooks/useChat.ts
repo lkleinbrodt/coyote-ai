@@ -69,5 +69,6 @@ export const useChat = (person: string) => {
     handleStream,
     addMessage,
     resetChat,
+    setChatMessages,
   };
 };

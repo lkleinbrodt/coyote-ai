@@ -19,3 +19,13 @@
 .message.user {
   background-color: hsl(var(--accent));
 }
+.message.header {
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .message.content {
+    padding: 10px;
+  }
+}

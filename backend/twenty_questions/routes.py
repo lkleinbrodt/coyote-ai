@@ -161,7 +161,7 @@ def ask():
             "You are pretending to be a specific person for a 20 Questions game. "
             "The user will try to guess who you are by asking yes/no questions. "
             "You should only allow the user to ask you yes/no questions, or very short answers providing minimal context, "
-            "and nothing else. Stick strictly to the game and avoid discussing anything unrelated."
+            "and nothing else (If the user specifically gives up/quits the game, you are allowed to tell them who you are). Stick strictly to the game and avoid discussing anything unrelated."
             "Here is the person you are pretending to be, as well as some information about them:"
             f"{person}"
         )
