@@ -1,34 +1,29 @@
 /* Chat.css */
 
-.app-container {
+.poeltl-page {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  width: 100%;
   overflow: hidden;
-  position: relative;
-  background-color: hsl(var(--background));
   padding-top: 2.5rem;
 }
 
 .chat-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1;
   width: 100%;
-  overflow: hidden;
   max-width: 700px;
   margin: 0 auto;
+  overflow: hidden;
 }
 
 .messages-container {
-  flex-grow: 1;
+  flex: 1;
   overflow-y: auto;
-  padding-left: 25px;
-  padding-right: 25px;
-  position: relative;
-  padding-top: 0px;
-  padding-bottom: 25px;
+  padding: 0 25px 25px 25px;
 }
 
 .chat-input-container {
@@ -36,7 +31,7 @@
   align-items: center;
   padding-bottom: 10px;
   width: 100%;
-  margin: auto;
+  margin: 0 auto;
 }
 
 .chat-input {

@@ -112,7 +112,7 @@ export default function Poeltl() {
   }, []);
 
   return (
-    <div className="app-container">
+    <div className="poeltl-page">
       <div className="container d-flex flex-column align-items-center flex-col">
         <div className="header gap-2">
           <PersonPicker onClick={handlePersonSelected} loading={isLoading} />

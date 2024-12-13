@@ -28,7 +28,7 @@ const Landing: React.FC = () => {
   ];
 
   return (
-    <div>
+    <div className="landing-page">
       <div className="hero-section">
         <img
           src="icons/coyote_logo.png"
