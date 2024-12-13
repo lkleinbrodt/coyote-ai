@@ -9,6 +9,12 @@
   padding-top: 2.5rem;
 }
 
+@media (max-width: 768px) {
+  .poeltl-page {
+    overflow: auto;
+  }
+}
+
 .chat-container {
   position: relative;
   display: flex;
