@@ -23,7 +23,7 @@ body {
       rgba(0, 0, 0, 0) 95%,
       rgba(0, 0, 0, 1) 100%
     ),
-    url(assets/river.jpeg) top -200px center;
+    url(/assets/river.jpeg) top -200px center;
   background-size: cover;
   min-height: 100vh;
   width: 100%;
