@@ -1,17 +1,19 @@
 /* Chat.css */
 
 .poeltl-page {
-  position: absolute;
+  position: fixed;
   inset: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   padding-top: 2.5rem;
+  height: 100vh;
+  height: 100dvh;
 }
 
 @media (max-width: 768px) {
   .poeltl-page {
-    overflow: auto;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
