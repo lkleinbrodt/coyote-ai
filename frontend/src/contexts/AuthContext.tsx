@@ -7,6 +7,7 @@ import {
 } from "react";
 
 import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom";
 
 interface User {
   id: number;
@@ -29,7 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const navigate = useNavigate();
   useEffect(() => {
     const userCookie = Cookies.get("user");
     if (userCookie) {
@@ -47,7 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await navigate("/");
+
+    // Ensure navigation completes before clearing user state
+    // React Router's navigation can be asynchronous
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     setUser(null);
     Cookies.remove("user");
   };

@@ -8,7 +8,7 @@ export default function PrivateRoute() {
 
   // Wait for the authentication check to complete
   if (loading) {
-    return null; // or return a loading spinner
+    return null;
   }
 
   if (!user) {

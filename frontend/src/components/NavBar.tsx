@@ -6,6 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Link, useLocation } from "react-router-dom";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -14,13 +15,12 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
-import { Link } from "react-router-dom";
 import { ModeToggle } from "@/components/DarkModeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function NavBar() {
-  const { user, logout } = useAuth();
-
+  const { user, logout, login } = useAuth();
+  const location = useLocation();
   return (
     <div className="w-full fixed top-0 z-1 flex flex-row justify-between items-center">
       {/* these buttons go on the left */}
@@ -56,13 +56,8 @@ export default function NavBar() {
               {user ? (
                 <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
               ) : (
-                <DropdownMenuItem>
-                  <Link
-                    to="/login"
-                    className="text-foreground text-decoration-none"
-                  >
-                    Login
-                  </Link>
+                <DropdownMenuItem onClick={() => login(location.pathname)}>
+                  Login
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
