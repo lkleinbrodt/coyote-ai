@@ -57,7 +57,7 @@ export const useChat = (person: string) => {
       {
         role: "assistant",
         content:
-          "Ok, I'm ready. Ask me questions to guess who I'm thinking of!",
+          "I'm thinking of a currently active NBA player. Ask me questions to guess who I'm thinking of!",
       },
     ]);
   };
