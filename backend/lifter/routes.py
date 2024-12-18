@@ -91,13 +91,9 @@ def get_last_lifts():
 
 @lifter.route("/get-all-lifts", methods=["GET"])
 def get_all_lifts():
-    user = request.args.get("user")
     lift = request.args.get("lift")
 
     data = load_workouts_from_s3()
-
-    if user is not None:
-        data = data[data["user"] == user]
 
     if lift is not None:
         data = data[data["name"] == lift]
@@ -158,6 +154,7 @@ def save_workout():
 
         exercise_df["type"] = exercise["type"]
         exercise_df["name"] = exercise["name"]
+        exercise_df["set"] = exercise_df["set"] + 1  # so it's not 0 indexed
         workout_array.append(exercise_df)
 
     workout_df = pd.concat(workout_array, axis=0)
