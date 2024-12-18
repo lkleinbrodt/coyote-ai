@@ -23,6 +23,21 @@ def save_lifts_to_s3(lifts_dict):
     s3_client.save_json(lifts_dict, "lifts.json")
 
 
+def load_workouts_from_s3():
+    # cringe. upgrade this entire script
+    s3_client = S3(bucket=S3_BUCKET)
+    try:
+        data = s3_client.load_csv("lifts.csv")
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "NoSuchKey":
+            logger.warning("No lift csv found, making a new one")
+            data = pd.DataFrame()
+        else:
+            logger.exception(e)
+            return jsonify({"error": "Error loading data"}), 500
+    return data
+
+
 @lifter.route("/")
 def home():
     logger.debug("Home route accessed")
@@ -56,7 +71,7 @@ def get_last_lifts():
     lift = request.args.get("lift")
     user = request.args.get("user")
 
-    data = load_lifts_from_s3()
+    data = load_workouts_from_s3()
 
     if lift is not None:
         data = data[data["name"] == lift]
@@ -79,13 +94,13 @@ def get_all_lifts():
     user = request.args.get("user")
     lift = request.args.get("lift")
 
-    lifts = load_lifts_from_s3()
+    data = load_workouts_from_s3()
 
     if user is not None:
-        lifts = lifts[lifts["user"] == user]
+        data = data[data["user"] == user]
 
     if lift is not None:
-        lifts = lifts[lifts["name"] == lift]
+        data = data[data["name"] == lift]
 
     data = data.fillna("")
 
@@ -98,16 +113,14 @@ def get_all_lifts():
 
 @lifter.route("/save-workout", methods=["POST"])
 def save_workout():
-
     workout = request.json
-
     workout_array = []
+
     for exercise in workout:
-
-        landon_array = exercise["landon"]
-        erin_array = exercise["erin"]
-
         series_array = []
+
+        # Process Landon's sets (always present)
+        landon_array = exercise["landon"]
         for set in landon_array:
             series_array.append(
                 pd.Series(
@@ -121,24 +134,30 @@ def save_workout():
         landon_series = pd.DataFrame(series_array)
         landon_series.index.name = "set"
 
-        series_array = []
-        for set in erin_array:
-            series_array.append(
-                pd.Series(
-                    {
-                        "user": "erin",
-                        "weight": set["weight"],
-                        "reps": set["reps"],
-                    }
+        # Process Erin's sets if present
+        if "erin" in exercise and exercise["erin"]:
+            erin_array = exercise["erin"]
+            erin_series_array = []
+            for set in erin_array:
+                erin_series_array.append(
+                    pd.Series(
+                        {
+                            "user": "erin",
+                            "weight": set["weight"],
+                            "reps": set["reps"],
+                        }
+                    )
                 )
-            )
-        erin_series = pd.DataFrame(series_array)
-        erin_series.index.name = "set"
+            erin_series = pd.DataFrame(erin_series_array)
+            erin_series.index.name = "set"
+            # Combine both users' data
+            exercise_df = pd.concat([landon_series, erin_series], axis=0).reset_index()
+        else:
+            # Only use Landon's data
+            exercise_df = landon_series.reset_index()
 
-        exercise_df = pd.concat([landon_series, erin_series], axis=0).reset_index()
         exercise_df["type"] = exercise["type"]
         exercise_df["name"] = exercise["name"]
-
         workout_array.append(exercise_df)
 
     workout_df = pd.concat(workout_array, axis=0)
