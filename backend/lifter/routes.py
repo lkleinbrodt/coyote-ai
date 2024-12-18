@@ -56,18 +56,7 @@ def get_last_lifts():
     lift = request.args.get("lift")
     user = request.args.get("user")
 
-    s3_client = S3(bucket=S3_BUCKET)
-    try:
-        data = s3_client.load_csv("lifts.csv")
-    except ClientError as e:
-        if e.response["Error"]["Code"] == "NoSuchKey":
-            logger.warning("No lift csv found, making a new one")
-            data = pd.DataFrame()
-
-            return jsonify([]), 200
-        else:
-            logger.exception(e)
-            return jsonify({"error": "Error loading data"}), 500
+    data = load_lifts_from_s3()
 
     if lift is not None:
         data = data[data["name"] == lift]
@@ -76,6 +65,28 @@ def get_last_lifts():
         data = data[data["user"].str.lower() == user]
 
     data = data[data["date"] == data["date"].max()]
+    data = data.fillna("")
+
+    out = []
+    for i, row in data.iterrows():
+        out.append(row.to_dict())
+
+    return jsonify(out), 200
+
+
+@lifter.route("/get-all-lifts", methods=["GET"])
+def get_all_lifts():
+    user = request.args.get("user")
+    lift = request.args.get("lift")
+
+    lifts = load_lifts_from_s3()
+
+    if user is not None:
+        lifts = lifts[lifts["user"] == user]
+
+    if lift is not None:
+        lifts = lifts[lifts["name"] == lift]
+
     data = data.fillna("")
 
     out = []
