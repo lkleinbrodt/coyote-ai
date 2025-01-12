@@ -1,36 +1,38 @@
-# import sqlalchemy.orm as so
-# import sqlalchemy as sa
-# from typing import Optional
-# from datetime import datetime
-# from werkzeug.security import generate_password_hash, check_password_hash
-# from server import db
+from .extensions import db, jwt
+from sqlalchemy.orm import relationship
+from autodraft.models import user_project_association
 
 
-# class User(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     userName = db.Column(db.String(80), unique=True, nullable=False)
-#     password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    social_id = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255), nullable=True)
+    image = db.Column(db.String(255), nullable=True)
+    email = db.Column(db.String(255), nullable=True, unique=True)
+    email_verified = db.Column("emailVerified", db.BigInteger, nullable=True)
 
-#     email = db.Column(db.String(120), unique=True, nullable=False)
-#     storeName = db.Column(db.String(120), unique=False, nullable=True)
-#     reverbAccess = db.Column(db.String(120), unique=True, nullable=True)
+    created_at = db.Column(
+        "createdAt", db.BigInteger, nullable=False, default=db.func.now()
+    )
+    updated_at = db.Column(
+        "updatedAt", db.BigInteger, nullable=False, default=db.func.now()
+    )
 
-#     email_verified = db.Column(db.Boolean, default=False)
+    group = db.Column(db.String(50), nullable=True)
 
-#     # TODO: I dont like this implementation, using deeplinking would be better
-#     # but that is more complex and requires more setup
-#     can_change_password = db.Column(db.Boolean, default=False)
-#     can_change_password_expiry = db.Column(db.DateTime, default=datetime.utcnow)
-#     change_password_code = db.Column(db.String(6), nullable=True)
+    projects = relationship(
+        "Project", secondary=user_project_association, back_populates="users"
+    )
 
-#     def set_password(self, password):
-#         self.password_hash = generate_password_hash(password)
+    def __repr__(self):
+        return f"<User {self.id}>"
 
-#     def check_password(self, password):
-#         return check_password_hash(self.password_hash, password)
+    def __str__(self) -> str:
+        return f"<User {self.id}>"
 
-#     def set_reverb_key(self, reverb_key):
-#         self.reverbAccess = reverb_key
 
-#     def __repr__(self):
-#         return f"<User {self.userName}>"
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    # decode the jwt_data
+    identity = jwt_data["sub"]["id"]
+    return User.query.filter_by(id=identity).one_or_none()

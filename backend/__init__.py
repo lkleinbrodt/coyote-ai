@@ -5,8 +5,7 @@ from flask import request
 from backend.config import Config
 from flask_cors import CORS
 from flask_session import Session
-from backend.extensions import jwt
-from flask import render_template
+from backend.extensions import jwt, db
 from flask import Blueprint
 from flask import send_from_directory
 from .twenty_questions.routes import twenty_questions
@@ -30,8 +29,7 @@ def create_app(config_class: Config):
     )
     jwt.init_app(app)
     Session(app)
-
-    # return send_from_directory(app.static_folder, "index.html")
+    db.init_app(app)
 
     @app.route("/", defaults={"path": ""})
     @app.route("/<string:path>")

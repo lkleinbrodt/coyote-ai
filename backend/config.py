@@ -14,14 +14,6 @@ class Config:
     JWT_SECRET_KEY = SECRET_KEY
     ENV = os.environ.get("ENV", "dev").lower()
 
-    # if ENV == "dev":
-    #     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(ROOT_DIR, "app.db")
-    # else:
-    #     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
-    #     SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
-    #         "postgres://", "postgresql://"
-    #     )
-
     ADMIN_EMAILS = ["landon@coyote-ai.com"]
     MAIL_SERVER = os.environ.get("MAIL_SERVER")
     MAIL_PORT = os.environ.get("MAIL_PORT")
@@ -29,6 +21,7 @@ class Config:
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 
     CORS_HEADERS = "Content-Type"
+
     SESSION_TYPE = "filesystem"
     SESSION_COOKIE_SAMESITE = None
     SESSION_COOKIE_SECURE = True  # Only send cookie over HTTPS
@@ -51,20 +44,32 @@ class Config:
         }
     }
 
+    # TODO: this belongs elsewhere
+    S3_INDEX_DIR = "indices"
+
 
 class DevelopmentConfig(Config):
     ENV = "development"
     DEBUG = True
     BASE_URL = "http://localhost:5173"
+    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(Config.ROOT_DIR, "app.db")
+
+    AUTODRAFT_BUCKET = "autodraft-dev"
 
 
 class ProductionConfig(Config):
     ENV = "production"
     DEBUG = False
     BASE_URL = "https://www.coyote-ai.com"
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+
+    AUTODRAFT_BUCKET = "autodraft"
 
 
 class TestingConfig(Config):
     ENV = "testing"
     DEBUG = True
     BASE_URL = "http://localhost:8000"
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+
+    AUTODRAFT_BUCKET = "autodraft-test"

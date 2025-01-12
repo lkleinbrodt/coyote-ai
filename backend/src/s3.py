@@ -2,6 +2,7 @@ from io import BytesIO
 import boto3
 from ..config import Config
 import json
+import s3fs
 
 
 def create_s3_client() -> boto3.client:
@@ -9,6 +10,15 @@ def create_s3_client() -> boto3.client:
         "s3",
         aws_access_key_id=Config.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=Config.AWS_SECRET_ACCESS_KEY,
+    )
+    return s3
+
+
+def create_s3_fs() -> s3fs.S3FileSystem:
+    s3 = s3fs.S3FileSystem(
+        key=Config.AWS_ACCESS_KEY_ID,
+        secret=Config.AWS_SECRET_ACCESS_KEY,
+        client_kwargs={"region_name": "us-west-1"},  # TODO: make this configurable
     )
     return s3
 
@@ -65,3 +75,6 @@ class S3:
         df.to_csv(csv_buffer, index=False)
         self.s3.put_object(Body=csv_buffer.getvalue(), Bucket=self.bucket, Key=path)
         return True
+
+    def exists(self, path):
+        return self.s3.head_object(Bucket=self.bucket, Key=path) is not None
