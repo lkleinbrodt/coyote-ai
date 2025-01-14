@@ -1,16 +1,14 @@
 from flask import Blueprint, jsonify, request
-import os
-import shutil
 from backend.autodraft.models import Project
 from backend.autodraft.utils import load_index, update_index
 from llama_index.core import Document as LlamaDocument
 from flask_jwt_extended import jwt_required, current_user
-from src.IndexBuilder import IndexBuilder
+from backend.autodraft.src.IndexBuilder import IndexBuilder
 from backend.autodraft.extensions import INDEX_DICT
 from backend.extensions import create_logger
 from backend.src.s3 import create_s3_fs
 from backend.config import Config
-
+from backend.autodraft.utils import check_index_available
 
 index_bp = Blueprint("index", __name__)
 logger = create_logger(__name__, level="DEBUG")
@@ -75,11 +73,8 @@ def index_available():
     if not project_id:
         return jsonify({"error": "No project_id provided"}), 400
 
-    # check if index exists
-
     s3_fs = create_s3_fs()
-    index_dir = Config.AUTODRAFT_BUCKET / Config.S3_INDEX_DIR / str(project_id)
-    exists = s3_fs.exists(index_dir)
+    exists = check_index_available(project_id, s3_fs)
 
     return jsonify({"exists": exists}), 200
 
@@ -99,7 +94,9 @@ def delete_index():
         return jsonify({"error": "User does not have access to project"}), 403
 
     s3_fs = create_s3_fs()
-    index_dir = Config.AUTODRAFT_BUCKET / Config.S3_INDEX_DIR / str(project_id)
+    index_dir = (
+        Config.AUTODRAFT_BUCKET + "/" + Config.S3_INDEX_DIR + "/" + str(project_id)
+    )
     if s3_fs.exists(index_dir):
         s3_fs.rm(index_dir)
 
@@ -119,7 +116,9 @@ def update_index():
     if current_user not in project.users:
         return jsonify({"error": "User does not have access to project"}), 403
 
-    index_dir = Config.AUTODRAFT_BUCKET / Config.S3_INDEX_DIR / str(project_id)
+    index_dir = (
+        Config.AUTODRAFT_BUCKET + "/" + Config.S3_INDEX_DIR + "/" + str(project_id)
+    )
     s3_fs = create_s3_fs()
     if not s3_fs.exists(index_dir):
         return jsonify({"error": "Index not found"}), 404

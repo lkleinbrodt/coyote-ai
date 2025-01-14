@@ -5,12 +5,14 @@ from flask import request
 from backend.config import Config
 from flask_cors import CORS
 from flask_session import Session
-from backend.extensions import jwt, db
+from backend.extensions import jwt, db, migrate
 from flask import Blueprint
 from flask import send_from_directory
 from .twenty_questions.routes import twenty_questions
 from .lifter.routes import lifter
 from .routes import auth_bp
+from .autodraft.routes import autodraft_bp
+from .models import *
 import os
 
 
@@ -26,10 +28,18 @@ def create_app(config_class: Config):
 
     CORS(
         app,
+        supports_credentials=True,  # Allow credentials
+        resources={
+            r"/api/autodraft/*": {"origins": "http://localhost:5173"}
+        },  # Specify allowed origin
+        # allow_headers=["Authorization", "Content-Type"],
+        # methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Allow necessary methods
     )
+
     jwt.init_app(app)
     Session(app)
     db.init_app(app)
+    migrate.init_app(app, db)
 
     @app.route("/", defaults={"path": ""})
     @app.route("/<string:path>")
@@ -42,6 +52,7 @@ def create_app(config_class: Config):
     api_bp.register_blueprint(twenty_questions)
     api_bp.register_blueprint(lifter)
     api_bp.register_blueprint(auth_bp)
+    api_bp.register_blueprint(autodraft_bp)
     app.register_blueprint(api_bp, url_prefix="/api")
 
     if not app.debug:

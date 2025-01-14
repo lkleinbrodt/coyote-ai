@@ -1,6 +1,6 @@
 from .extensions import db, jwt
 from sqlalchemy.orm import relationship
-from autodraft.models import user_project_association
+from .autodraft.models import user_project_association
 
 
 class User(db.Model):
@@ -9,13 +9,13 @@ class User(db.Model):
     name = db.Column(db.String(255), nullable=True)
     image = db.Column(db.String(255), nullable=True)
     email = db.Column(db.String(255), nullable=True, unique=True)
-    email_verified = db.Column("emailVerified", db.BigInteger, nullable=True)
+    email_verified = db.Column("emailVerified", db.DateTime, nullable=True)
 
     created_at = db.Column(
-        "createdAt", db.BigInteger, nullable=False, default=db.func.now()
+        "createdAt", db.DateTime, nullable=False, default=db.func.now()
     )
     updated_at = db.Column(
-        "updatedAt", db.BigInteger, nullable=False, default=db.func.now()
+        "updatedAt", db.DateTime, nullable=False, default=db.func.now()
     )
 
     group = db.Column(db.String(50), nullable=True)

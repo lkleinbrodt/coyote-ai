@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const handleSetUser = (newUser: User | null) => {
+    console.log("handleSetUser", newUser);
     setUser(newUser);
     if (newUser) {
       Cookies.set("user", JSON.stringify(newUser));
@@ -63,7 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!from) {
       from = "/";
     }
+    console.log("from", from);
     const nextPath = encodeURIComponent(from);
+    console.log("nextPath", nextPath);
     const baseUrl = import.meta.env.VITE_AUTH_BASE_URL;
     window.location.href = `${baseUrl}/auth/authorize/google?next=${nextPath}`;
   };

@@ -14,8 +14,9 @@ const AuthPage = () => {
   }
 
   // Validate the next path
+  console.log("next", next);
   const redirectTo = isValidRedirectPath(next) ? next : "/";
-
+  console.log("redirectTo", redirectTo);
   // Store the token in a secure cookie
   Cookies.set("accessToken", accessToken, { secure: true, sameSite: "strict" });
   const user = JSON.parse(atob(accessToken.split(".")[1]));

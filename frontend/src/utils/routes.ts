@@ -1,9 +1,5 @@
 // Create a new file to store valid routes
-export const VALID_REDIRECT_PATHS = [
-  "/",
-  "/poeltl",
-  // Add other valid protected routes here
-];
+export const VALID_REDIRECT_PATHS = ["/", "/poeltl", "/autodraft"];
 
 export const isValidRedirectPath = (path: string): boolean => {
   return (

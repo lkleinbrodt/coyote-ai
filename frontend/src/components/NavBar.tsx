@@ -22,9 +22,9 @@ export default function NavBar() {
   const { user, logout, login } = useAuth();
   const location = useLocation();
   return (
-    <div className="w-full fixed top-0 z-1 flex flex-row justify-between items-center">
+    <div className="w-full fixed top-0 z-1 flex flex-row justify-between items-center ">
       {/* these buttons go on the left */}
-      <NavigationMenu>
+      <NavigationMenu className="mt-0 mb-0">
         <NavigationMenuList>
           <NavigationMenuItem>
             <Link to="/" className="text-foreground">

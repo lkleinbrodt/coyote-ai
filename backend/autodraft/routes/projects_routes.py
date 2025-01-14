@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request
-from backend.autodraft.utils import delete_index
+from backend.autodraft.utils import delete_index, check_index_available
 from backend.autodraft.models import Project
 from flask_jwt_extended import jwt_required, current_user
 from backend.extensions import db, create_logger
+from backend.src.s3 import create_s3_fs
 
 projects_bp = Blueprint("projects", __name__)
 logger = create_logger(__name__, level="DEBUG")
@@ -72,5 +73,10 @@ def delete_project():
 def get_projects():
 
     projects = current_user.projects
+
+    # TODO: this is kinda dumb
+    s3_fs = create_s3_fs()
+    for project in projects:
+        project.index_available = check_index_available(project.id, s3_fs)
 
     return jsonify([project.to_dict() for project in projects]), 200

@@ -6,9 +6,10 @@ from llama_index.core import Document as LlamaDocument
 from backend.src.s3 import S3, create_s3_fs
 from backend.config import Config
 
+
 # TODO: implement s3 save/loading, make sure to adjust index builder etc (which should be using these set functions, not rolling it's own save to storage (perhaps use an index IO class or something?)
 
-S3_INDEX_DIR = Config.AUTODRAFT_BUCKET / Config.S3_INDEX_DIR
+S3_INDEX_DIR = Config.AUTODRAFT_BUCKET + "/" + Config.S3_INDEX_DIR
 
 
 def save_index(index: VectorStoreIndex, project_id: int):
@@ -78,3 +79,10 @@ def delete_index(project_id) -> bool:
             return False
     else:
         return False
+
+
+def check_index_available(project_id, s3_fs=None) -> bool:
+    index_path = S3_INDEX_DIR / str(project_id)
+    if not s3_fs:
+        s3_fs = create_s3_fs()
+    return s3_fs.exists(index_path)

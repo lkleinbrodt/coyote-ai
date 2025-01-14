@@ -4,8 +4,10 @@ from .projects_routes import projects_bp
 from .reports_routes import reports_bp
 from .files_routes import files_bp
 from .entries_routes import entries_bp
+from flask import request, current_app
+import jwt
 
-autodraft_bp = Blueprint("autodraft", __name__)
+autodraft_bp = Blueprint("autodraft", __name__, url_prefix="/autodraft")
 
 autodraft_bp.register_blueprint(index_bp)
 autodraft_bp.register_blueprint(projects_bp)

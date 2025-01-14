@@ -5,7 +5,12 @@ from backend.extensions import db
 user_project_association = db.Table(
     "user_project",
     db.Column("user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True),
-    db.Column("project_id", db.Integer, db.ForeignKey("project.id"), primary_key=True),
+    db.Column(
+        "project_id",
+        db.Integer,
+        db.ForeignKey("autodraft.project.id"),
+        primary_key=True,
+    ),
 )
 
 
@@ -51,7 +56,9 @@ class File(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
     last_modified = db.Column(db.DateTime, nullable=False, default=db.func.now())
 
-    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("autodraft.project.id"), nullable=False
+    )
     project = relationship("Project", back_populates="files")
 
     # one to many with documents
@@ -87,7 +94,7 @@ class Document(db.Model):
 
     content = db.Column(db.Text, nullable=False)
 
-    file_id = db.Column(db.Integer, db.ForeignKey("file.id"), nullable=False)
+    file_id = db.Column(db.Integer, db.ForeignKey("autodraft.file.id"), nullable=False)
     file = relationship("File", back_populates="documents")
 
     def __repr__(self):
@@ -103,7 +110,9 @@ class Report(db.Model):
     name = db.Column(db.String(200), nullable=False)
 
     # Foreign key for the One-to-Many relationship with Project
-    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("autodraft.project.id"), nullable=False
+    )
     project = relationship("Project", back_populates="reports")
 
     # One-to-Many relationship with Prompt
@@ -132,7 +141,9 @@ class Prompt(db.Model):
     position = db.Column(db.Integer, nullable=False)
 
     # Foreign key for the One-to-Many relationship with Report
-    report_id = db.Column(db.Integer, db.ForeignKey("report.id"), nullable=False)
+    report_id = db.Column(
+        db.Integer, db.ForeignKey("autodraft.report.id"), nullable=False
+    )
     report = relationship("Report", back_populates="prompts")
 
     # One-to-Many relationship with Response
@@ -164,7 +175,9 @@ class Response(db.Model):
     selected = db.Column(db.Boolean, nullable=False)
 
     # Foreign key for the One-to-Many relationship with Prompt
-    prompt_id = db.Column(db.Integer, db.ForeignKey("prompt.id"), nullable=False)
+    prompt_id = db.Column(
+        db.Integer, db.ForeignKey("autodraft.prompt.id"), nullable=False
+    )
     prompt = relationship("Prompt", back_populates="responses")
 
     def __repr__(self):

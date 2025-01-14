@@ -1,5 +1,7 @@
 from backend.config import Config
 from backend.extensions import create_logger
+from backend.models import User
+from backend.extensions import db
 from flask import (
     Blueprint,
     redirect,
@@ -28,6 +30,7 @@ def oauth_authorize(provider):
 
 @auth_bp.route("/callback/<provider>")
 def oauth_callback(provider):
+    # TODO: if user is already logged in, redirect to index
 
     oauth = OAuthSignIn.get_provider(provider)
     try:
@@ -35,10 +38,18 @@ def oauth_callback(provider):
     except Exception as e:
         print(e)
         return jsonify({"error": "No social id found"}), 400
-    next_path = request.args.get("state", "/")
 
     if social_id is None:
         return jsonify({"error": "No social id found"}), 400
+
+    user = User.query.filter_by(social_id=social_id).first()
+
+    if not user:
+
+        user = User(social_id=social_id, name=name, email=email, image=picture)
+        db.session.add(user)
+        db.session.commit()
+    # TODO: update user if changed
 
     # Get the next parameter from the OAuth state
     next_path = request.args.get("state", "/")
@@ -46,10 +57,10 @@ def oauth_callback(provider):
     # create a jwt
     access_token = create_access_token(
         identity={
-            "id": social_id,
-            "name": name,
-            "email": email,
-            "image": picture,
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "image": user.image,
         }
     )
 

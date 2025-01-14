@@ -2,9 +2,22 @@ import "./Landing.css";
 
 import ProductCard from "../components/ProductCard";
 import React from "react";
+import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 const Landing: React.FC = () => {
+  useEffect(() => {
+    const authError = localStorage.getItem("authError");
+    if (authError) {
+      toast({
+        title: "Session expired",
+        description: authError,
+      });
+      localStorage.removeItem("authError");
+    }
+  }, []);
+
   const { user } = useAuth();
   const products = [
     {
@@ -18,6 +31,13 @@ const Landing: React.FC = () => {
       description: "Your AI sous-chef helps you discover, share, and create",
       icon: "icons/chef_hat_stamp.png",
       link: "https://apps.apple.com/us/app/cheffrey/id6503424946",
+    },
+
+    {
+      title: "Autodraft",
+      description: "Generate AI-powered drafts for your projects",
+      icon: "icons/autodraft.png",
+      link: "/autodraft",
     },
     {
       title: "Reminder-Mate",

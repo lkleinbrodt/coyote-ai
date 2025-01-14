@@ -77,4 +77,10 @@ class S3:
         return True
 
     def exists(self, path):
-        return self.s3.head_object(Bucket=self.bucket, Key=path) is not None
+        try:
+            self.s3.head_object(Bucket=self.bucket, Key=path)
+            return True
+        except self.s3.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                return False
+            raise  # Re-raise any other errors

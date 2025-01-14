@@ -28,8 +28,7 @@ class Config:
     REMEMBER_COOKIE_SECURE = True  # Same for "remember me" cookie
     SESSION_COOKIE_HTTPONLY = True  # Prevent client-side JS access to cookie
 
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=10)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=90)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=90)
 
     TWENTY_QUESTIONS_OPENAI_API_KEY = os.environ.get("TWENTY_QUESTIONS_OPENAI_API_KEY")
     LIFTER_BUCKET = "coyote-lifter"
@@ -47,12 +46,15 @@ class Config:
     # TODO: this belongs elsewhere
     S3_INDEX_DIR = "indices"
 
+    AUTODRAFT_BUCKET = "autodraft-dev"
+
 
 class DevelopmentConfig(Config):
     ENV = "development"
     DEBUG = True
     BASE_URL = "http://localhost:5173"
-    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(Config.ROOT_DIR, "app.db")
+    # SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(Config.ROOT_DIR, "app.db")
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 
     AUTODRAFT_BUCKET = "autodraft-dev"
 
