@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import DragDropFileInput from "@/autodraft/components/DragDropFileInput";
 import { uploadTemplate } from "@/autodraft/services/api";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 
 export default function TemplateUploader({
   projectID,
@@ -26,10 +25,9 @@ export default function TemplateUploader({
   //TODO: a lot of overlap with SourceFileUploader...
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [fileProgress, setFileProgress] = useState<number | null>(null);
+  const [fileProgress] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [uploading, setUploading] = useState<boolean>(false);
-  const { toast } = useToast();
 
   const handleFileUpload = async (files: FileList) => {
     if (files.length !== 1) {
@@ -61,6 +59,7 @@ export default function TemplateUploader({
     } catch (error) {
       setUploading(false);
       setErrorMessage("Error uploading template.");
+      console.error(error);
     } finally {
       setUploading(false);
     }

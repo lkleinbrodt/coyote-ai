@@ -14,6 +14,7 @@ import { updateOrCreateIndex, uploadFile } from "@/autodraft/services/api";
 
 import { Button } from "@/components/ui/button";
 import DragDropFileInput from "@/autodraft/components/DragDropFileInput";
+import { SourceFile } from "../types";
 import { useToast } from "@/hooks/use-toast";
 
 export default function FileUploader({
@@ -24,7 +25,7 @@ export default function FileUploader({
   updateIndexOnUpload,
 }: {
   projectID: string;
-  setAvailableFiles: React.Dispatch<React.SetStateAction<any[]>>;
+  setAvailableFiles: React.Dispatch<React.SetStateAction<SourceFile[]>>;
   setUploading: React.Dispatch<React.SetStateAction<boolean>>;
   updateIndexOnUpload: boolean;
   uploading: boolean;
@@ -43,7 +44,7 @@ export default function FileUploader({
     setUploading(true);
     setFileProgress(0);
 
-    const uploadPromises = Array.from(files).map((file, index) =>
+    const uploadPromises = Array.from(files).map((file) =>
       uploadFile(file, projectID)
         .then((result) => {
           setFileProgress((prev) => (prev || 0) + 1 / files.length);

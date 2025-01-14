@@ -5,7 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import React, { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { FileIcon } from "@radix-ui/react-icons";
@@ -13,6 +12,7 @@ import { Loader2 } from "lucide-react";
 import { SourceFile } from "@/autodraft/types";
 import { TrashIcon } from "@radix-ui/react-icons";
 import { toast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface FileCardProps {
   file: SourceFile;
