@@ -66,7 +66,7 @@ class ProductionConfig(Config):
     ENV = "production"
     DEBUG = False
     BASE_URL = "https://www.coyote-ai.com"
-    SQLALCHEMY_DATABASE_URI = os.environ.get("PROD_DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 
     AUTODRAFT_BUCKET = "autodraft"
 
