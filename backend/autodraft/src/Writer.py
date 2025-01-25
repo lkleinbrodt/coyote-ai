@@ -23,7 +23,7 @@ class Writer:
                 "You are a helpful assistant who is helping to fill out a report for a non-profit. The report is a pre-application form for a grant."
                 "Currently you are working on the following prompt: "
                 "```{query_str}```"
-                "While doing your research on this, you've found the following information. note, this is not the only information you have, but it is relevant to the prompt."
+                "While doing your research on this, you've found the following information. Note that this is not the only information you have, but it is relevant to the prompt."
                 "Extract as much information as you can from the context, and use it to write a response to the prompt."
                 "Context information from multiple sources is below."
                 "-----------------"

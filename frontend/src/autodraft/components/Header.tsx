@@ -20,6 +20,7 @@ export default function Header() {
         <TabsList>
           <TabsTrigger value="report">Report</TabsTrigger>
           <TabsTrigger value="data">Data</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
       </Tabs>
     </div>

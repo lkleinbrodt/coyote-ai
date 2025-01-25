@@ -1,3 +1,4 @@
+from typing import List
 from sqlalchemy.orm import relationship
 from backend.extensions import db
 
@@ -8,7 +9,7 @@ user_project_association = db.Table(
     db.Column(
         "project_id",
         db.Integer,
-        db.ForeignKey("autodraft.project.id"),
+        db.ForeignKey("autodraft.project.id", ondelete="CASCADE"),
         primary_key=True,
     ),
 )
@@ -90,6 +91,7 @@ class Document(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
     last_modified = db.Column(db.DateTime, nullable=False, default=db.func.now())
     uploaded_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    page_label = db.Column(db.String(200), nullable=True)
     llama_metadata = db.Column(db.JSON, nullable=False)
 
     content = db.Column(db.Text, nullable=False)
@@ -97,17 +99,37 @@ class Document(db.Model):
     file_id = db.Column(db.Integer, db.ForeignKey("autodraft.file.id"), nullable=False)
     file = relationship("File", back_populates="documents")
 
+    responses = relationship(
+        "Response",
+        secondary="autodraft.source_doc",
+        back_populates="source_docs",
+    )
+
     def __repr__(self):
         return f"<Document {self.id}>"
 
     def __str__(self) -> str:
         return f"<Document {self.id}>"
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "llama_id": self.llama_id,
+            "created_at": self.created_at,
+            "last_modified": self.last_modified,
+            "uploaded_at": self.uploaded_at,
+            "llama_metadata": self.llama_metadata,
+            "content": self.content,
+            "file": self.file.to_dict(),
+        }
+
 
 class Report(db.Model):
     __table_args__ = {"schema": "autodraft"}
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    updated_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
 
     # Foreign key for the One-to-Many relationship with Project
     project_id = db.Column(
@@ -131,6 +153,8 @@ class Report(db.Model):
             "id": self.id,
             "name": self.name,
             "project_id": self.project_id,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
         }
 
 
@@ -142,7 +166,9 @@ class Prompt(db.Model):
 
     # Foreign key for the One-to-Many relationship with Report
     report_id = db.Column(
-        db.Integer, db.ForeignKey("autodraft.report.id"), nullable=False
+        db.Integer,
+        db.ForeignKey("autodraft.report.id"),
+        nullable=False,
     )
     report = relationship("Report", back_populates="prompts")
 
@@ -173,6 +199,10 @@ class Response(db.Model):
     text = db.Column(db.Text, nullable=False)
     position = db.Column(db.Integer, nullable=False)
     selected = db.Column(db.Boolean, nullable=False)
+    # each response has a relation to a list of the source documents (of type Document)
+    source_docs = relationship(
+        "Document", secondary="autodraft.source_doc", back_populates="responses"
+    )
 
     # Foreign key for the One-to-Many relationship with Prompt
     prompt_id = db.Column(
@@ -192,71 +222,29 @@ class Response(db.Model):
             "text": self.text,
             "position": self.position,
             "selected": self.selected,
+            # do i want to include all this data every time?
+            "source_docs": [doc.to_dict() for doc in self.source_docs],
         }
 
 
-### DEPRECATED: Tables necessary for auth.js
+class SourceDoc(db.Model):
+    __table_args__ = {"schema": "autodraft"}
+    id = db.Column(db.Integer, primary_key=True)
+    response_id = db.Column(
+        db.Integer, db.ForeignKey("autodraft.response.id"), nullable=False
+    )
+    document_id = db.Column(
+        db.Integer, db.ForeignKey("autodraft.document.id"), nullable=False
+    )
+    score = db.Column(db.Float, nullable=False)
 
-# class Account(db.Model):
+    # TODO: we may want to revisit how we do this
 
-#     id = db.Column(db.String, primary_key=True)
-#     user_id = db.Column("userId", db.String, db.ForeignKey("user.id"), nullable=False)
-#     type = db.Column(db.String(255), nullable=False)
-#     provider = db.Column(db.String(255), nullable=False)
-#     provider_account_id = db.Column("providerAccountId", db.String(255), nullable=False)
-#     refresh_token = db.Column(db.String(256), nullable=True)
-#     access_token = db.Column(db.String(256), nullable=True)
-#     expires_at = db.Column(db.BigInteger, nullable=True)
-#     id_token = db.Column(db.String(256), nullable=True)
-#     scope = db.Column(db.String(256), nullable=True)
-#     session_state = db.Column(db.String(256), nullable=True)
-#     token_type = db.Column(db.String(256), nullable=True)
+    # Store the character positions of the relevant segment
+    start_char = db.Column(db.Integer, nullable=True)
+    end_char = db.Column(db.Integer, nullable=True)
 
-#     created_at = db.Column(
-#         "createdAt", db.BigInteger, nullable=False, default=db.func.now()
-#     )
-#     updated_at = db.Column(
-#         "updatedAt", db.BigInteger, nullable=False, default=db.func.now()
-#     )
+    # Store the actual relevant text segment
+    relevant_text = db.Column(db.Text, nullable=True)
 
-#     # Define relationship to the User model
-#     user = relationship("User", back_populates="accounts")
-
-#     def __repr__(self):
-#         return f"<Account {self.id}>"
-
-#     def __str__(self) -> str:
-#         return f"<Account {self.id}>"
-
-# class Session(db.Model):
-
-#     id = db.Column(db.String, primary_key=True)
-#     user_id = db.Column("userId", db.String, db.ForeignKey("user.id"), nullable=False)
-#     expires = db.Column(db.BigInteger, nullable=False)
-#     session_token = db.Column("sessionToken", db.String(255), nullable=False)
-
-#     created_at = db.Column(
-#         "createdAt", db.BigInteger, nullable=False, default=db.func.now()
-#     )
-#     updated_at = db.Column(
-#         "updatedAt", db.BigInteger, nullable=False, default=db.func.now()
-#     )
-
-#     # Define relationship to the User model
-#     user = relationship("User", back_populates="sessions")
-
-#     def __repr__(self):
-#         return f"<Session {self.id}>"
-
-#     def __str__(self) -> str:
-#         return f"<Session {self.id}>"
-
-
-# class VerificationToken(db.Model):
-
-#     identifier = db.Column(db.String(256), primary_key=True, nullable=False)
-#     token = db.Column(db.String(256), nullable=False)
-#     expires = db.Column(db.BigInteger, nullable=False)
-
-#     def __repr__(self):
-#         return f"<VerificationToken {self.identifier}>"
+    # we will also store

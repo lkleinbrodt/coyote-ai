@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Sheet,
   SheetClose,
@@ -14,13 +12,12 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusIcon } from "@radix-ui/react-icons";
-import { Project } from "@/autodraft/types";
 import { SelectBox } from "./SelectBox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWork } from "@/autodraft/WorkContext";
 
 export function ProjectSelector() {
-  const [availableProjects, setAvailableProjects] = useState<Project[]>([]);
   const [newProjectName, setNewProjectName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [canCreate, setCanCreate] = useState(false);
@@ -30,42 +27,46 @@ export function ProjectSelector() {
     setSelectedProject,
     setSelectedReport,
     setSelectedTab,
+    availableProjects,
+    setAvailableProjects,
+    loading,
   } = useWork();
-
   const { user } = useAuth();
-
-  const handleChange = (value: { id: string; name: string }) => {
-    //get the correct project from the available projects
-    const project = availableProjects.find((p) => p.id === value.id);
-    if (project) {
-      setSelectedProject(project);
-      setSelectedReport(null);
-    } else {
-      console.error("Project not found");
-    }
-  };
 
   useEffect(() => {
     if (user) {
       getProjects().then((projects) => {
         setAvailableProjects(projects);
-        //set selected project to the first one
-        if (projects.length > 0) {
+        if (projects.length > 0 && !selectedProject) {
           setSelectedProject(projects[0]);
         }
       });
     }
-  }, [user, setAvailableProjects, setSelectedProject]);
+  }, [user, setAvailableProjects, setSelectedProject, selectedProject]);
 
-  const handleSubmit = () => {
+  const handleChange = (value: { id: string; name: string }) => {
+    const project = availableProjects.find((p) => p.id === value.id);
+    if (project) {
+      setSelectedProject(project);
+      setSelectedReport(null);
+    }
+  };
+
+  const handleSubmit = async () => {
     if (!canCreate) return;
-    newProject(newProjectName).then((project) => {
+    try {
+      const project = await newProject(newProjectName);
       setAvailableProjects([...availableProjects, project]);
       setSelectedProject(project);
       setSelectedTab("data");
       setSelectedReport(null);
-    });
-    closeButtonRef.current?.click();
+      // Reset state
+      setNewProjectName("");
+      setError(null);
+      setCanCreate(false);
+    } catch (err) {
+      console.error("Failed to create new project:", err);
+    }
   };
 
   const handleNewProjectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,11 +89,14 @@ export function ProjectSelector() {
     setCanCreate(true);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && canCreate) {
-      handleSubmit();
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex flex-row gap-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-10" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-row gap-4">
@@ -103,6 +107,7 @@ export function ProjectSelector() {
           name: selectedProject?.name,
         }}
         setValue={handleChange}
+        emptyMessage="Press + to create a new project."
       />
       <Sheet>
         <SheetTrigger asChild>
@@ -113,25 +118,32 @@ export function ProjectSelector() {
         <SheetContent side="left">
           <SheetHeader>
             <SheetTitle>New Project</SheetTitle>
-            <div className="flex flex-row gap-2">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (canCreate) {
+                  handleSubmit();
+                }
+              }}
+              className="flex w-full gap-2 mt-2"
+            >
               <Input
                 placeholder="Project name"
                 onChange={handleNewProjectChange}
-                onKeyDown={handleKeyDown}
+                value={newProjectName}
               />
-
               <SheetClose>
                 <Button
-                  onClick={handleSubmit}
+                  type="submit"
                   disabled={!canCreate}
                   ref={closeButtonRef}
                 >
                   Create
                 </Button>
               </SheetClose>
-            </div>
+            </form>
           </SheetHeader>
-          {error && <p className="text-red-500">{error}</p>}
+          {error && <p className="text-red-500 mt-2">{error}</p>}
         </SheetContent>
       </Sheet>
     </div>

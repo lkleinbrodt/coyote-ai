@@ -5,6 +5,7 @@ import { WorkProvider, useWork } from "../WorkContext";
 import DataEditor from "../components/DataEditor";
 import Header from "../components/Header";
 import ReportEditor from "../components/ReportEditor";
+import Settings from "../components/Settings";
 import Sidebar from "../components/Sidebar";
 
 const Home = () => {
@@ -14,6 +15,7 @@ const Home = () => {
     <div className="autodraft-container">
       {selectedTab === "report" && <ReportEditor />}
       {selectedTab === "data" && <DataEditor />}
+      {selectedTab === "settings" && <Settings />}
     </div>
   );
 };

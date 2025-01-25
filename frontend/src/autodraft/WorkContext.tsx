@@ -8,6 +8,10 @@ import {
   useEffect,
   useState,
 } from "react";
+import {
+  deleteReport as deleteReportApi,
+  updateReport as updateReportApi,
+} from "./services/api";
 
 import { getFiles } from "@/autodraft/services/api";
 import { getPrompts } from "@/autodraft/services/api";
@@ -24,6 +28,13 @@ const WorkContext = createContext<{
   setPrompts: React.Dispatch<React.SetStateAction<Prompt[]>>;
   availableFiles: SourceFile[];
   setAvailableFiles: React.Dispatch<React.SetStateAction<SourceFile[]>>;
+  updateReport: (reportId: string, updates: Partial<Report>) => Promise<void>;
+  deleteReport: (reportId: string) => Promise<void>;
+  availableReports: Report[];
+  setAvailableReports: React.Dispatch<React.SetStateAction<Report[]>>;
+  availableProjects: Project[];
+  setAvailableProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  loading: boolean;
 } | null>(null);
 
 // Export a provider component
@@ -33,20 +44,43 @@ export function WorkProvider({ children }: { children: ReactNode }) {
   const [selectedTab, setSelectedTab] = useState("report");
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [availableFiles, setAvailableFiles] = useState<SourceFile[]>([]);
+  const [availableReports, setAvailableReports] = useState<Report[]>([]);
+  const [availableProjects, setAvailableProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (selectedReport) {
-      getPrompts(selectedReport.id).then(setPrompts);
+      setLoading(true);
+      getPrompts(selectedReport.id)
+        .then(setPrompts)
+        .finally(() => setLoading(false));
     }
   }, [selectedReport]);
 
   useEffect(() => {
     if (selectedProject) {
-      getFiles(selectedProject.id).then((files) => {
-        setAvailableFiles(files);
-      });
+      setLoading(true);
+      getFiles(selectedProject.id)
+        .then((files) => {
+          setAvailableFiles(files);
+        })
+        .finally(() => setLoading(false));
     }
   }, [selectedProject]);
+
+  const updateReport = async (reportId: string, updates: Partial<Report>) => {
+    await updateReportApi(reportId, updates);
+    if (selectedReport && selectedReport.id === reportId) {
+      setSelectedReport((prev) => (prev ? { ...prev, ...updates } : null));
+    }
+  };
+
+  const deleteReport = async (reportId: string) => {
+    await deleteReportApi(reportId);
+    if (selectedReport && selectedReport.id === reportId) {
+      setSelectedReport(null);
+    }
+  };
 
   return (
     <WorkContext.Provider
@@ -61,6 +95,13 @@ export function WorkProvider({ children }: { children: ReactNode }) {
         setPrompts,
         availableFiles,
         setAvailableFiles,
+        updateReport,
+        deleteReport,
+        availableReports,
+        setAvailableReports,
+        availableProjects,
+        setAvailableProjects,
+        loading,
       }}
     >
       {children}

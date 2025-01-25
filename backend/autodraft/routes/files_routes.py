@@ -84,6 +84,7 @@ def upload_file():
                 llama_metadata=doc.metadata,
                 content=doc.text,
                 file_id=file.id,
+                page_label=doc.metadata.get("page_label"),
             )
             db.session.add(document)
             all_docs.append(doc)

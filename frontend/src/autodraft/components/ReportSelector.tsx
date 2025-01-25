@@ -16,45 +16,56 @@ import { Input } from "@/components/ui/input";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { Report } from "@/autodraft/types";
 import { SelectBox } from "./SelectBox";
-import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useWork } from "@/autodraft/WorkContext";
 
 export function ReportSelector() {
-  const [availableReports, setAvailableReports] = useState<Report[]>([]);
   const [newReportName, setNewReportName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [canCreate, setCanCreate] = useState(false);
-  const { selectedReport, selectedProject, setSelectedReport } = useWork();
-  const { user } = useAuth();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const {
+    selectedReport,
+    selectedProject,
+    setSelectedReport,
+    availableReports,
+    setAvailableReports,
+    loading,
+  } = useWork();
 
   useEffect(() => {
-    if (user && selectedProject) {
+    if (selectedProject) {
       getReports(selectedProject.id).then((reports) => {
         setAvailableReports(reports);
-        //set selected report to the first one
-        if (reports.length > 0) {
+        if (reports.length > 0 && !selectedReport) {
           setSelectedReport(reports[0]);
         }
       });
     }
-  }, [user, selectedProject, setSelectedReport]);
+  }, [selectedProject, setAvailableReports, setSelectedReport, selectedReport]);
 
-  const handleSubmit = () => {
-    //check if the report name is already taken
+  const handleSubmit = async () => {
+    // If the report name is already taken, show an error
     if (availableReports.some((report) => report.name === newReportName)) {
       setError("Report name already taken");
       return;
     }
-    newReport(newReportName, selectedProject!.id).then((report: Report) => {
-      //add new report to available reports
+    try {
+      const report: Report = await newReport(
+        newReportName,
+        selectedProject!.id
+      );
+      // Add new report to available reports
       setAvailableReports([...availableReports, report]);
       setSelectedReport(report);
-    });
-    closeButtonRef.current?.click();
-    setError(null);
-    setCanCreate(false);
-    setNewReportName("");
+      // Reset state
+      setError(null);
+      setCanCreate(false);
+      setNewReportName("");
+    } catch (err) {
+      // handle possible backend error
+      console.error("Failed to create new report:", err);
+    }
   };
 
   const handleChangeReport = (value: { id: string; name: string }) => {
@@ -66,38 +77,36 @@ export function ReportSelector() {
     }
   };
 
+  // Validate the new report name whenever it changes
   const handleNewReportChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //check the following conditions to see if the user can create a new report
-    //1) new report name is not empty
-    //2) new report name is not already taken
     const name = e.target.value;
     setNewReportName(name);
-    if (name.length === 0) {
+    if (name.trim().length === 0) {
       setCanCreate(false);
       setError("Report name cannot be empty");
       return;
     }
-    setError(null);
-
-    if (availableReports.some((report) => report.name === name)) {
+    if (availableReports.some((r) => r.name === name)) {
       setCanCreate(false);
       setError("Report name already taken");
       return;
     }
     setError(null);
-
     setCanCreate(true);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && canCreate) {
-      handleSubmit();
-    }
+  const handleOpenSheet = () => {
+    // optional custom logic
   };
 
-  const handleOpenSheet = () => {
-    //pass
-  };
+  if (loading) {
+    return (
+      <div className="flex flex-row gap-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-10" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-row gap-4">
@@ -109,35 +118,51 @@ export function ReportSelector() {
         }
         options={availableReports}
         setValue={handleChangeReport}
+        //if no project selected, then disable the report selector
+        disabled={!selectedProject}
+        emptyMessage="Press + to create a new report."
       />
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="outline" size="icon" onClick={handleOpenSheet}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleOpenSheet}
+            disabled={!selectedProject}
+          >
             <PlusIcon />
           </Button>
         </SheetTrigger>
         <SheetContent side="left">
           <SheetHeader>
             <SheetTitle>New Report</SheetTitle>
-            <div className="flex flex-row gap-2">
+            {/* Wrap your input+button in a form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault(); // prevents a browser reload
+                if (canCreate) {
+                  handleSubmit();
+                }
+              }}
+              className="flex w-full gap-2 mt-2"
+            >
               <Input
                 placeholder="Report name"
                 onChange={handleNewReportChange}
-                onKeyDown={handleKeyDown}
+                value={newReportName}
               />
               <SheetClose>
                 <Button
-                  onClick={handleSubmit}
+                  type="submit"
                   ref={closeButtonRef}
                   disabled={!canCreate}
                 >
                   Create
                 </Button>
               </SheetClose>
-            </div>
+            </form>
           </SheetHeader>
-
-          {error && <div className="text-red-500">{error}</div>}
+          {error && <div className="text-red-500 mt-2">{error}</div>}
         </SheetContent>
       </Sheet>
     </div>

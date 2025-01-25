@@ -49,7 +49,6 @@ const UserItem = () => {
         <DropdownMenuContent>
           <DropdownMenuLabel>{name}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Settings</DropdownMenuItem>
           <DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

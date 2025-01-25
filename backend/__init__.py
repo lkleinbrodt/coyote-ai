@@ -13,6 +13,7 @@ from .lifter.routes import lifter
 from .routes import auth_bp
 from .autodraft.routes import autodraft_bp
 from .models import *
+from .autodraft.models import *
 import os
 
 

@@ -106,7 +106,7 @@ def upload_template():
     End date: Click or tap to enter a date.
     
     Project Overview
-    Describe the proposed project. Quantify the project’s goals and expected outcomes/benefits.
+    Describe the proposed project. Quantify the project's goals and expected outcomes/benefits.
     Identify the major tasks involved in the project. Describe why the project needed. Attach a map
     of the project location (and photos if helpful), and briefly describe the project location. Be
     specific about the portion of the project that would be funded by this request.
@@ -125,7 +125,7 @@ def upload_template():
         "Amount requested from WCB (round up to nearest $1,000)",
         "Start date",
         "End date",
-        "Describe the proposed project. Quantify the project’s goals and expected outcomes/benefits. Identify the major tasks involved in the project. Describe why the project needed. Attach a map of the project location (and photos if helpful), and briefly describe the project location. Be specific about the portion of the project that would be funded by this request.",
+        "Describe the proposed project. Quantify the project's goals and expected outcomes/benefits. Identify the major tasks involved in the project. Describe why the project needed. Attach a map of the project location (and photos if helpful), and briefly describe the project location. Be specific about the portion of the project that would be funded by this request.",
             "Please list all of the sources of cost share. Please indicate if other funding sources have been secured or are pending (applied for but not yet awarded)."
         ]
     }}
@@ -161,3 +161,62 @@ def upload_template():
     db.session.commit()
 
     return jsonify({"success": "Template uploaded"}), 200
+
+
+@reports_bp.route("/update-report", methods=["POST"])
+@jwt_required()
+def update_report():
+    data = request.get_json()
+    report_id = data.get("report_id")
+    updates = {k: v for k, v in data.items() if k != "report_id"}
+
+    if not report_id:
+        return jsonify({"error": "No report_id provided"}), 400
+
+    report = Report.query.get(report_id)
+    if not report:
+        return jsonify({"error": "Report not found"}), 404
+
+    # Verify user has access to this report's project
+    if report.project not in current_user.projects:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    # Apply updates
+    for key, value in updates.items():
+        if hasattr(report, key):
+            setattr(report, key, value)
+
+    try:
+        db.session.commit()
+        return jsonify(report.to_dict()), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error updating report: {str(e)}")
+        return jsonify({"error": "Failed to update report"}), 500
+
+
+@reports_bp.route("/delete-report", methods=["POST"])
+@jwt_required()
+def delete_report():
+    data = request.get_json()
+    report_id = data.get("report_id")
+
+    if not report_id:
+        return jsonify({"error": "No report_id provided"}), 400
+
+    report = Report.query.get(report_id)
+    if not report:
+        return jsonify({"error": "Report not found"}), 404
+
+    # Verify user has access to this report's project
+    if report.project not in current_user.projects:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        db.session.delete(report)
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting report: {str(e)}")
+        return jsonify({"error": "Failed to delete report"}), 500

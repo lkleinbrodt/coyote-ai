@@ -1,4 +1,5 @@
 import {
+  Document,
   Project,
   Prompt,
   Report,
@@ -211,6 +212,22 @@ export const updateResponse = async (
   }
 };
 
+export const addResponse = async (
+  text: string,
+  promptID: string
+): Promise<Response> => {
+  try {
+    const response = await axiosInstance.post("/add-response", {
+      text,
+      prompt_id: promptID,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error adding response:", error);
+    throw error;
+  }
+};
+
 export const updateIndex = async (projectID: string) => {
   try {
     const response = await axiosInstance.post("/update-index", {
@@ -297,6 +314,59 @@ export const generateAll = async (reportID: string) => {
     return response.data;
   } catch (error) {
     console.error("Error generating all:", error);
+    throw error;
+  }
+};
+export const updateReport = async (
+  reportId: string,
+  updates: Partial<Report>
+): Promise<Report> => {
+  try {
+    const response = await axiosInstance.post("/update-report", {
+      report_id: reportId,
+      ...updates,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating report:", error);
+    throw error;
+  }
+};
+
+export const deleteReport = async (reportId: string): Promise<void> => {
+  try {
+    await axiosInstance.post("/delete-report", {
+      report_id: reportId,
+    });
+  } catch (error) {
+    console.error("Error deleting report:", error);
+    throw error;
+  }
+};
+
+export const updateProject = async (
+  projectId: string,
+  updates: Partial<Project>
+): Promise<Project> => {
+  try {
+    const response = await axiosInstance.post("/update-project", {
+      project_id: projectId,
+      ...updates,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating project:", error);
+    throw error;
+  }
+};
+
+export const deleteProject = async (projectId: string): Promise<void> => {
+  try {
+    await axiosInstance.post("/delete-project", {
+      project_id: projectId,
+    });
+  } catch (error) {
+    console.error("Error deleting project:", error);
     throw error;
   }
 };

@@ -53,8 +53,11 @@ class DevelopmentConfig(Config):
     ENV = "development"
     DEBUG = True
     BASE_URL = "http://localhost:5173"
+    # SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
     # SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(Config.ROOT_DIR, "app.db")
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = (
+        "postgresql://coyote-user:coyote-password@localhost:5432/coyote-db-dev"
+    )
 
     AUTODRAFT_BUCKET = "autodraft-dev"
 

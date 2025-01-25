@@ -1,0 +1,19 @@
+# docker-compose.dev.yml
+# This Docker Compose file is for local development only.
+# Do NOT use this in production.
+
+services:
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: coyote_db_dev
+    environment:
+      POSTGRES_USER: coyote-user
+      POSTGRES_PASSWORD: coyote-password
+      POSTGRES_DB: coyote-db-dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -21,7 +21,8 @@ import { exportDocx } from "./exportFunctions";
 import { useWork } from "@/autodraft/WorkContext";
 
 const ReportEditor = () => {
-  const { selectedProject, selectedReport, prompts, setPrompts } = useWork();
+  const { selectedProject, selectedReport, prompts, setPrompts, loading } =
+    useWork();
   const [indexAvailable, setIndexAvailable] = useState<boolean>(true);
   const [generatingAll, setGeneratingAll] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +90,14 @@ const ReportEditor = () => {
     }
 
     exportDocx(prompts, selectedProject, selectedReport);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   if (!selectedProject) {

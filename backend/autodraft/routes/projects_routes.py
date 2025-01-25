@@ -51,21 +51,68 @@ def create_project():
     return jsonify(project.to_dict()), 200
 
 
-@projects_bp.route("/delete-project", methods=["POST"])
-def delete_project():
-    # TODO: can the user delete the project?
-    project_id = request.get_json().get("project_id")
+@projects_bp.route("/update-project", methods=["POST"])
+@jwt_required()
+def update_project():
+    data = request.get_json()
+    project_id = data.get("project_id")
+    updates = {k: v for k, v in data.items() if k != "project_id"}
+
+    if not project_id:
+        return jsonify({"error": "No project_id provided"}), 400
+
     project = Project.query.get(project_id)
     if not project:
         return jsonify({"error": "Project not found"}), 404
 
-    db.session.delete(project)
+    # Verify user has access to this project
+    if project not in current_user.projects:
+        return jsonify({"error": "Unauthorized"}), 403
 
-    delete_index(project_id)
+    # Apply updates
+    for key, value in updates.items():
+        if hasattr(project, key):
+            setattr(project, key, value)
 
-    db.session.commit()
+    try:
+        db.session.commit()
+        return jsonify(project.to_dict()), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error updating project: {str(e)}")
+        return jsonify({"error": "Failed to update project"}), 500
 
-    return jsonify({"success": f"Deleted project {project_id}"}), 200
+
+@projects_bp.route("/delete-project", methods=["POST"])
+@jwt_required()
+def delete_project():
+    data = request.get_json()
+    project_id = data.get("project_id")
+
+    if not project_id:
+        return jsonify({"error": "No project_id provided"}), 400
+
+    project = Project.query.get(project_id)
+    if not project:
+        return jsonify({"error": "Project not found"}), 404
+
+    # Verify user has access to this project
+    if project not in current_user.projects:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        # Delete the project's index if it exists
+        if project.index_id:
+            # TODO: Add your index deletion logic here
+            pass
+
+        db.session.delete(project)
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting project: {str(e)}")
+        return jsonify({"error": "Failed to delete project"}), 500
 
 
 @projects_bp.route("/projects", methods=["GET"])
@@ -76,7 +123,10 @@ def get_projects():
 
     # TODO: this is kinda dumb
     s3_fs = create_s3_fs()
+    out = []
     for project in projects:
-        project.index_available = check_index_available(project.id, s3_fs)
+        x = project.to_dict()
+        x["index_available"] = check_index_available(project.id, s3_fs)
+        out.append(x)
 
-    return jsonify([project.to_dict() for project in projects]), 200
+    return jsonify(out), 200

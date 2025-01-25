@@ -105,7 +105,7 @@ def delete_index():
 
 @index_bp.route("/update-index", methods=["POST"])
 @jwt_required()
-def update_index():
+def update_index_route():
     project_id = request.get_json().get("project_id")
     if not project_id:
         return jsonify({"error": "No project_id provided"}), 400

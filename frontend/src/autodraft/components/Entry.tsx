@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Prompt, Response, defaultResponse } from "@/autodraft/types";
 import React, { useEffect, useState } from "react";
 import {
+  addResponse,
   deletePrompt,
   generateResponse,
   updatePrompt,
@@ -11,6 +12,7 @@ import {
 import { AutosizeTextarea } from "./AutoSizeTextArea";
 import { Button } from "@/components/ui/button";
 import { ReloadIcon } from "@radix-ui/react-icons";
+import SourceDocs from "./SourceDocs";
 import { Textarea } from "@/components/ui/textarea";
 import { TrashIcon } from "lucide-react";
 import { useWork } from "@/autodraft/WorkContext";
@@ -68,10 +70,17 @@ const Entry: React.FC<EntryProps> = ({ initialPrompt, setPrompts }) => {
 
   function saveResponse(text: string, id: string) {
     if (text !== previousResponseText) {
-      updateResponse(text, id).then((response: Response) => {
-        setPreviousResponseText(response.text);
-        setResponse(response);
-      });
+      if (id == "-1") {
+        // this is the default id, aka no response has been created yet
+        addResponse(text, prompt.id).then((response: Response) => {
+          setResponse(response);
+        });
+      } else {
+        updateResponse(text, id).then((response: Response) => {
+          setPreviousResponseText(response.text);
+          setResponse(response);
+        });
+      }
     }
   }
 
@@ -81,8 +90,6 @@ const Entry: React.FC<EntryProps> = ({ initialPrompt, setPrompts }) => {
       generateResponse(prompt.text, prompt.id, selectedProject.id)
         .then((response: Response) => {
           setResponse(response);
-          // setResponseText(response.text);
-          saveResponse(response.text, response.id);
         })
         .finally(() => {
           setGenerating(false);
@@ -136,6 +143,7 @@ const Entry: React.FC<EntryProps> = ({ initialPrompt, setPrompts }) => {
           onBlur={() => saveResponse(response.text, response.id)}
           className="w-full mb-4"
         />
+        <SourceDocs sourceDocs={response.source_docs} />
         {generating ? (
           <Button disabled>
             <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />

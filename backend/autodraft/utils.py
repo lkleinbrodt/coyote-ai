@@ -82,7 +82,7 @@ def delete_index(project_id) -> bool:
 
 
 def check_index_available(project_id, s3_fs=None) -> bool:
-    index_path = S3_INDEX_DIR / str(project_id)
+    index_path = S3_INDEX_DIR + "/" + str(project_id)
     if not s3_fs:
         s3_fs = create_s3_fs()
     return s3_fs.exists(index_path)

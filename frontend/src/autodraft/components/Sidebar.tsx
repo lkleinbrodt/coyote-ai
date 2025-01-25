@@ -1,8 +1,10 @@
 import { ProjectSelector } from "@/autodraft/components/ProjectSelector";
 import { ReportSelector } from "@/autodraft/components/ReportSelector";
 import UserItem from "@/autodraft/components/UserItem";
+import { useWork } from "@/autodraft/WorkContext";
 
 function Sidebar() {
+  const { selectedProject } = useWork();
   return (
     <div className="fixed flex flex-col gap-4 w-[300px] min-w-[300px] border-r min-h-screen p-4">
       <UserItem />
@@ -13,10 +15,14 @@ function Sidebar() {
         </div>
 
         <ProjectSelector />
-        <div className="text-muted-foreground font-semibold mt-2 mb-2">
-          Current Report
-        </div>
-        <ReportSelector />
+        {selectedProject && (
+          <>
+            <div className="text-muted-foreground font-semibold mt-2 mb-2">
+              Current Report
+            </div>
+            <ReportSelector />
+          </>
+        )}
       </div>
     </div>
   );

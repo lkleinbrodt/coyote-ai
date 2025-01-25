@@ -104,7 +104,7 @@ const DataEditor = () => {
             updateIndexOnUpload={true}
             uploading={uploading}
           />
-          <div>
+          {/* <div>
             {creatingIndex ? (
               <Button disabled>
                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
@@ -118,7 +118,7 @@ const DataEditor = () => {
                 Create Index
               </Button>
             )}
-          </div>
+          </div> */}
         </div>
         <div>
           <h2 className="text-xl font-semibold mb-2">Source Files</h2>
