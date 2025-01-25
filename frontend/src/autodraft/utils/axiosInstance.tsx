@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Create an axios instance with base URL and default configuration
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_AUTH_BASE_URL + "/autodraft/",
+  baseURL: import.meta.env.VITE_BASE_URL + "/autodraft/",
   withCredentials: true, // Send cookies with requests
 });
 
