@@ -1,7 +1,7 @@
 rm -r dist/
 cd frontend
 npm install
-npm run build
+npm run build --mode production
 cp -r dist ../
 cd ..
 git add ./dist
