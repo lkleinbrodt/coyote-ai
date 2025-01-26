@@ -8,7 +8,7 @@ from flask_session import Session
 from backend.extensions import jwt, db, migrate
 from flask import Blueprint
 from flask import send_from_directory
-from .twenty_questions.routes import twenty_questions
+from .poeltl.routes import poeltl
 from .lifter.routes import lifter
 from .routes import auth_bp
 from .autodraft.routes import autodraft_bp
@@ -50,7 +50,7 @@ def create_app(config_class: Config):
 
     api_bp = Blueprint("api", __name__)
 
-    api_bp.register_blueprint(twenty_questions)
+    api_bp.register_blueprint(poeltl)
     api_bp.register_blueprint(lifter)
     api_bp.register_blueprint(auth_bp)
     api_bp.register_blueprint(autodraft_bp)

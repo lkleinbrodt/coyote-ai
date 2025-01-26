@@ -1,38 +1,16 @@
 from flask import jsonify, Blueprint, request, Response, stream_with_context
 from backend.extensions import create_logger
 from backend.config import Config
-from openai import OpenAI
+from backend.src.OpenRouter import OpenRouterClient
 import random
 
 logger = create_logger(__name__, level="DEBUG")
 
-OPENAI_API_KEY = Config.TWENTY_QUESTIONS_OPENAI_API_KEY
+poeltl = Blueprint("poeltl", __name__, url_prefix="/poeltl")
 
-twenty_questions = Blueprint(
-    "twenty_questions", __name__, url_prefix="/twenty-questions"
+openrouter_client = OpenRouterClient(
+    default_model="deepseek-chat",
 )
-
-
-@twenty_questions.route("/chat", methods=["POST"])
-def chat():
-    messages = request.json.get("messages", [])
-
-    client = OpenAI(
-        api_key=Config.TWENTY_QUESTIONS_OPENAI_API_KEY,
-    )
-
-    stream = client.chat.completions.create(
-        model="gpt-4o",
-        messages=messages,
-        stream=True,
-    )
-
-    def yield_stream():
-        for chunk in stream:
-            if chunk.choices[0].delta.content is not None:
-                yield chunk.choices[0].delta.content
-
-    return Response(stream_with_context(yield_stream()))
 
 
 def pick_person():
@@ -130,13 +108,13 @@ def pick_person():
     return random.choice(players)
 
 
-@twenty_questions.route("/get-person", methods=["GET"])
+@poeltl.route("/get-person", methods=["GET"])
 def get_person():
     person = pick_person()
     return {"person": person}, 200
 
 
-@twenty_questions.route("/ask", methods=["POST"])
+@poeltl.route("/ask", methods=["POST"])
 def ask():
     """
     Chat endpoint for the 20 Questions bot.
@@ -167,12 +145,7 @@ def ask():
         )
         messages.insert(0, {"role": "system", "content": system_prompt})
 
-    client = OpenAI(
-        api_key=Config.TWENTY_QUESTIONS_OPENAI_API_KEY,
-    )
-
-    stream = client.chat.completions.create(
-        model="gpt-4o-mini",
+    stream = openrouter_client.chat(
         messages=messages,
         stream=True,
         max_tokens=50,  # Keep responses short for the yes/no nature

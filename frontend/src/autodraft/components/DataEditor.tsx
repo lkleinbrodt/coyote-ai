@@ -1,5 +1,3 @@
-import { createIndex, deleteFile, deleteIndex } from "@/autodraft/services/api";
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import FileCard from "./FileCard";
@@ -8,66 +6,62 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SourceFile } from "@/autodraft/types";
 import SourceFileUploader from "./SourceFileUploader";
+import { deleteFile } from "@/autodraft/services/api";
 import { useState } from "react";
 import { useWork } from "@/autodraft/WorkContext";
 
 const DataEditor = () => {
-  const {
-    selectedProject,
-    availableFiles,
-    setAvailableFiles,
-    setSelectedProject,
-  } = useWork();
+  const { selectedProject, availableFiles, setAvailableFiles } = useWork();
 
   const [uploading, setUploading] = useState<boolean>(false);
-  const [creatingIndex, setCreatingIndex] = useState<boolean>(false);
+  const [creatingIndex] = useState<boolean>(false);
 
-  const handleCreateIndex = () => {
-    if (!selectedProject) {
-      return;
-    }
-    setCreatingIndex(true);
-    const createIndexWithConfirmation = () => {
-      createIndex(selectedProject.id)
-        .then(() => {
-          console.log("Index created");
-        })
-        .catch((error) => {
-          if (error.response && error.response.status === 409) {
-            const overwrite = window.confirm(
-              "Index already exists. Do you want to overwrite it?"
-            );
-            if (overwrite) {
-              // First, delete the existing index
-              deleteIndex(selectedProject.id)
-                .then(() => {
-                  return createIndex(selectedProject.id);
-                })
-                .then(() => {
-                  console.log("Index overwritten and recreated");
-                })
-                .catch((error) => {
-                  console.error("Error overwriting index:", error);
-                });
-            }
-          } else {
-            console.error("Error creating index:", error);
-          }
-        })
-        .finally(() => {
-          setCreatingIndex(false);
-          setSelectedProject((prevProject) => {
-            if (!prevProject) return null;
-            return {
-              ...prevProject,
-              index_available: true,
-            };
-          });
-        });
-    };
+  // const handleCreateIndex = () => {
+  //   if (!selectedProject) {
+  //     return;
+  //   }
+  //   setCreatingIndex(true);
+  //   const createIndexWithConfirmation = () => {
+  //     createIndex(selectedProject.id)
+  //       .then(() => {
+  //         console.log("Index created");
+  //       })
+  //       .catch((error) => {
+  //         if (error.response && error.response.status === 409) {
+  //           const overwrite = window.confirm(
+  //             "Index already exists. Do you want to overwrite it?"
+  //           );
+  //           if (overwrite) {
+  //             // First, delete the existing index
+  //             deleteIndex(selectedProject.id)
+  //               .then(() => {
+  //                 return createIndex(selectedProject.id);
+  //               })
+  //               .then(() => {
+  //                 console.log("Index overwritten and recreated");
+  //               })
+  //               .catch((error) => {
+  //                 console.error("Error overwriting index:", error);
+  //               });
+  //           }
+  //         } else {
+  //           console.error("Error creating index:", error);
+  //         }
+  //       })
+  //       .finally(() => {
+  //         setCreatingIndex(false);
+  //         setSelectedProject((prevProject) => {
+  //           if (!prevProject) return null;
+  //           return {
+  //             ...prevProject,
+  //             index_available: true,
+  //           };
+  //         });
+  //       });
+  //   };
 
-    createIndexWithConfirmation();
-  };
+  //   createIndexWithConfirmation();
+  // };
 
   const handleDeleteFile = async (fileId: string): Promise<void> => {
     try {

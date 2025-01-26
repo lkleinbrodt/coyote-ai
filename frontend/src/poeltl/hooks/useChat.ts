@@ -1,4 +1,4 @@
-import { twentyQuestionsApi } from "../services/api";
+import { poeltlApi } from "../services/api";
 import { useState } from "react";
 
 export interface ChatMessage {
@@ -7,21 +7,13 @@ export interface ChatMessage {
 }
 
 export const useChat = (person: string) => {
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      role: "assistant",
-      content: "Ok, I'm ready. Ask me questions to guess who I'm thinking of!",
-    },
-  ]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [currentResponse, setCurrentResponse] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleStream = async (messages: ChatMessage[]) => {
     try {
-      const responseBody = await twentyQuestionsApi.askQuestion(
-        messages,
-        person
-      );
+      const responseBody = await poeltlApi.askQuestion(messages, person);
       if (!responseBody) throw new Error("No response body");
 
       const reader = responseBody.getReader();

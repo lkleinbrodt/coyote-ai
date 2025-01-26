@@ -11,8 +11,7 @@ import React from "react";
 interface ProductCardProps {
   title: string;
   description: string;
-  icon: string | string;
-
+  icon: string;
   link: string;
 }
 
@@ -20,7 +19,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
   title,
   description,
   icon,
-
   link,
 }) => {
   const renderIcon = () => {
@@ -35,13 +33,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <Card
-      className="cursor-pointer shadow-none hover:shadow-lg hover:scale-105 transition-all duration-200 bg-transparent border-0"
+      className="cursor-pointer shadow-none hover:shadow-lg hover:scale-105 transition-all duration-200 bg-card border-0"
       onClick={() => (window.location.href = link)}
     >
       <CardHeader>{renderIcon()}</CardHeader>
       <CardContent>
-        <CardTitle className="text-center h3 text-white">{title}</CardTitle>
-        <CardDescription className="text-left text-white">
+        <CardTitle className="text-center h3 text-foreground">
+          {title}
+        </CardTitle>
+        <CardDescription className="text-left text-muted-foreground">
           {description}
         </CardDescription>
       </CardContent>

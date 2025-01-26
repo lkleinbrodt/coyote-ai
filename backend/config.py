@@ -30,7 +30,6 @@ class Config:
 
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=90)
 
-    TWENTY_QUESTIONS_OPENAI_API_KEY = os.environ.get("TWENTY_QUESTIONS_OPENAI_API_KEY")
     LIFTER_BUCKET = "coyote-lifter"
 
     AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")

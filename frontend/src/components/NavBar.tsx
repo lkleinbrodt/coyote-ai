@@ -22,12 +22,11 @@ export default function NavBar() {
   const { user, logout, login } = useAuth();
   const location = useLocation();
   return (
-    <div className="w-full fixed top-0 z-1 flex flex-row justify-between items-center ">
-      {/* these buttons go on the left */}
-      <NavigationMenu className="mt-0 mb-0">
-        <NavigationMenuList>
+    <div className="w-full top-0 z-1 flex flex-row justify-between items-center bg-secondary-foreground opacity-90">
+      <NavigationMenu>
+        <NavigationMenuList className="h-full flex items-center">
           <NavigationMenuItem>
-            <Link to="/" className="text-foreground">
+            <Link to="/">
               <img
                 src="icons/coyote_logo.png"
                 alt="logo"
@@ -38,8 +37,7 @@ export default function NavBar() {
         </NavigationMenuList>
       </NavigationMenu>
 
-      {/* these buttons go on the right */}
-      <NavigationMenu className="p-4">
+      <NavigationMenu>
         <NavigationMenuList>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

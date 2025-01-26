@@ -5,8 +5,10 @@ import React from "react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
+import { useTheme } from "@/components/theme-provider";
 
 const Landing: React.FC = () => {
+  const { theme } = useTheme();
   useEffect(() => {
     const authError = localStorage.getItem("authError");
     if (authError) {
@@ -23,26 +25,35 @@ const Landing: React.FC = () => {
     {
       title: "Poeltl-Chat",
       description: "Play a game of NBA themed 20-questions against an AI",
-      icon: "icons/AI Basketball.png",
+      icon: theme === "dark" ? "icons/team-dark.png" : "icons/team-light.png",
       link: "/poeltl",
     },
     {
       title: "Cheffrey",
       description: "Your AI sous-chef helps you discover, share, and create",
-      icon: "icons/chef_hat_stamp.png",
+      icon:
+        theme === "dark"
+          ? "icons/chef_hat_stamp.png"
+          : "icons/chef_hat_stamp_light.png",
       link: "https://apps.apple.com/us/app/cheffrey/id6503424946",
     },
 
     {
       title: "Autodraft",
       description: "Generate AI-powered drafts for your projects",
-      icon: "icons/autodraft.png",
+      icon:
+        theme === "dark"
+          ? "icons/drafting-compass-dark.png"
+          : "icons/drafting-compass-light.png",
       link: "/autodraft",
     },
     {
       title: "Reminder-Mate",
       description: "Get reminders for your tasks and events",
-      icon: "icons/reminder-mate.png",
+      icon:
+        theme === "dark"
+          ? "icons/reminder-dark.png"
+          : "icons/reminder-light.png",
       link: "https://reminder-mate.vercel.app/",
     },
   ];
@@ -50,19 +61,30 @@ const Landing: React.FC = () => {
   return (
     <div className="landing-page">
       <div className="hero-section">
-        <img
+        {/* <img
           src="icons/coyote_logo.png"
           className="logo"
           alt="Coyote AI logo"
-        />
-        <h1 className="title">Welcome to Coyote AI</h1>
+        /> */}
+
         {user && (
           <div className="flex flex-col justify-center items-center">
-            <span className="welcome-message text-center">{user.name}</span>
+            <span className="user-message text-center">{user.name}</span>
           </div>
         )}
 
-        <div className="product-section">
+        <div className="welcome-container">
+          <h1>Welcome</h1>
+          <div className="welcome-blurb">
+            Coyote AI is a platform for building AI applications. We provide a
+            suite of tools and services to help you build your own AI
+            applications.
+          </div>
+        </div>
+      </div>
+      <div className="product-section">
+        <h1>Projects</h1>
+        <div className="product-grid">
           {products.map((product, index) => (
             <ProductCard key={index} {...product} />
           ))}

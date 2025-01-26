@@ -11,14 +11,14 @@ import Landing from "./pages/Landing";
 import Login from "./pages/LoginPage";
 import NavBar from "./components/NavBar";
 import NotFound from "./pages/NotFound";
-import Poeltl from "./20questions/pages/Poeltl";
+import Poeltl from "./poeltl/pages/Poeltl";
 import Privacy from "./pages/Privacy";
 import PrivateRoute from "./components/PrivateRoute";
 import { ThemeProvider } from "./components/theme-provider";
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <BrowserRouter>
         <AuthProvider>
           <div className="app-container">

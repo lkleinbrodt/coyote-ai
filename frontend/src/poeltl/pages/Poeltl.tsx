@@ -76,7 +76,7 @@ export default function Poeltl() {
   const getPerson = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/twenty-questions/get-person", {
+      const response = await fetch("/api/poeltl/get-person", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

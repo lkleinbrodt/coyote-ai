@@ -1,4 +1,4 @@
-export const twentyQuestionsApi = {
+export const poeltlApi = {
   getPerson: async () => {
     const response = await fetch("/api/twenty-questions/get-person", {
       method: "GET",
@@ -18,7 +18,7 @@ export const twentyQuestionsApi = {
     messages: { role: string; content: string }[],
     person: string
   ) => {
-    const response = await fetch("/api/twenty-questions/ask", {
+    const response = await fetch("/api/poeltl/ask", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
