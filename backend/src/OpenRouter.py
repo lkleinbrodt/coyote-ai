@@ -33,7 +33,7 @@ class OpenRouterClient:
             api_key=self.api_key,
         )
 
-    def chat(self, messages, model: str = None, **kwargs) -> str:
+    def chat(self, messages, model: str = None, stream: bool = False, **kwargs) -> str:
         """
         Send a list of messages in the standard chat format:
         messages = [
@@ -46,10 +46,13 @@ class OpenRouterClient:
         model_to_use = model or self.model
 
         completion = self._client.chat.completions.create(
-            model=model_to_use, messages=messages, **kwargs
+            model=model_to_use, messages=messages, stream=stream, **kwargs
         )
 
-        return completion.choices[0].message.content
+        if stream:
+            return completion
+        else:
+            return completion.choices[0].message.content
 
     def complete(self, prompt: str, model: str = None, **kwargs) -> str:
         """

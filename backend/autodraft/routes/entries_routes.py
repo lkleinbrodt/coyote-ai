@@ -10,7 +10,6 @@ from backend.autodraft.models import (
 )
 from backend.extensions import db, create_logger
 from backend.autodraft.extensions import INDEX_DICT
-import os
 from backend.autodraft.src.Writer import Writer
 from flask_jwt_extended import (
     jwt_required,

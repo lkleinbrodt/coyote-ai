@@ -2,10 +2,11 @@ from llama_index.core import VectorStoreIndex
 from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core import PromptTemplate
-from llama_index.core.response_synthesizers import TreeSummarize, Refine
+from llama_index.core.response_synthesizers import TreeSummarize
 from llama_index.core.tools import QueryEngineTool
 from llama_index.agent.openai import OpenAIAgent
 from llama_index.core import Response
+import os
 
 
 class Writer:

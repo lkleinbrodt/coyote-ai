@@ -8,9 +8,7 @@ logger = create_logger(__name__, level="DEBUG")
 
 poeltl = Blueprint("poeltl", __name__, url_prefix="/poeltl")
 
-openrouter_client = OpenRouterClient(
-    default_model="deepseek-chat",
-)
+openrouter_client = OpenRouterClient()
 
 
 def pick_person():
@@ -140,6 +138,7 @@ def ask():
             "The user will try to guess who you are by asking yes/no questions. "
             "You should only allow the user to ask you yes/no questions, or very short answers providing minimal context, "
             "and nothing else (If the user specifically gives up/quits the game, you are allowed to tell them who you are). Stick strictly to the game and avoid discussing anything unrelated."
+            "if the user answers correctly, give them a short congratulations message and elaborate on the person's background and career."
             "Here is the person you are pretending to be, as well as some information about them:"
             f"{person}"
         )
@@ -156,6 +155,7 @@ def ask():
     def yield_stream():
         for chunk in stream:
             if chunk.choices[0].delta.content is not None:
+                print(chunk.choices[0].delta.content)
                 yield chunk.choices[0].delta.content
 
     return Response(stream_with_context(yield_stream()))

@@ -22,9 +22,9 @@ export default function NavBar() {
   const { user, logout, login } = useAuth();
   const location = useLocation();
   return (
-    <div className="w-full top-0 z-1 flex flex-row justify-between items-center bg-secondary-foreground opacity-90">
-      <NavigationMenu>
-        <NavigationMenuList className="h-full flex items-center">
+    <div className="flex flex-row justify-between items-center bg-secondary-foreground h-16 px-4">
+      <NavigationMenu className="mx-0 my-0">
+        <NavigationMenuList className="m-0 p-0">
           <NavigationMenuItem>
             <Link to="/">
               <img
@@ -37,15 +37,15 @@ export default function NavBar() {
         </NavigationMenuList>
       </NavigationMenu>
 
-      <NavigationMenu>
-        <NavigationMenuList>
+      <NavigationMenu className="mx-0 my-0">
+        <NavigationMenuList className="m-0 p-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <ChevronDownIcon className="w-4 h-4 text-foreground" />
+              <Button variant="outline" size="icon" className="bg-transparent">
+                <ChevronDownIcon className="w-4 h-4 text-background" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
+            <DropdownMenuContent className="w-60">
               <DropdownMenuLabel className="flex flex-row justify-between items-center">
                 {user ? user.name : "Guest"}
                 <ModeToggle />

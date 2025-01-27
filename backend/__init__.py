@@ -30,9 +30,10 @@ def create_app(config_class: Config):
     CORS(
         app,
         supports_credentials=True,  # Allow credentials
-        resources={
-            r"/api/autodraft/*": {"origins": "http://localhost:5173"}
-        },  # Specify allowed origin
+        # resources={
+        #     r"/api/autodraft/*": {"origins": "http://localhost:5173"},
+        #     r"/api/poeltl/*": {"origins": "http://localhost:5173"},
+        # },
         # allow_headers=["Authorization", "Content-Type"],
         # methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Allow necessary methods
     )
