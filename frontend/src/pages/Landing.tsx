@@ -65,7 +65,7 @@ const Landing: React.FC = () => {
           src="icons/coyote_logo.png"
           className="logo"
           alt="Coyote AI logo"
-        /> */}
+        />
 
         {user && (
           <div className="flex flex-col justify-center items-center">
@@ -75,12 +75,8 @@ const Landing: React.FC = () => {
 
         <div className="welcome-container">
           <h1>Welcome</h1>
-          <div className="welcome-blurb">
-            Coyote AI is a platform for building AI applications. We provide a
-            suite of tools and services to help you build your own AI
-            applications.
-          </div>
-        </div>
+          <div className="welcome-blurb">Check out our projects below!</div>
+        </div> */}
       </div>
       <div className="product-section">
         <h1>Projects</h1>
