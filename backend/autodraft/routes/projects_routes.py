@@ -24,7 +24,7 @@ def new_project():
     new_project = Project(
         name=project_name, creator_id=current_user.id, users=[current_user]
     )
-    logger.debug(f"New project: {new_project}")
+
     db.session.add(new_project)
     db.session.commit()
 

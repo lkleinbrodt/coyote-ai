@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/card";
 import { Prompt, Response } from "@/autodraft/types";
 import { generateResponse, getPrompts } from "@/autodraft/services/api";
-import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import Entry from "./Entry";
@@ -18,21 +17,16 @@ import NewPrompt from "./NewPrompt";
 import PlaceholderMessage from "./PlaceholderMessage";
 import TemplateUploader from "./TemplateUploader";
 import { exportDocx } from "./exportFunctions";
+import { useState } from "react";
 import { useWork } from "@/autodraft/WorkContext";
 
 const ReportEditor = () => {
   const { selectedProject, selectedReport, prompts, setPrompts, loading } =
     useWork();
-  const [indexAvailable, setIndexAvailable] = useState<boolean>(true);
+
   const [generatingAll, setGeneratingAll] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [, setResponsesGenerated] = useState<number>(0);
-
-  useEffect(() => {
-    if (selectedProject) {
-      setIndexAvailable(selectedProject.index_available);
-    }
-  }, [selectedProject]);
 
   function handleGenerateAll() {
     if (!selectedReport) {
@@ -131,7 +125,7 @@ const ReportEditor = () => {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      {!indexAvailable && (
+      {!selectedProject.index_available && (
         <Alert variant="destructive" className="mb-4">
           <ExclamationTriangleIcon className="h-4 w-4" />
           <AlertTitle>Index not available</AlertTitle>
@@ -141,7 +135,7 @@ const ReportEditor = () => {
         </Alert>
       )}
 
-      {prompts.length === 0 && (
+      {prompts.length === 0 ? (
         <div className="mb-6">
           <Card>
             <CardHeader>
@@ -163,12 +157,26 @@ const ReportEditor = () => {
             </CardContent>
           </Card>
         </div>
+      ) : (
+        <div className="mb-6 flex justify-end">
+          <TemplateUploader
+            projectID={selectedProject.id}
+            reportID={selectedReport.id}
+            onUploadSuccess={() => {
+              getPrompts(selectedReport.id).then(setPrompts);
+            }}
+          />
+        </div>
       )}
       <div className="flex justify-center mb-10 gap-4">
         <Button
           className="w-1/5 text-xl font-bold py-4 bg-blue-500 hover:bg-blue-600 text-white shadow-lg"
           onClick={handleGenerateAll}
-          disabled={prompts.length === 0 || generatingAll || !indexAvailable}
+          disabled={
+            prompts.length === 0 ||
+            generatingAll ||
+            !selectedProject.index_available
+          }
         >
           {generatingAll ? (
             <Loader2 className="animate-spin" />
@@ -190,11 +198,13 @@ const ReportEditor = () => {
           <Entry initialPrompt={prompt} setPrompts={setPrompts} />
         </div>
       ))}
-      <NewPrompt
-        prompts={prompts}
-        setPrompts={setPrompts}
-        reportID={selectedReport.id}
-      />
+      <div className="flex justify-center mb-10 gap-4">
+        <NewPrompt
+          prompts={prompts}
+          setPrompts={setPrompts}
+          reportID={selectedReport.id}
+        />
+      </div>
     </div>
   );
 };

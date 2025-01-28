@@ -6,7 +6,6 @@ from llama_index.core.response_synthesizers import TreeSummarize
 from llama_index.core.tools import QueryEngineTool
 from llama_index.agent.openai import OpenAIAgent
 from llama_index.core import Response
-import os
 
 
 class Writer:

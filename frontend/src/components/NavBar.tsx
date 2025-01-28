@@ -15,24 +15,44 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
-import { ModeToggle } from "@/components/DarkModeToggle";
+// import { ModeToggle } from "@/components/DarkModeToggle";
 import { useAuth } from "@/contexts/AuthContext";
+
+const getPageTitle = (pathname: string) => {
+  switch (pathname) {
+    case "/poeltl":
+      return "PoeltlGPT";
+    case "/autodraft":
+      return "Autodraft";
+    default:
+      return "Coyote-AI";
+  }
+};
 
 export default function NavBar() {
   const { user, logout, login } = useAuth();
   const location = useLocation();
+  const pageTitle = getPageTitle(location.pathname);
+
   return (
-    <div className="flex flex-row justify-between items-center bg-secondary-foreground h-16 px-4">
+    <div className="flex fixed flex-row justify-between items-center bg-secondary-foreground h-16 px-4 w-full z-1000">
       <NavigationMenu className="mx-0 my-0">
         <NavigationMenuList className="m-0 p-0">
           <NavigationMenuItem>
-            <Link to="/">
-              <img
-                src="icons/coyote_logo.png"
-                alt="logo"
-                className="w-10 h-10"
-              />
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link to="/" className="flex items-center gap-4">
+                <img
+                  src="icons/coyote_logo.png"
+                  alt="logo"
+                  className="w-10 h-10"
+                />
+              </Link>
+              {pageTitle && (
+                <span className="text-xl font-semibold text-background">
+                  {pageTitle}
+                </span>
+              )}
+            </div>
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
@@ -48,7 +68,7 @@ export default function NavBar() {
             <DropdownMenuContent className="w-60">
               <DropdownMenuLabel className="flex flex-row justify-between items-center">
                 {user ? user.name : "Guest"}
-                <ModeToggle />
+                {/* <ModeToggle /> */}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {user ? (

@@ -23,11 +23,9 @@ const SourceDocs: React.FC<SourceDocsProps> = ({ sourceDocs }) => {
   }, {} as Record<string, Document[]>);
 
   return (
-    <Card className="mt-2">
+    <Card>
       <CardContent className="pt-4">
-        <h4 className="text-sm font-semibold mb-2">
-          {sourceDocs.length} Sources:
-        </h4>
+        <h4 className="text-sm font-semibol">{sourceDocs.length} Sources:</h4>
         <ul className="text-sm text-muted-foreground ">
           {Object.entries(groupedDocs).map(([fileName, docs]) => (
             <li key={fileName} className="mr-4 ml-4">

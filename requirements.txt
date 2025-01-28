@@ -14,6 +14,6 @@ gunicorn==21.2.0
 boto3==1.34.103
 pandas==2.2.2
 rauth==0.7.3
-llama-index
-openai
 s3fs==2024.12.0
+llama-index==0.12.14
+openai==1.60.2

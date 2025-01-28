@@ -49,15 +49,14 @@ export default function TemplateUploader({
     try {
       console.log("Uploading template...");
       console.log(files[0]);
-      uploadTemplate(files[0], projectID, reportID).then((response) => {
-        setSuccessMessage(response.message);
-        if (onUploadSuccess) {
-          onUploadSuccess();
-        }
-        setErrorMessage(null);
-      });
+      await uploadTemplate(files[0], projectID, reportID);
+      setSuccessMessage("Template uploaded successfully");
+      if (onUploadSuccess) {
+        onUploadSuccess();
+      }
+      setErrorMessage(null);
+      setDrawerOpen(false);
     } catch (error) {
-      setUploading(false);
       setErrorMessage("Error uploading template.");
       console.error(error);
     } finally {
@@ -74,9 +73,12 @@ export default function TemplateUploader({
         <DrawerHeader>
           <DrawerTitle className="text-5xl">Upload Template</DrawerTitle>
           <DrawerDescription className="text-xl">
-            <div>
+            <div className="mb-2 text-2xl">
               Upload a document with the structure you want to use for your
               report.
+            </div>
+            <div className="text-lg text-muted-foreground italic">
+              (This will overwrite all existing prompts in this report)
             </div>
           </DrawerDescription>
         </DrawerHeader>

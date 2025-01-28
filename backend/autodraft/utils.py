@@ -6,9 +6,6 @@ from llama_index.core import Document as LlamaDocument
 from backend.src.s3 import S3, create_s3_fs
 from backend.config import Config
 
-
-# TODO: implement s3 save/loading, make sure to adjust index builder etc (which should be using these set functions, not rolling it's own save to storage (perhaps use an index IO class or something?)
-
 S3_INDEX_DIR = Config.AUTODRAFT_BUCKET + "/" + Config.S3_INDEX_DIR
 
 

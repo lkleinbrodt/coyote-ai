@@ -21,6 +21,14 @@ interface FileCardProps {
 const FileCard = ({ file, onDelete }: FileCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  };
+
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
@@ -43,7 +51,7 @@ const FileCard = ({ file, onDelete }: FileCardProps) => {
     <Card key={file.id} className="flex flex-col truncate">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="truncate flex-grow">{file.name}</CardTitle>
+          <CardTitle className="truncate flex-grow py-2">{file.name}</CardTitle>
           <Button
             variant="ghost"
             size="icon"
@@ -58,7 +66,9 @@ const FileCard = ({ file, onDelete }: FileCardProps) => {
             )}
           </Button>
         </div>
-        <CardDescription>{file.created_at}</CardDescription>
+        <CardDescription className="text-xs text-muted-foreground">
+          Uploaded: {formatDate(file.created_at)}
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex items-center justify-center">
         <FileIcon className="w-10 h-10" />

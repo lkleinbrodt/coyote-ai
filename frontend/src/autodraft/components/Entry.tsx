@@ -100,7 +100,7 @@ const Entry: React.FC<EntryProps> = ({ initialPrompt, setPrompts }) => {
   return (
     <Card>
       <CardHeader>
-        <div className="relative">
+        <div>
           {isEditingPrompt ? (
             <Textarea
               value={prompt?.text}
@@ -118,21 +118,17 @@ const Entry: React.FC<EntryProps> = ({ initialPrompt, setPrompts }) => {
               autoFocus
             />
           ) : (
-            <>
+            <div className="flex flex-row justify-between">
               <CardTitle
                 onClick={() => setIsEditingPrompt(true)}
                 className="cursor-pointer mr-10"
               >
                 {prompt?.text}
               </CardTitle>
-              <Button
-                onClick={handleDeletePrompt}
-                className="absolute top-0 right-0  pr-3 pl-3"
-                variant="ghost"
-              >
+              <Button onClick={handleDeletePrompt} variant="ghost">
                 <TrashIcon className="h-4 w-4 text-red-500 hover:text-red-700" />
               </Button>
-            </>
+            </div>
           )}
         </div>
       </CardHeader>
@@ -144,16 +140,18 @@ const Entry: React.FC<EntryProps> = ({ initialPrompt, setPrompts }) => {
           className="w-full mb-4"
         />
         <SourceDocs sourceDocs={response.source_docs} />
-        {generating ? (
-          <Button disabled>
-            <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
-            Generating
-          </Button>
-        ) : (
-          <Button onClick={() => requestResponse()}>
-            {response?.text ? "Regenerate" : "Generate"}
-          </Button>
-        )}
+        <div className="mt-3">
+          {generating ? (
+            <Button disabled>
+              <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+              Generating
+            </Button>
+          ) : (
+            <Button onClick={() => requestResponse()}>
+              {response?.text ? "Regenerate" : "Generate"}
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

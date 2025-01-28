@@ -49,7 +49,7 @@ def create_index():
 
 
 @index_bp.route("/load-index", methods=["GET"])
-def load_index():
+def load_index_route():
     project_id = request.args.get("project_id")
     logger.debug(f"Loading index for project {project_id}")
 
@@ -112,8 +112,12 @@ def update_index_route():
 
     project = Project.query.get(project_id)
     if not project:
+        logger.error(f"Project not found for project_id {project_id}")
         return jsonify({"error": "Project not found"}), 404
     if current_user not in project.users:
+        logger.error(
+            f"User {current_user.id} does not have access to project {project_id}"
+        )
         return jsonify({"error": "User does not have access to project"}), 403
 
     index_dir = (

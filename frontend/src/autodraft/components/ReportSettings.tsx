@@ -94,7 +94,7 @@ function ReportSettings() {
               </p>
             </div>
             <div>
-              <Label>Created At</Label>
+              <Label>Created</Label>
               <p className="text-sm text-muted-foreground">
                 {new Date(selectedReport.created_at).toLocaleDateString()}
               </p>
@@ -114,13 +114,13 @@ function ReportSettings() {
             <CardTitle>Actions</CardTitle>
             <CardDescription>Manage your report settings</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="flex flex-row justify-around">
             {/* Rename Dialog */}
             <Dialog>
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-1/3 justify-center"
                   disabled={isLoading}
                 >
                   {isLoading ? "Saving..." : "Rename Report"}
@@ -159,7 +159,7 @@ function ReportSettings() {
               <DialogTrigger asChild>
                 <Button
                   variant="destructive"
-                  className="w-full"
+                  className="w-1/3 justify-center"
                   disabled={isLoading}
                 >
                   {isLoading ? "Deleting..." : "Delete Report"}

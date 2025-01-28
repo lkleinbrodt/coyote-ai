@@ -88,7 +88,7 @@ function ProjectSettings() {
             <div>
               <Label>Index Status</Label>
               <p className="text-sm text-muted-foreground">
-                {selectedProject.index_id ? "Indexed" : "Not Indexed"}
+                {selectedProject.index_available ? "Indexed" : "Not Indexed"}
               </p>
             </div>
           </CardContent>
@@ -100,13 +100,12 @@ function ProjectSettings() {
             <CardTitle>Actions</CardTitle>
             <CardDescription>Manage your project settings</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Rename Dialog */}
+          <CardContent className="flex flex-row justify-around">
             <Dialog>
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-1/3"
                   disabled={isLoading}
                 >
                   {isLoading ? "Saving..." : "Rename Project"}
@@ -140,12 +139,11 @@ function ProjectSettings() {
               </DialogContent>
             </Dialog>
 
-            {/* Delete Dialog */}
             <Dialog>
               <DialogTrigger asChild>
                 <Button
                   variant="destructive"
-                  className="w-full"
+                  className="w-1/3"
                   disabled={isLoading}
                 >
                   {isLoading ? "Deleting..." : "Delete Project"}

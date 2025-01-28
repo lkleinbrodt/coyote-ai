@@ -23,17 +23,19 @@ function App() {
         <AuthProvider>
           <div className="app-container">
             <NavBar />
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route element={<PrivateRoute />}>
-                <Route path="/poeltl" element={<Poeltl />} />
-                <Route path="/autodraft" element={<Autodraft />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <div className="content-container">
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route element={<PrivateRoute />}>
+                  <Route path="/poeltl" element={<Poeltl />} />
+                  <Route path="/autodraft" element={<Autodraft />} />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
           </div>
         </AuthProvider>
       </BrowserRouter>
