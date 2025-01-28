@@ -6,13 +6,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ChevronDownIcon, GearIcon } from "@radix-ui/react-icons";
+import {
+  Download,
+  FileEdit,
+  FileIcon,
+  Loader2,
+  MessageCircleIcon,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Prompt, Response } from "@/autodraft/types";
 import { generateResponse, getPrompts } from "@/autodraft/services/api";
 
+import { AutodraftIcon } from "./AutodraftIcon";
 import { Button } from "@/components/ui/button";
 import Entry from "./Entry";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
-import { Loader2 } from "lucide-react";
 import NewPrompt from "./NewPrompt";
 import PlaceholderMessage from "./PlaceholderMessage";
 import TemplateUploader from "./TemplateUploader";
@@ -135,7 +149,7 @@ const ReportEditor = () => {
         </Alert>
       )}
 
-      {prompts.length === 0 ? (
+      {prompts.length === 0 && (
         <div className="mb-6">
           <Card>
             <CardHeader>
@@ -157,40 +171,49 @@ const ReportEditor = () => {
             </CardContent>
           </Card>
         </div>
-      ) : (
-        <div className="mb-6 flex justify-end">
-          <TemplateUploader
-            projectID={selectedProject.id}
-            reportID={selectedReport.id}
-            onUploadSuccess={() => {
-              getPrompts(selectedReport.id).then(setPrompts);
-            }}
-          />
-        </div>
       )}
-      <div className="flex justify-center mb-10 gap-4">
-        <Button
-          className="w-1/5 text-xl font-bold py-4 bg-blue-500 hover:bg-blue-600 text-white shadow-lg"
-          onClick={handleGenerateAll}
-          disabled={
-            prompts.length === 0 ||
-            generatingAll ||
-            !selectedProject.index_available
-          }
-        >
-          {generatingAll ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            "Generate All"
-          )}
-        </Button>
-        <Button
-          className="w-1/5 text-xl font-bold py-4"
-          onClick={handleExport}
-          disabled={prompts.length === 0}
-        >
-          Export
-        </Button>
+
+      <div className="mb-5 flex gap-4">
+        {selectedReport && (
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight">
+              {selectedReport.name}
+            </h1>
+          </div>
+        )}
+        <div className="flex gap-4 justify-end grow">
+          <Button
+            onClick={handleGenerateAll}
+            className="flex justify-between ml-0 pl-0"
+          >
+            {generatingAll ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <AutodraftIcon className="mr-2 h-6 w-6" theme="dark" />
+            )}
+            Generate All
+          </Button>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              disabled={
+                prompts.length === 0 ||
+                generatingAll ||
+                !selectedProject?.index_available
+              }
+            >
+              <ChevronDownIcon className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={handleExport}>
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {prompts.map((prompt) => (

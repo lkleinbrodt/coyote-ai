@@ -1,7 +1,5 @@
 import * as React from "react";
 
-import { Card, CardContent } from "@/components/ui/card";
-
 import DocTooltip from "./DocTooltip";
 import { Document } from "@/autodraft/types";
 
@@ -23,28 +21,26 @@ const SourceDocs: React.FC<SourceDocsProps> = ({ sourceDocs }) => {
   }, {} as Record<string, Document[]>);
 
   return (
-    <Card>
-      <CardContent className="pt-4">
-        <h4 className="text-sm font-semibol">{sourceDocs.length} Sources:</h4>
-        <ul className="text-sm text-muted-foreground ">
-          {Object.entries(groupedDocs).map(([fileName, docs]) => (
-            <li key={fileName} className="mr-4 ml-4">
-              {docs.map((doc, index) => (
-                <React.Fragment key={doc.id}>
-                  {index > 0 && ", "}
+    <>
+      <ol className="text-sm text-muted-foreground list-decimal list-inside ml-0 pl-0">
+        {Object.entries(groupedDocs).map(([fileName, docs], fileIndex) => (
+          <li key={fileName} className="">
+            {fileName}:
+            <ol className="list-disc list-inside ml-0 pl-2">
+              {docs.map((doc) => (
+                <li key={doc.id}>
                   <DocTooltip document={doc}>
                     <span className="cursor-all-scroll underline decoration-dotted">
-                      {doc.id}
+                      Page: {doc.page_label}
                     </span>
                   </DocTooltip>
-                </React.Fragment>
-              ))}{" "}
-              ({fileName})
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+                </li>
+              ))}
+            </ol>
+          </li>
+        ))}
+      </ol>
+    </>
   );
 };
 

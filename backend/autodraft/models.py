@@ -121,6 +121,7 @@ class Document(db.Model):
             "llama_metadata": self.llama_metadata,
             "content": self.content,
             "file": self.file.to_dict(),
+            "page_label": self.page_label,
         }
 
 

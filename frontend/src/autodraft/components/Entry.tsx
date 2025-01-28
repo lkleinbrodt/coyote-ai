@@ -1,4 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronDown, RefreshCcw, TrashIcon } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Prompt, Response, defaultResponse } from "@/autodraft/types";
 import React, { useEffect, useState } from "react";
 import {
@@ -14,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import SourceDocs from "./SourceDocs";
 import { Textarea } from "@/components/ui/textarea";
-import { TrashIcon } from "lucide-react";
 import { useWork } from "@/autodraft/WorkContext";
 
 interface EntryProps {
@@ -125,9 +130,20 @@ const Entry: React.FC<EntryProps> = ({ initialPrompt, setPrompts }) => {
               >
                 {prompt?.text}
               </CardTitle>
-              <Button onClick={handleDeletePrompt} variant="ghost">
-                <TrashIcon className="h-4 w-4 text-red-500 hover:text-red-700" />
-              </Button>
+              <div className="flex flex-row">
+                <Popover>
+                  <PopoverTrigger className="text-s text-muted-foreground hover:underline decoration-dotted flex items-center gap-1">
+                    <span>{response.source_docs.length} Sources</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <SourceDocs sourceDocs={response.source_docs} />
+                  </PopoverContent>
+                </Popover>
+                <Button onClick={handleDeletePrompt} variant="ghost">
+                  <TrashIcon className="h-4 w-4 text-red-500 hover:text-red-700" />
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -139,8 +155,8 @@ const Entry: React.FC<EntryProps> = ({ initialPrompt, setPrompts }) => {
           onBlur={() => saveResponse(response.text, response.id)}
           className="w-full mb-4"
         />
-        <SourceDocs sourceDocs={response.source_docs} />
-        <div className="mt-3">
+
+        <div className="mt-3 flex justify-end w-full">
           {generating ? (
             <Button disabled>
               <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
@@ -148,6 +164,7 @@ const Entry: React.FC<EntryProps> = ({ initialPrompt, setPrompts }) => {
             </Button>
           ) : (
             <Button onClick={() => requestResponse()}>
+              <RefreshCcw className="mr-0 h-4 w-4" />
               {response?.text ? "Regenerate" : "Generate"}
             </Button>
           )}

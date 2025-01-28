@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nextPath = encodeURIComponent(from);
     console.log("nextPath", nextPath);
     const baseUrl = import.meta.env.VITE_BASE_URL;
-    window.location.href = `${baseUrl}/auth/authorize/google?next=${nextPath}`;
+    window.location.href = `${baseUrl}/api/auth/authorize/google?next=${nextPath}`;
   };
 
   return (

@@ -15,13 +15,14 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
+import UserItem from "@/autodraft/components/UserItem";
 // import { ModeToggle } from "@/components/DarkModeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
 const getPageTitle = (pathname: string) => {
   switch (pathname) {
     case "/poeltl":
-      return "PoeltlGPT";
+      return "PoeltlChat";
     case "/autodraft":
       return "Autodraft";
     default:
@@ -35,7 +36,7 @@ export default function NavBar() {
   const pageTitle = getPageTitle(location.pathname);
 
   return (
-    <div className="flex fixed flex-row justify-between items-center bg-secondary-foreground h-16 px-4 w-full z-1000">
+    <div className="flex fixed flex-row justify-between items-center bg-secondary-foreground h-16 px-4 w-full z-[1000]">
       <NavigationMenu className="mx-0 my-0">
         <NavigationMenuList className="m-0 p-0">
           <NavigationMenuItem>
@@ -59,28 +60,17 @@ export default function NavBar() {
 
       <NavigationMenu className="mx-0 my-0">
         <NavigationMenuList className="m-0 p-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="bg-transparent">
-                <ChevronDownIcon className="w-4 h-4 text-background" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-60">
-              <DropdownMenuLabel className="flex flex-row justify-between items-center">
-                {user ? user.name : "Guest"}
-                {/* <ModeToggle /> */}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {user ? (
-                <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem onClick={() => login(location.pathname)}>
-                  Login
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {user ? (
+            <UserItem />
+          ) : (
+            <Button
+              variant="outline"
+              className="bg-transparent text-background hover:text-background"
+              onClick={() => login(location.pathname)}
+            >
+              Login
+            </Button>
+          )}
         </NavigationMenuList>
       </NavigationMenu>
     </div>

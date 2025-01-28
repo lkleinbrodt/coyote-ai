@@ -12,9 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 
 const UserItem = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
 
-  if (!user) {
+  if (loading) {
     return (
       <div className="flex items-center space-x-0 border rounded-[8px] p-1">
         <Skeleton className="h-12 min-w-12 rounded-full" />
@@ -24,6 +24,10 @@ const UserItem = () => {
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   const name = user?.name;
@@ -36,13 +40,13 @@ const UserItem = () => {
   return (
     <div className="p-1">
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-start w-full gap-2 border rounded-[8px] p-1">
+        <DropdownMenuTrigger className="flex items-start w-full gap-2 rounded-[8px] p-1">
           <Avatar>
             <AvatarImage src={user!.image ?? ""} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div>
-            <div className="text-lg font-bold">{name}</div>
+            <div className="text-lg font-bold text-white">{name}</div>
             <div className="text-xs text-muted-foreground">{email}</div>
           </div>
         </DropdownMenuTrigger>
