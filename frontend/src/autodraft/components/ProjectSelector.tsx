@@ -128,6 +128,7 @@ export function ProjectSelector() {
         setValue={handleChange}
         emptyMessage="Press + to create a new project."
       />
+      {/* account for the navbar height */}
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon">

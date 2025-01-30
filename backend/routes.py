@@ -56,12 +56,12 @@ def oauth_callback(provider):
 
     # create a jwt
     access_token = create_access_token(
-        identity={
-            "id": user.id,
+        identity=user.id,
+        additional_claims={
             "name": user.name,
             "email": user.email,
             "image": user.image,
-        }
+        },
     )
 
     redirect_url = f"{current_app.config['BASE_URL']}/auth?access_token={access_token}&next={next_path}"

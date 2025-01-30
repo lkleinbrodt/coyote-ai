@@ -27,7 +27,7 @@ export default function NavBar() {
   const pageTitle = getPageTitle(location.pathname);
 
   return (
-    <div className="flex fixed flex-row justify-between items-center bg-secondary-foreground h-16 px-4 w-full z-[1000]">
+    <div className="flex fixed flex-row justify-between items-center bg-secondary-foreground h-[var(--navbar-height)] px-4 w-full z-[1000]">
       <NavigationMenu className="mx-0 my-0">
         <NavigationMenuList className="m-0 p-0">
           <NavigationMenuItem>

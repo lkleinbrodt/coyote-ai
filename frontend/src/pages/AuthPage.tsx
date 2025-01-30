@@ -20,12 +20,12 @@ const AuthPage = () => {
   // Store the token in a secure cookie
   Cookies.set("accessToken", accessToken, { secure: true, sameSite: "strict" });
   const user = JSON.parse(atob(accessToken.split(".")[1]));
-  const userInfo = user.sub;
+
   const userDict = {
-    id: userInfo.id,
-    email: userInfo.email,
-    name: userInfo.name,
-    image: userInfo.picture,
+    id: user.sub,
+    email: user.email,
+    name: user.name,
+    image: user.picture,
     token: accessToken,
   };
 

@@ -36,6 +36,7 @@ const ReportEditor = () => {
     setPrompts,
     loading,
     error,
+    availableFiles,
   } = useWork();
 
   const [generatingAll, setGeneratingAll] = useState<boolean>(false);
@@ -131,12 +132,12 @@ const ReportEditor = () => {
           <AlertDescription>{error || generationError}</AlertDescription>
         </Alert>
       )}
-      {!selectedProject.index_available && (
+      {availableFiles.length === 0 && (
         <Alert variant="destructive" className="mb-4">
           <ExclamationTriangleIcon className="h-4 w-4" />
-          <AlertTitle>Index not available</AlertTitle>
+          <AlertTitle>No source files available</AlertTitle>
           <AlertDescription>
-            Go to the data tab to create an index.
+            Go to the data tab to upload files related to this project.
           </AlertDescription>
         </Alert>
       )}
