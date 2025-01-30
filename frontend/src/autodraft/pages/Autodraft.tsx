@@ -1,21 +1,25 @@
 import "./Autodraft.css";
 
+import { Suspense, lazy } from "react";
 import { WorkProvider, useWork } from "../WorkContext";
 
-import DataEditor from "../components/DataEditor";
 import Header from "../components/Header";
-import ReportEditor from "../components/ReportEditor";
-import Settings from "../components/Settings";
 import Sidebar from "../components/Sidebar";
+
+const ReportEditor = lazy(() => import("../components/ReportEditor"));
+const DataEditor = lazy(() => import("../components/DataEditor"));
+const Settings = lazy(() => import("../components/Settings"));
 
 const Home = () => {
   const { selectedTab } = useWork();
 
   return (
     <div className="autodraft-container">
-      {selectedTab === "report" && <ReportEditor />}
-      {selectedTab === "data" && <DataEditor />}
-      {selectedTab === "settings" && <Settings />}
+      <Suspense fallback={<div>Loading...</div>}>
+        {selectedTab === "report" && <ReportEditor />}
+        {selectedTab === "data" && <DataEditor />}
+        {selectedTab === "settings" && <Settings />}
+      </Suspense>
     </div>
   );
 };

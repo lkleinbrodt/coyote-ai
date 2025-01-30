@@ -29,11 +29,17 @@ import { useState } from "react";
 import { useWork } from "@/autodraft/WorkContext";
 
 const ReportEditor = () => {
-  const { selectedProject, selectedReport, prompts, setPrompts, loading } =
-    useWork();
+  const {
+    selectedProject,
+    selectedReport,
+    prompts,
+    setPrompts,
+    loading,
+    error,
+  } = useWork();
 
   const [generatingAll, setGeneratingAll] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [, setResponsesGenerated] = useState<number>(0);
 
   function handleGenerateAll() {
@@ -74,13 +80,13 @@ const ReportEditor = () => {
         );
       } catch (error) {
         console.error("Error generating response:", error);
-        setError("Error generating response");
+        setGenerationError("Error generating response");
       }
     }
     Promise.all(prompts.map((prompt) => requestResponse(prompt))).catch(
       (error) => {
         console.error("Error generating all responses:", error);
-        setError("Error generating all responses");
+        setGenerationError("Error generating all responses");
         setGeneratingAll(false);
       }
     );
@@ -118,11 +124,11 @@ const ReportEditor = () => {
 
   return (
     <div className="p-4">
-      {error && (
+      {(error || generationError) && (
         <Alert variant="destructive" className="mb-4">
           <ExclamationTriangleIcon className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{error || generationError}</AlertDescription>
         </Alert>
       )}
       {!selectedProject.index_available && (
@@ -147,6 +153,11 @@ const ReportEditor = () => {
           <Button
             onClick={handleGenerateAll}
             className="flex justify-between ml-0 pl-0"
+            disabled={
+              prompts.length === 0 ||
+              generatingAll ||
+              !selectedProject?.index_available
+            }
           >
             {generatingAll ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -183,7 +194,7 @@ const ReportEditor = () => {
         </div>
       ) : (
         <>
-          {prompts.length === 0 ? (
+          {prompts.length === 0 && !error ? (
             <div className="mb-6">
               <Card>
                 <CardHeader>

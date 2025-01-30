@@ -40,10 +40,37 @@ const WorkContext = createContext<{
   loadingFiles: boolean;
   loadingReportUpdate: boolean;
   loadingReportDelete: boolean;
+  error: string | null;
+  errors: {
+    prompts: string | null;
+    files: string | null;
+    reportUpdate: string | null;
+    reportDelete: string | null;
+  };
+  setErrors: React.Dispatch<
+    React.SetStateAction<{
+      prompts: string | null;
+      files: string | null;
+      reportUpdate: string | null;
+      reportDelete: string | null;
+    }>
+  >;
 } | null>(null);
 
 // Export a provider component
 export function WorkProvider({ children }: { children: ReactNode }) {
+  const [errors, setErrors] = useState<{
+    prompts: string | null;
+    files: string | null;
+    reportUpdate: string | null;
+    reportDelete: string | null;
+  }>({
+    prompts: null,
+    files: null,
+    reportUpdate: null,
+    reportDelete: null,
+  });
+
   const [loadingPrompts, setLoadingPrompts] = useState(false);
   const [loadingFiles, setLoadingFiles] = useState(false);
   const [loadingReportUpdate, setLoadingReportUpdate] = useState(false);
@@ -55,6 +82,12 @@ export function WorkProvider({ children }: { children: ReactNode }) {
     loadingFiles ||
     loadingReportUpdate ||
     loadingReportDelete;
+
+  const error =
+    errors.prompts ||
+    errors.files ||
+    errors.reportUpdate ||
+    errors.reportDelete;
 
   // Initialize all state using a custom initialization function
   const initializeFromStorage = () => {
@@ -83,29 +116,34 @@ export function WorkProvider({ children }: { children: ReactNode }) {
 
   // Keep separate useState calls for better maintainability
   const initialData = initializeFromStorage();
-  const [availableReports, setAvailableReports] = useState(
+  const [availableReports, setAvailableReports] = useState<Report[]>(
     initialData.availableReports
   );
-  const [availableProjects, setAvailableProjects] = useState(
+  const [availableProjects, setAvailableProjects] = useState<Project[]>(
     initialData.availableProjects
   );
-  const [selectedProject, setSelectedProject] = useState(
+  const [selectedProject, setSelectedProject] = useState<Project | null>(
     initialData.selectedProject
   );
-  const [selectedReport, setSelectedReport] = useState(
+  const [selectedReport, setSelectedReport] = useState<Report | null>(
     initialData.selectedReport
   );
   const [selectedTab, setSelectedTab] = useState(initialData.selectedTab);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [availableFiles, setAvailableFiles] = useState(
+  const [availableFiles, setAvailableFiles] = useState<SourceFile[]>(
     initialData.availableFiles
   );
 
   useEffect(() => {
     if (selectedReport) {
       setLoadingPrompts(true);
+      setErrors((prev) => ({ ...prev, prompts: null }));
       getPrompts(selectedReport.id)
         .then(setPrompts)
+        .catch((err) => {
+          setErrors((prev) => ({ ...prev, prompts: "Error getting prompts" }));
+          console.error(err);
+        })
         .finally(() => setLoadingPrompts(false));
     }
   }, [selectedReport]);
@@ -113,9 +151,14 @@ export function WorkProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (selectedProject) {
       setLoadingFiles(true);
+      setErrors((prev) => ({ ...prev, files: null }));
       getFiles(selectedProject.id)
         .then((files) => {
           setAvailableFiles(files);
+        })
+        .catch((err) => {
+          setErrors((prev) => ({ ...prev, files: "Error getting files" }));
+          console.error(err);
         })
         .finally(() => setLoadingFiles(false));
     }
@@ -135,11 +178,15 @@ export function WorkProvider({ children }: { children: ReactNode }) {
 
   const updateReport = async (reportId: string, updates: Partial<Report>) => {
     setLoadingReportUpdate(true);
+    setErrors((prev) => ({ ...prev, reportUpdate: null }));
     try {
       await updateReportApi(reportId, updates);
       if (selectedReport && selectedReport.id === reportId) {
         setSelectedReport((prev) => (prev ? { ...prev, ...updates } : null));
       }
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, reportUpdate: "Error updating report" }));
+      console.error(err);
     } finally {
       setLoadingReportUpdate(false);
     }
@@ -147,11 +194,15 @@ export function WorkProvider({ children }: { children: ReactNode }) {
 
   const deleteReport = async (reportId: string) => {
     setLoadingReportDelete(true);
+    setErrors((prev) => ({ ...prev, reportDelete: null }));
     try {
       await deleteReportApi(reportId);
       if (selectedReport && selectedReport.id === reportId) {
         setSelectedReport(null);
       }
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, reportDelete: "Error deleting report" }));
+      console.error(err);
     } finally {
       setLoadingReportDelete(false);
     }
@@ -181,6 +232,9 @@ export function WorkProvider({ children }: { children: ReactNode }) {
         loadingFiles,
         loadingReportUpdate,
         loadingReportDelete,
+        errors,
+        setErrors,
+        error,
       }}
     >
       {children}

@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Sheet,
   SheetClose,
@@ -12,6 +13,7 @@ import { getReports, newReport } from "@/autodraft/services/api";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import { Input } from "@/components/ui/input";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { Report } from "@/autodraft/types";
@@ -32,15 +34,22 @@ export function ReportSelector() {
     setAvailableReports,
     loading,
   } = useWork();
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedProject) {
-      getReports(selectedProject.id).then((reports) => {
-        setAvailableReports(reports);
-        if (reports.length > 0 && !selectedReport) {
-          setSelectedReport(reports[0]);
-        }
-      });
+      getReports(selectedProject.id)
+        .then((reports) => {
+          setAvailableReports(reports);
+          if (reports.length > 0 && !selectedReport) {
+            setSelectedReport(reports[0]);
+          }
+          setLoadingError(null);
+        })
+        .catch((err) => {
+          console.error("Failed to load reports:", err);
+          setLoadingError("Failed to load reports. Please try again later.");
+        });
     }
   }, [selectedProject, setAvailableReports, setSelectedReport, selectedReport]);
 
@@ -98,6 +107,16 @@ export function ReportSelector() {
   const handleOpenSheet = () => {
     // optional custom logic
   };
+
+  if (loadingError) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <ExclamationTriangleIcon className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{loadingError}</AlertDescription>
+      </Alert>
+    );
+  }
 
   if (loading) {
     return (

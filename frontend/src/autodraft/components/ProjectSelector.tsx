@@ -1,3 +1,4 @@
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Sheet,
   SheetClose,
@@ -10,6 +11,7 @@ import { getProjects, newProject } from "@/autodraft/services/api";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import { Input } from "@/components/ui/input";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { SelectBox } from "./SelectBox";
@@ -19,7 +21,7 @@ import { useWork } from "@/autodraft/WorkContext";
 
 export function ProjectSelector() {
   const [newProjectName, setNewProjectName] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [canCreate, setCanCreate] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const {
@@ -32,15 +34,22 @@ export function ProjectSelector() {
     loading,
   } = useWork();
   const { user } = useAuth();
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
-      getProjects().then((projects) => {
-        setAvailableProjects(projects);
-        if (projects.length > 0 && !selectedProject) {
-          setSelectedProject(projects[0]);
-        }
-      });
+      getProjects()
+        .then((projects) => {
+          setAvailableProjects(projects);
+          if (projects.length > 0 && !selectedProject) {
+            setSelectedProject(projects[0]);
+          }
+          setLoadingError(null);
+        })
+        .catch((err) => {
+          console.error("Failed to load projects:", err);
+          setLoadingError("Failed to load projects. Please try again later.");
+        });
     }
   }, [user, setAvailableProjects, setSelectedProject, selectedProject]);
 
@@ -62,7 +71,7 @@ export function ProjectSelector() {
       setSelectedReport(null);
       // Reset state
       setNewProjectName("");
-      setError(null);
+      setCreateError(null);
       setCanCreate(false);
     } catch (err) {
       console.error("Failed to create new project:", err);
@@ -75,19 +84,29 @@ export function ProjectSelector() {
 
     if (name.length === 0) {
       setCanCreate(false);
-      setError("Project name cannot be empty");
+      setCreateError("Project name cannot be empty");
       return;
     }
-    setError(null);
+    setCreateError(null);
 
     if (availableProjects.some((project) => project.name === name)) {
       setCanCreate(false);
-      setError("Project name already taken");
+      setCreateError("Project name already taken");
       return;
     }
-    setError(null);
+    setCreateError(null);
     setCanCreate(true);
   };
+
+  if (loadingError) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <ExclamationTriangleIcon className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{loadingError}</AlertDescription>
+      </Alert>
+    );
+  }
 
   if (loading) {
     return (
@@ -143,7 +162,7 @@ export function ProjectSelector() {
               </SheetClose>
             </form>
           </SheetHeader>
-          {error && <p className="text-red-500 mt-2">{error}</p>}
+          {createError && <p className="text-red-500 mt-2">{createError}</p>}
         </SheetContent>
       </Sheet>
     </div>
