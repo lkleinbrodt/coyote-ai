@@ -12,6 +12,8 @@ class Config:
     ROOT_DIR = Path(os.path.abspath(os.path.dirname(__file__))).parent
     SECRET_KEY = os.environ.get("SECRET_KEY")
     JWT_SECRET_KEY = SECRET_KEY
+    if not SECRET_KEY:
+        raise ValueError("SECRET_KEY is not set")
     ENV = os.environ.get("ENV", "dev").lower()
 
     ADMIN_EMAILS = ["landon@coyote-ai.com"]
