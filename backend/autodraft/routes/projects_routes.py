@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from backend.autodraft.utils import delete_index, check_index_available
+from backend.autodraft.utils import delete_index, check_index_available, S3_INDEX_DIR
 from backend.autodraft.models import Project
 from flask_jwt_extended import jwt_required, current_user
 from backend.extensions import db, create_logger

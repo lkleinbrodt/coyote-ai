@@ -95,12 +95,27 @@ export function WorkProvider({ children }: { children: ReactNode }) {
     const availableProjects = storage.get(storage.keys.AVAILABLE_PROJECTS);
 
     let selectedProject = storage.get(storage.keys.SELECTED_PROJECT);
+    //if no project is selected, select the first available project
+    //if project is selected but its not in the available projects, select the first available project
+    //
     if (!selectedProject && availableProjects.length > 0) {
+      selectedProject = availableProjects[0];
+    } else if (
+      selectedProject &&
+      availableProjects.length > 0 &&
+      !availableProjects.includes(selectedProject)
+    ) {
       selectedProject = availableProjects[0];
     }
 
     let selectedReport = storage.get(storage.keys.SELECTED_REPORT);
     if (!selectedReport && availableReports.length > 0) {
+      selectedReport = availableReports[0];
+    } else if (
+      selectedReport &&
+      availableReports.length > 0 &&
+      !availableReports.includes(selectedReport)
+    ) {
       selectedReport = availableReports[0];
     }
 
