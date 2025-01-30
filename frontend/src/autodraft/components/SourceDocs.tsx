@@ -23,7 +23,7 @@ const SourceDocs: React.FC<SourceDocsProps> = ({ sourceDocs }) => {
   return (
     <>
       <ol className="text-sm text-muted-foreground list-decimal list-inside ml-0 pl-0">
-        {Object.entries(groupedDocs).map(([fileName, docs], fileIndex) => (
+        {Object.entries(groupedDocs).map(([fileName, docs]) => (
           <li key={fileName} className="">
             {fileName}:
             <ol className="list-disc list-inside ml-0 pl-2">

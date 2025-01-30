@@ -1,11 +1,3 @@
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "react-router-dom";
 import {
   NavigationMenu,
@@ -14,7 +6,6 @@ import {
 } from "@/components/ui/navigation-menu";
 
 import { Button } from "@/components/ui/button";
-import { ChevronDownIcon } from "@radix-ui/react-icons";
 import UserItem from "@/autodraft/components/UserItem";
 // import { ModeToggle } from "@/components/DarkModeToggle";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,14 +15,14 @@ const getPageTitle = (pathname: string) => {
     case "/poeltl":
       return "PoeltlChat";
     case "/autodraft":
-      return "Autodraft";
+      return "AutoDraft";
     default:
       return "Coyote-AI";
   }
 };
 
 export default function NavBar() {
-  const { user, logout, login } = useAuth();
+  const { user, login } = useAuth();
   const location = useLocation();
   const pageTitle = getPageTitle(location.pathname);
 

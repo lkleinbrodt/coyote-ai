@@ -3,7 +3,6 @@ import "./Landing.css";
 import ProductCard from "../components/ProductCard";
 import React from "react";
 import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 import { useTheme } from "@/components/theme-provider";
 
@@ -20,7 +19,6 @@ const Landing: React.FC = () => {
     }
   }, []);
 
-  const { user } = useAuth();
   const products = [
     {
       title: "Poeltl-Chat",
@@ -39,7 +37,7 @@ const Landing: React.FC = () => {
     },
 
     {
-      title: "Autodraft",
+      title: "AutoDraft",
       description: "Generate AI-powered drafts for your projects",
       icon:
         theme === "dark"

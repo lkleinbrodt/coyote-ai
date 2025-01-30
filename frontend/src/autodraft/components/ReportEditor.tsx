@@ -6,14 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ChevronDownIcon, GearIcon } from "@radix-ui/react-icons";
-import {
-  Download,
-  FileEdit,
-  FileIcon,
-  Loader2,
-  MessageCircleIcon,
-} from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +18,7 @@ import { generateResponse, getPrompts } from "@/autodraft/services/api";
 
 import { AutodraftIcon } from "./AutodraftIcon";
 import { Button } from "@/components/ui/button";
+import { ChevronDownIcon } from "@radix-ui/react-icons";
 import Entry from "./Entry";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import NewPrompt from "./NewPrompt";

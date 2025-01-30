@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { ProjectSelector } from "@/autodraft/components/ProjectSelector";
 import { ReportSelector } from "@/autodraft/components/ReportSelector";
-import UserItem from "@/autodraft/components/UserItem";
 import { useWork } from "@/autodraft/WorkContext";
 
 function Sidebar() {
