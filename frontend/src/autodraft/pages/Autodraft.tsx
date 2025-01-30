@@ -4,6 +4,7 @@ import { Suspense, lazy } from "react";
 import { WorkProvider, useWork } from "../WorkContext";
 
 import Header from "../components/Header";
+import LoadingPage from "./LoadingPage";
 import Sidebar from "../components/Sidebar";
 
 const ReportEditor = lazy(() => import("../components/ReportEditor"));
@@ -15,7 +16,7 @@ const Home = () => {
 
   return (
     <div className="autodraft-container">
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<LoadingPage />}>
         {selectedTab === "report" && <ReportEditor />}
         {selectedTab === "data" && <DataEditor />}
         {selectedTab === "settings" && <Settings />}

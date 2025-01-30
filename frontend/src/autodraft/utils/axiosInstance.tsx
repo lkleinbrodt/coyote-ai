@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Create an axios instance with base URL and default configuration
 const axiosInstance = axios.create({
-  baseURL: `${import.meta.env.VITE_BASE_URL}/api/autodraft`, // Remove trailing slash
+  baseURL: `${import.meta.env.VITE_BASE_URL}api/autodraft`, // Remove trailing slash
   withCredentials: true, // Send cookies with requests
 });
 

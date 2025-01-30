@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
 import Entry from "./Entry";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
+import LoadingPage from "@/autodraft/pages/LoadingPage";
 import NewPrompt from "./NewPrompt";
 import PlaceholderMessage from "./PlaceholderMessage";
 import TemplateUploader from "./TemplateUploader";
@@ -111,6 +112,9 @@ const ReportEditor = () => {
       </div>
     );
   }
+  if (loading) {
+    return <LoadingPage />;
+  }
 
   if (!selectedReport) {
     return (
@@ -123,22 +127,35 @@ const ReportEditor = () => {
     );
   }
 
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <ExclamationTriangleIcon className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (availableFiles.length === 0) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <ExclamationTriangleIcon className="h-4 w-4" />
+        <AlertTitle>No source files available</AlertTitle>
+        <AlertDescription>
+          Go to the data tab to upload files related to this project.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <div className="p-4">
-      {(error || generationError) && (
+      {generationError && (
         <Alert variant="destructive" className="mb-4">
           <ExclamationTriangleIcon className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error || generationError}</AlertDescription>
-        </Alert>
-      )}
-      {availableFiles.length === 0 && (
-        <Alert variant="destructive" className="mb-4">
-          <ExclamationTriangleIcon className="h-4 w-4" />
-          <AlertTitle>No source files available</AlertTitle>
-          <AlertDescription>
-            Go to the data tab to upload files related to this project.
-          </AlertDescription>
+          <AlertDescription>{generationError}</AlertDescription>
         </Alert>
       )}
 
