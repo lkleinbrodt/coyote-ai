@@ -8,7 +8,11 @@ interface SourceDocsProps {
 }
 
 const SourceDocs: React.FC<SourceDocsProps> = ({ sourceDocs }) => {
-  if (!sourceDocs || sourceDocs.length === 0) return null;
+  if (!sourceDocs || sourceDocs.length === 0) {
+    return (
+      <div className="text-sm text-muted-foreground">No sources found</div>
+    );
+  }
 
   // Group documents by filename
   const groupedDocs = sourceDocs.reduce((acc, doc) => {

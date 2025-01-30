@@ -15,6 +15,7 @@ import {
 
 import { getFiles } from "@/autodraft/services/api";
 import { getPrompts } from "@/autodraft/services/api";
+import { storage } from "@/utils/storage";
 
 // Create the context
 const WorkContext = createContext<{
@@ -35,50 +36,124 @@ const WorkContext = createContext<{
   availableProjects: Project[];
   setAvailableProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   loading: boolean;
+  loadingPrompts: boolean;
+  loadingFiles: boolean;
+  loadingReportUpdate: boolean;
+  loadingReportDelete: boolean;
 } | null>(null);
 
 // Export a provider component
 export function WorkProvider({ children }: { children: ReactNode }) {
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [selectedTab, setSelectedTab] = useState("report");
+  const [loadingPrompts, setLoadingPrompts] = useState(false);
+  const [loadingFiles, setLoadingFiles] = useState(false);
+  const [loadingReportUpdate, setLoadingReportUpdate] = useState(false);
+  const [loadingReportDelete, setLoadingReportDelete] = useState(false);
+
+  // Compute overall loading state
+  const loading =
+    loadingPrompts ||
+    loadingFiles ||
+    loadingReportUpdate ||
+    loadingReportDelete;
+
+  // Initialize all state using a custom initialization function
+  const initializeFromStorage = () => {
+    const availableReports = storage.get(storage.keys.AVAILABLE_REPORTS);
+    const availableProjects = storage.get(storage.keys.AVAILABLE_PROJECTS);
+
+    let selectedProject = storage.get(storage.keys.SELECTED_PROJECT);
+    if (!selectedProject && availableProjects.length > 0) {
+      selectedProject = availableProjects[0];
+    }
+
+    let selectedReport = storage.get(storage.keys.SELECTED_REPORT);
+    if (!selectedReport && availableReports.length > 0) {
+      selectedReport = availableReports[0];
+    }
+
+    return {
+      availableReports,
+      availableProjects,
+      selectedProject,
+      selectedReport,
+      selectedTab: storage.get(storage.keys.SELECTED_TAB),
+      availableFiles: storage.get(storage.keys.AVAILABLE_FILES),
+    };
+  };
+
+  // Keep separate useState calls for better maintainability
+  const initialData = initializeFromStorage();
+  const [availableReports, setAvailableReports] = useState(
+    initialData.availableReports
+  );
+  const [availableProjects, setAvailableProjects] = useState(
+    initialData.availableProjects
+  );
+  const [selectedProject, setSelectedProject] = useState(
+    initialData.selectedProject
+  );
+  const [selectedReport, setSelectedReport] = useState(
+    initialData.selectedReport
+  );
+  const [selectedTab, setSelectedTab] = useState(initialData.selectedTab);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [availableFiles, setAvailableFiles] = useState<SourceFile[]>([]);
-  const [availableReports, setAvailableReports] = useState<Report[]>([]);
-  const [availableProjects, setAvailableProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [availableFiles, setAvailableFiles] = useState(
+    initialData.availableFiles
+  );
 
   useEffect(() => {
     if (selectedReport) {
-      setLoading(true);
+      setLoadingPrompts(true);
       getPrompts(selectedReport.id)
         .then(setPrompts)
-        .finally(() => setLoading(false));
+        .finally(() => setLoadingPrompts(false));
     }
   }, [selectedReport]);
 
   useEffect(() => {
     if (selectedProject) {
-      setLoading(true);
+      setLoadingFiles(true);
       getFiles(selectedProject.id)
         .then((files) => {
           setAvailableFiles(files);
         })
-        .finally(() => setLoading(false));
+        .finally(() => setLoadingFiles(false));
     }
   }, [selectedProject]);
 
+  useEffect(() => {
+    storage.set(storage.keys.SELECTED_PROJECT, selectedProject);
+  }, [selectedProject]);
+
+  useEffect(() => {
+    storage.set(storage.keys.SELECTED_REPORT, selectedReport);
+  }, [selectedReport]);
+
+  useEffect(() => {
+    storage.set(storage.keys.SELECTED_TAB, selectedTab);
+  }, [selectedTab]);
+
   const updateReport = async (reportId: string, updates: Partial<Report>) => {
-    await updateReportApi(reportId, updates);
-    if (selectedReport && selectedReport.id === reportId) {
-      setSelectedReport((prev) => (prev ? { ...prev, ...updates } : null));
+    setLoadingReportUpdate(true);
+    try {
+      await updateReportApi(reportId, updates);
+      if (selectedReport && selectedReport.id === reportId) {
+        setSelectedReport((prev) => (prev ? { ...prev, ...updates } : null));
+      }
+    } finally {
+      setLoadingReportUpdate(false);
     }
   };
 
   const deleteReport = async (reportId: string) => {
-    await deleteReportApi(reportId);
-    if (selectedReport && selectedReport.id === reportId) {
-      setSelectedReport(null);
+    setLoadingReportDelete(true);
+    try {
+      await deleteReportApi(reportId);
+      if (selectedReport && selectedReport.id === reportId) {
+        setSelectedReport(null);
+      }
+    } finally {
+      setLoadingReportDelete(false);
     }
   };
 
@@ -102,6 +177,10 @@ export function WorkProvider({ children }: { children: ReactNode }) {
         availableProjects,
         setAvailableProjects,
         loading,
+        loadingPrompts,
+        loadingFiles,
+        loadingReportUpdate,
+        loadingReportDelete,
       }}
     >
       {children}

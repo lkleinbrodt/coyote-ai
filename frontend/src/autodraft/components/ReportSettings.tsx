@@ -1,10 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -84,7 +78,6 @@ function ReportSettings() {
         <Card>
           <CardHeader>
             <CardTitle>Report Information</CardTitle>
-            <CardDescription>View details about your report</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -112,7 +105,6 @@ function ReportSettings() {
         <Card>
           <CardHeader>
             <CardTitle>Actions</CardTitle>
-            <CardDescription>Manage your report settings</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-row justify-around">
             {/* Rename Dialog */}

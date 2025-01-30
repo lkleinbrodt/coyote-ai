@@ -1,10 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -76,7 +70,6 @@ function ProjectSettings() {
         <Card>
           <CardHeader>
             <CardTitle>Project Information</CardTitle>
-            <CardDescription>View details about your project</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -98,7 +91,6 @@ function ProjectSettings() {
         <Card>
           <CardHeader>
             <CardTitle>Actions</CardTitle>
-            <CardDescription>Manage your project settings</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-row justify-around">
             <Dialog>

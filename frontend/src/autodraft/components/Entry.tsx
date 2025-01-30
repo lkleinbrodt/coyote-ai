@@ -15,6 +15,7 @@ import {
   updateResponse,
 } from "@/autodraft/services/api";
 
+import { AutodraftIcon } from "./AutodraftIcon";
 import { AutosizeTextarea } from "./AutoSizeTextArea";
 import { Button } from "@/components/ui/button";
 import { ReloadIcon } from "@radix-ui/react-icons";
@@ -131,15 +132,17 @@ const Entry: React.FC<EntryProps> = ({ initialPrompt, setPrompts }) => {
                 {prompt?.text}
               </CardTitle>
               <div className="flex flex-row">
-                <Popover>
-                  <PopoverTrigger className="text-s text-muted-foreground hover:underline decoration-dotted flex items-center gap-1">
-                    <span>{response.source_docs.length} Sources</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </PopoverTrigger>
-                  <PopoverContent>
-                    <SourceDocs sourceDocs={response.source_docs} />
-                  </PopoverContent>
-                </Popover>
+                {response.text.length > 0 && (
+                  <Popover>
+                    <PopoverTrigger className="text-s text-muted-foreground hover:underline decoration-dotted flex items-center gap-1">
+                      <span>{response.source_docs.length} Sources</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <SourceDocs sourceDocs={response.source_docs} />
+                    </PopoverContent>
+                  </Popover>
+                )}
                 <Button onClick={handleDeletePrompt} variant="ghost">
                   <TrashIcon className="h-4 w-4 text-red-500 hover:text-red-700" />
                 </Button>
@@ -164,7 +167,11 @@ const Entry: React.FC<EntryProps> = ({ initialPrompt, setPrompts }) => {
             </Button>
           ) : (
             <Button onClick={() => requestResponse()}>
-              <RefreshCcw className="mr-0 h-4 w-4" />
+              {response?.text ? (
+                <RefreshCcw className="mr-0 h-4 w-4" />
+              ) : (
+                <AutodraftIcon className="mr-0 h-5 w-5" theme="dark" />
+              )}
               {response?.text ? "Regenerate" : "Generate"}
             </Button>
           )}

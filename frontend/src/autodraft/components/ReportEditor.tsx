@@ -94,14 +94,6 @@ const ReportEditor = () => {
     exportDocx(prompts, selectedProject, selectedReport);
   }
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
   if (!selectedProject) {
     return (
       <div>
@@ -141,30 +133,6 @@ const ReportEditor = () => {
             Go to the data tab to create an index.
           </AlertDescription>
         </Alert>
-      )}
-
-      {prompts.length === 0 && (
-        <div className="mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Report Template</CardTitle>
-              <CardDescription>
-                Upload a template document to structure your report. The
-                template will be used as a starting point for generating
-                content.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TemplateUploader
-                projectID={selectedProject.id}
-                reportID={selectedReport.id}
-                onUploadSuccess={() => {
-                  getPrompts(selectedReport.id).then(setPrompts);
-                }}
-              />
-            </CardContent>
-          </Card>
-        </div>
       )}
 
       <div className="mb-5 flex gap-4">
@@ -209,19 +177,52 @@ const ReportEditor = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      {prompts.map((prompt) => (
-        <div key={prompt.id} className="mb-4">
-          <Entry initialPrompt={prompt} setPrompts={setPrompts} />
+      {loading ? (
+        <div className="flex justify-center items-center h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
-      ))}
-      <div className="flex justify-center mb-10 gap-4">
-        <NewPrompt
-          prompts={prompts}
-          setPrompts={setPrompts}
-          reportID={selectedReport.id}
-        />
-      </div>
+      ) : (
+        <>
+          {prompts.length === 0 ? (
+            <div className="mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Report Template</CardTitle>
+                  <CardDescription>
+                    Upload a template document to structure your report. The
+                    template will be used as a starting point for generating
+                    content.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <TemplateUploader
+                    projectID={selectedProject.id}
+                    reportID={selectedReport.id}
+                    onUploadSuccess={() => {
+                      getPrompts(selectedReport.id).then(setPrompts);
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <>
+              {prompts.map((prompt) => (
+                <div key={prompt.id} className="mb-4">
+                  <Entry initialPrompt={prompt} setPrompts={setPrompts} />
+                </div>
+              ))}
+              <div className="flex justify-center mb-10 gap-4">
+                <NewPrompt
+                  prompts={prompts}
+                  setPrompts={setPrompts}
+                  reportID={selectedReport.id}
+                />
+              </div>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 };

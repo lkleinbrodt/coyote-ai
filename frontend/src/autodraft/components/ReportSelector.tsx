@@ -114,7 +114,7 @@ export function ReportSelector() {
         value={
           selectedReport
             ? { id: selectedReport.id, name: selectedReport.name }
-            : { id: undefined, name: undefined }
+            : { id: "-1", name: "No report selected" }
         }
         options={availableReports}
         setValue={handleChangeReport}
