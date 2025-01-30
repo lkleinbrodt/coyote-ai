@@ -26,8 +26,6 @@ export const getReports = async (projectID?: string): Promise<Report[]> => {
       ? `/reports?project_id=${projectID}`
       : "/reports";
     const response = await axiosInstance.get(endpoint);
-    console.log("reports");
-    console.log(response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching reports:", error);
