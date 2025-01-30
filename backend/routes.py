@@ -56,7 +56,7 @@ def oauth_callback(provider):
 
     # create a jwt
     access_token = create_access_token(
-        identity=user.id,
+        identity=str(user.id),
         additional_claims={
             "name": user.name,
             "email": user.email,
