@@ -12,9 +12,19 @@
 }
 
 .controls-tooltip h3 {
-  margin: 0 0 15px 0;
   text-align: center;
   font-size: 1.2em;
+}
+
+.controls-tooltip .hover-content {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.controls-tooltip:hover .hover-content {
+  display: block;
+  opacity: 1;
 }
 
 .control-section {

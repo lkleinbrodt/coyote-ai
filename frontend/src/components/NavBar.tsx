@@ -16,6 +16,8 @@ const getPageTitle = (pathname: string) => {
       return "PoeltlChat";
     case "/autodraft":
       return "AutoDraft";
+    case "/boids":
+      return "Boids";
     default:
       return "Coyote-AI";
   }
