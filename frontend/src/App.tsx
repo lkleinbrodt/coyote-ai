@@ -7,6 +7,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import AuthPage from "./pages/AuthPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import Autodraft from "./autodraft/pages/Autodraft";
+import Boids from "./pages/Boids";
 import Landing from "./pages/Landing";
 import Login from "./pages/LoginPage";
 import NavBar from "./components/NavBar";
@@ -32,6 +33,7 @@ function App() {
                 <Route element={<PrivateRoute />}>
                   <Route path="/poeltl" element={<Poeltl />} />
                   <Route path="/autodraft" element={<Autodraft />} />
+                  <Route path="/boids" element={<Boids />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

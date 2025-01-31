@@ -139,13 +139,15 @@ const ReportEditor = () => {
 
   if (availableFiles.length === 0) {
     return (
-      <Alert variant="destructive" className="mb-4">
-        <ExclamationTriangleIcon className="h-4 w-4" />
-        <AlertTitle>No source files available</AlertTitle>
-        <AlertDescription>
-          Go to the data tab to upload files related to this project.
-        </AlertDescription>
-      </Alert>
+      <div className="p-4">
+        <Alert variant="destructive" className="mb-4">
+          <ExclamationTriangleIcon className="h-4 w-4" />
+          <AlertTitle>No source files available</AlertTitle>
+          <AlertDescription>
+            Go to the data tab to upload files related to this project.
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 

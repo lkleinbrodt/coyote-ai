@@ -21,10 +21,10 @@ const Landing: React.FC = () => {
 
   const products = [
     {
-      title: "Poeltl-Chat",
-      description: "Play a game of NBA themed 20-questions against an AI",
-      icon: theme === "dark" ? "icons/team-dark.png" : "icons/team-light.png",
-      link: "/poeltl",
+      title: "Boids",
+      description: "Visualize boids in 3D",
+      icon: theme === "dark" ? "icons/boids-dark.png" : "icons/boids-light.png",
+      link: "/boids",
     },
     {
       title: "Cheffrey",
@@ -45,6 +45,14 @@ const Landing: React.FC = () => {
           : "icons/drafting-compass-light.png",
       link: "/autodraft",
     },
+
+    {
+      title: "Poeltl-Chat",
+      description: "Play a game of NBA themed 20-questions against an AI",
+      icon: theme === "dark" ? "icons/team-dark.png" : "icons/team-light.png",
+      link: "/poeltl",
+    },
+
     {
       title: "Reminder-Mate",
       description: "Get reminders for your tasks and events",
