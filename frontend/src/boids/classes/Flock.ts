@@ -136,4 +136,10 @@ export class Flock {
   getBoids(): Boid[] {
     return this.boids;
   }
+
+  setMaxSpeed(speed: number): void {
+    this.config.maxSpeed = speed;
+    // Update minSpeed to maintain the same ratio with maxSpeed
+    this.config.minSpeed = speed * 0.5;
+  }
 }

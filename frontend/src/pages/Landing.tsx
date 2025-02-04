@@ -67,25 +67,21 @@ const Landing: React.FC = () => {
   return (
     <div className="landing-page">
       <div className="hero-section">
-        {/* <img
-          src="icons/coyote_logo.png"
-          className="logo"
-          alt="Coyote AI logo"
-        />
-
-        {user && (
-          <div className="flex flex-col justify-center items-center">
-            <span className="user-message text-center">{user.name}</span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-20">
+            <h1 className="text-4xl sm:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-br from-primary to-secondary pb-1">
+              Let AI lighten your load
+            </h1>
+            <p className="text-xl sm:text-2xl text-muted-foreground">
+              We help you leverage the power of AI to streamline your work and
+              improve your productivity
+            </p>
           </div>
-        )}
-
-        <div className="welcome-container">
-          <h1>Welcome</h1>
-          <div className="welcome-blurb">Check out our projects below!</div>
-        </div> */}
+        </div>
       </div>
+
       <div className="product-section">
-        <h1>Projects</h1>
+        <h1 className="text-6xl text-muted font-bold mb-4">Projects</h1>
         <div className="product-grid">
           {products.map((product, index) => (
             <ProductCard key={index} {...product} />

@@ -7,11 +7,6 @@
   }
 }
 
-h1 {
-  font-size: 4rem;
-  color: hsl(var(--muted-foreground));
-}
-
 .landing-page {
   padding: 1rem 1rem;
 }
@@ -73,7 +68,6 @@ h1 {
 .product-section {
   display: flex;
   flex-direction: column;
-  margin-top: 2rem;
   margin-bottom: 2rem;
 }
 

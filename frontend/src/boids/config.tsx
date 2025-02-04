@@ -14,20 +14,20 @@ const BOID_CONFIG: BoidConfig = {
   centeringFactor: 0.005, // Cohesion - strength of attraction to flock center
   matchingFactor: 0.05, // Alignment - strength of velocity matching
   avoidFactor: 0.05, // Separation - strength of collision avoidance
-  wallAvoidFactor: 0.5, // Wall avoidance strength
+  wallAvoidFactor: 4, // Wall avoidance strength
   maxSpeed: 0.2, // Maximum movement speed
   minSpeed: 0.1, // Minimum movement speed
 
   // Environment configuration
   bounds: {
-    width: 30, // X-axis
-    height: 15, // Y-axis
-    depth: 20, // Z-axis
+    width: 35, // X-axis
+    height: 20, // Y-axis
+    depth: 35, // Z-axis
   },
   margin: 3, // Distance from walls to start avoiding them
 
   // Flock configuration
-  numBoids: 250, // Total number of boids
+  numBoids: 500, // Total number of boids
   constantColorPercentage: 0.1, // Percentage of boids that maintain constant color
 };
 
