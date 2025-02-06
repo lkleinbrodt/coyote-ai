@@ -22,7 +22,7 @@ export default function TemplateUploader({
   reportID: string;
   onUploadSuccess?: () => void;
 }) {
-  //TODO: a lot of overlap with SourceFileUploader...
+  //NOTE: a lot of overlap with SourceFileUploader...
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [fileProgress] = useState<number | null>(null);

@@ -17,6 +17,7 @@ import PlaceholderMessage from "./PlaceholderMessage";
 import { useState } from "react";
 import { useWork } from "../WorkContext";
 
+//TODO: add error handling for when you fail to update the report
 function ReportSettings() {
   const { selectedReport, setSelectedReport, setAvailableReports } = useWork();
   const [newName, setNewName] = useState(selectedReport?.name || "");

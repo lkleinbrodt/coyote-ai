@@ -44,9 +44,6 @@ class Config:
         }
     }
 
-    # TODO: this belongs elsewhere
-    S3_INDEX_DIR = "indices"
-
     AUTODRAFT_BUCKET = "autodraft-dev"
 
 

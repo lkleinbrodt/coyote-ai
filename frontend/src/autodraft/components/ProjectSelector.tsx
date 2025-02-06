@@ -37,21 +37,19 @@ export function ProjectSelector() {
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
-      getProjects()
-        .then((projects) => {
-          setAvailableProjects(projects);
-          if (projects.length > 0 && !selectedProject) {
-            setSelectedProject(projects[0]);
-          }
-          setLoadingError(null);
-        })
-        .catch((err) => {
-          console.error("Failed to load projects:", err);
-          setLoadingError("Failed to load projects. Please try again later.");
-        });
-    }
-  }, [user, setAvailableProjects, setSelectedProject, selectedProject]);
+    getProjects()
+      .then((projects) => {
+        setAvailableProjects(projects);
+        if (projects.length > 0 && !selectedProject) {
+          setSelectedProject(projects[0]);
+        }
+        setLoadingError(null);
+      })
+      .catch((err) => {
+        console.error("Failed to load projects:", err);
+        setLoadingError("Failed to load projects.");
+      });
+  }, [setAvailableProjects, setSelectedProject, selectedProject]);
 
   const handleChange = (value: { id: string; name: string }) => {
     const project = availableProjects.find((p) => p.id === value.id);
@@ -100,7 +98,7 @@ export function ProjectSelector() {
 
   if (loadingError) {
     return (
-      <Alert variant="destructive" className="mb-4">
+      <Alert variant="destructive">
         <ExclamationTriangleIcon className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>{loadingError}</AlertDescription>

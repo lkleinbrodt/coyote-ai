@@ -243,17 +243,14 @@ export const updateOrCreateIndex = async (projectID: string) => {
     const updateResponse = await updateIndex(projectID);
     return updateResponse;
   } catch (error: any) {
-    // Check if the error is due to the index not being found
     if (
       error.response &&
       error.response.status === 404 &&
       error.response.data.error === "Index not found"
     ) {
-      // If the index doesn't exist, create a new one
       const createResponse = await createIndex(projectID);
       return createResponse;
     } else {
-      // If it's a different error, throw it
       console.error("Error updating or creating index:", error);
       throw error;
     }

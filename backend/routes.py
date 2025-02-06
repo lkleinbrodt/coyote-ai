@@ -45,7 +45,6 @@ def oauth_callback(provider):
     user = User.query.filter_by(social_id=social_id).first()
 
     if not user:
-
         user = User(social_id=social_id, name=name, email=email, image=picture)
         db.session.add(user)
         db.session.commit()
@@ -54,7 +53,6 @@ def oauth_callback(provider):
     # Get the next parameter from the OAuth state
     next_path = request.args.get("state", "/")
 
-    # create a jwt
     access_token = create_access_token(
         identity=str(user.id),
         additional_claims={

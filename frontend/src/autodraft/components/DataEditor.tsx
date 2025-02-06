@@ -1,8 +1,10 @@
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ComponentNoneIcon, ReloadIcon } from "@radix-ui/react-icons";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import FileCard from "./FileCard";
 import PlaceholderMessage from "./PlaceholderMessage";
-import { ReloadIcon } from "@radix-ui/react-icons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SourceFile } from "@/autodraft/types";
 import SourceFileUploader from "./SourceFileUploader";
@@ -54,7 +56,6 @@ const DataEditor = () => {
   //           if (!prevProject) return null;
   //           return {
   //             ...prevProject,
-  //             index_available: true,
   //           };
   //         });
   //       });
@@ -90,7 +91,7 @@ const DataEditor = () => {
   return (
     <div className="p-4">
       <div className="flex flex-col gap-4">
-        <div className="flex flex-row gap-4 justify-between">
+        <div className="flex flex-row gap-4 justify-center">
           <SourceFileUploader
             projectID={selectedProject?.id}
             setAvailableFiles={setAvailableFiles}
@@ -117,6 +118,17 @@ const DataEditor = () => {
         </div>
         <div>
           <h2 className="text-xl font-semibold mb-2">Source Files</h2>
+          {availableFiles.length === 0 && (
+            <Alert className="mb-4">
+              <ComponentNoneIcon className="h-4 w-4" />
+              <AlertTitle>No source files yet</AlertTitle>
+              <AlertDescription className="text-muted-foreground">
+                Sources let AutoDraft base its answers on specific documents
+                (like project updates, annual reports, financial statements,
+                etc.)
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="grid grid-cols-4 gap-4">
             {availableFiles.map((file: SourceFile) => (
               <FileCard key={file.id} file={file} onDelete={handleDeleteFile} />

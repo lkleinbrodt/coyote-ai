@@ -25,7 +25,6 @@ export interface Project {
   id: string;
   name: string;
   index_id: string;
-  index_available: boolean;
 }
 
 export interface Report {

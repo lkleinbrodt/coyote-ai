@@ -1,35 +1,34 @@
 from llama_index.core import VectorStoreIndex, StorageContext
 from llama_index.core import load_index_from_storage
-import os
 from backend.autodraft.models import File
 from llama_index.core import Document as LlamaDocument
-from backend.src.s3 import S3, create_s3_fs
+from backend.src.s3 import S3
 from backend.config import Config
 
-S3_INDEX_DIR = Config.AUTODRAFT_BUCKET + "/" + Config.S3_INDEX_DIR
+S3_INDEX_DIR = Config.AUTODRAFT_BUCKET + "/indices"
 
 
 def save_index(index: VectorStoreIndex, project_id: int):
-    s3_fs = create_s3_fs()
+    s3 = S3(Config.AUTODRAFT_BUCKET)
     # TODO: more config
     index.storage_context.persist(
         persist_dir=f"{S3_INDEX_DIR}/{project_id}",
-        fs=s3_fs,
+        fs=s3.fs,
     )
 
     return True
 
 
 def load_index(project_id: int) -> VectorStoreIndex | None:
-    s3_fs = create_s3_fs()
+    s3 = S3(Config.AUTODRAFT_BUCKET)
     # if no dir exists at the given path, then raise an error
-    if not s3_fs.exists(f"{S3_INDEX_DIR}/{project_id}"):
+    if not s3.fs.exists(f"{S3_INDEX_DIR}/{project_id}"):
         raise FileNotFoundError(
             f"Index not found at {S3_INDEX_DIR}/{project_id}. Please create an index first."
         )
     index = load_index_from_storage(
         StorageContext.from_defaults(
-            persist_dir=f"{S3_INDEX_DIR}/{project_id}", fs=s3_fs
+            persist_dir=f"{S3_INDEX_DIR}/{project_id}", fs=s3.fs
         )
     )
     return index
@@ -65,15 +64,14 @@ def update_index(project_id):
     return index
 
 
-def delete_index(project_id) -> bool:
+def delete_index(project_id, s3_fs=None) -> bool:
     index_path = S3_INDEX_DIR / str(project_id)
-    s3_fs = create_s3_fs()
+    # TODO: replace with s3.exists implementation?
+    if s3_fs is None:
+        s3_fs = S3(Config.AUTODRAFT_BUCKET).fs
     if s3_fs.exists(index_path):
-        try:
-            s3_fs.rm(index_path, recursive=True)
-            return True
-        except Exception as e:
-            return False
+        s3_fs.rm(index_path, recursive=True)
+        return True
     else:
         return False
 
@@ -81,5 +79,5 @@ def delete_index(project_id) -> bool:
 def check_index_available(project_id, s3_fs=None) -> bool:
     index_path = S3_INDEX_DIR + "/" + str(project_id)
     if not s3_fs:
-        s3_fs = create_s3_fs()
+        s3_fs = S3(Config.AUTODRAFT_BUCKET).fs
     return s3_fs.exists(index_path)

@@ -23,13 +23,13 @@ function Sidebar() {
           </>
         )}
 
-        <Card className="mt-4 ">
+        <Card className="mt-4">
           <CardHeader className="mb-0">
             <CardTitle>How to use AutoDraft</CardTitle>
           </CardHeader>
 
           <CardContent>
-            <ol className="list-decimal list-inside pl-0 space-y-2 pt-0 mt-0">
+            <ol className="list-decimal list-inside pl-0 space-y-2 pt-0 mt-0 mb-0">
               <li>
                 Create projects to organize your work, and upload source files
                 related to each project so the AI can use them as context.

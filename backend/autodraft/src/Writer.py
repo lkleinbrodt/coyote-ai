@@ -35,7 +35,7 @@ class Writer:
             )
         )
 
-        # TODO: can provide our own templates here
+        # can provide our own templates here
         self.streaming_response_synthesizer = TreeSummarize(
             summary_template=qa_prompt, streaming=True
         )

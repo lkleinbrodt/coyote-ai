@@ -17,6 +17,7 @@ import PlaceholderMessage from "./PlaceholderMessage";
 import { useState } from "react";
 import { useWork } from "../WorkContext";
 
+//TODO: add error handling for when you fail to update the project
 function ProjectSettings() {
   const { selectedProject, setSelectedProject } = useWork();
   const [newName, setNewName] = useState(selectedProject?.name || "");
@@ -76,12 +77,6 @@ function ProjectSettings() {
               <Label>Project ID</Label>
               <p className="text-sm text-muted-foreground">
                 {selectedProject.id}
-              </p>
-            </div>
-            <div>
-              <Label>Index Status</Label>
-              <p className="text-sm text-muted-foreground">
-                {selectedProject.index_available ? "Indexed" : "Not Indexed"}
               </p>
             </div>
           </CardContent>

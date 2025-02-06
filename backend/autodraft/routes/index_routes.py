@@ -1,14 +1,13 @@
 from flask import Blueprint, jsonify, request
 from backend.autodraft.models import Project
-from backend.autodraft.utils import load_index, update_index
+from backend.autodraft.utils import update_index
 from llama_index.core import Document as LlamaDocument
 from flask_jwt_extended import jwt_required, current_user
 from backend.autodraft.src.IndexBuilder import IndexBuilder
-from backend.autodraft.extensions import INDEX_DICT
 from backend.extensions import create_logger
 from backend.src.s3 import create_s3_fs
-from backend.config import Config
-from backend.autodraft.utils import check_index_available
+from backend.autodraft.utils import check_index_available, delete_index
+from backend.autodraft.extensions import index_cache
 
 index_bp = Blueprint("index", __name__)
 logger = create_logger(__name__, level="DEBUG")
@@ -53,15 +52,10 @@ def load_index_route():
     project_id = request.args.get("project_id")
     logger.debug(f"Loading index for project {project_id}")
 
-    if project_id in INDEX_DICT:
-        logger.debug(f"Index for project_id {project_id} found in cache")
-        return jsonify({"success": "Index found in cache"}), 200
-
     try:
-        index = load_index(project_id)
+        index = index_cache.get_index(project_id)
     except FileNotFoundError:
         return jsonify({"error": "Index not found"}), 404
-    INDEX_DICT[project_id] = index
 
     return jsonify({"success": "Index loaded"}), 200
 
@@ -94,11 +88,8 @@ def delete_index():
         return jsonify({"error": "User does not have access to project"}), 403
 
     s3_fs = create_s3_fs()
-    index_dir = (
-        Config.AUTODRAFT_BUCKET + "/" + Config.S3_INDEX_DIR + "/" + str(project_id)
-    )
-    if s3_fs.exists(index_dir):
-        s3_fs.rm(index_dir)
+    if check_index_available(project_id, s3_fs):
+        delete_index(project_id, s3_fs)
 
     return jsonify({"success": "Index deleted"}), 200
 
@@ -120,13 +111,9 @@ def update_index_route():
         )
         return jsonify({"error": "User does not have access to project"}), 403
 
-    index_dir = (
-        Config.AUTODRAFT_BUCKET + "/" + Config.S3_INDEX_DIR + "/" + str(project_id)
-    )
-    s3_fs = create_s3_fs()
-    if not s3_fs.exists(index_dir):
+    try:
+        index = update_index(project_id)
+    except FileNotFoundError:
         return jsonify({"error": "Index not found"}), 404
-
-    index = update_index(project_id)
 
     return jsonify({"success": "Index updated"}), 200

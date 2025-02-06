@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from backend.autodraft.utils import delete_index, check_index_available, S3_INDEX_DIR
+from backend.autodraft.utils import delete_index, check_index_available
 from backend.autodraft.models import Project
 from flask_jwt_extended import jwt_required, current_user
 from backend.extensions import db, create_logger
@@ -101,11 +101,7 @@ def delete_project():
         return jsonify({"error": "Unauthorized"}), 403
 
     try:
-        # Delete the project's index if it exists
-        if project.index_id:
-            # TODO: Add your index deletion logic here
-            pass
-
+        delete_index(project_id)
         db.session.delete(project)
         db.session.commit()
         return jsonify({"success": True}), 200
@@ -118,15 +114,6 @@ def delete_project():
 @projects_bp.route("/projects", methods=["GET"])
 @jwt_required()
 def get_projects():
-
     projects = current_user.projects
-
-    # TODO: this is kinda dumb
-    s3_fs = create_s3_fs()
-    out = []
-    for project in projects:
-        x = project.to_dict()
-        x["index_available"] = check_index_available(project.id, s3_fs)
-        out.append(x)
-
-    return jsonify(out), 200
+    projects = [project.to_dict() for project in projects]
+    return jsonify(projects), 200

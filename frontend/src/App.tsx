@@ -30,11 +30,10 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/auth" element={<AuthPage />} />
-                <Route element={<PrivateRoute />}>
-                  <Route path="/poeltl" element={<Poeltl />} />
-                  <Route path="/autodraft" element={<Autodraft />} />
-                  <Route path="/boids" element={<Boids />} />
-                </Route>
+                <Route path="/boids" element={<Boids />} />
+                <Route path="/poeltl" element={<Poeltl />} />
+                <Route path="/autodraft" element={<Autodraft />} />
+                <Route element={<PrivateRoute />}></Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>

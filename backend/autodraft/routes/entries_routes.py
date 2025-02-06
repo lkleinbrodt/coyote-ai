@@ -9,7 +9,7 @@ from backend.autodraft.models import (
     SourceDoc,
 )
 from backend.extensions import db, create_logger
-from backend.autodraft.extensions import INDEX_DICT
+from backend.autodraft.extensions import index_cache
 from backend.autodraft.src.Writer import Writer
 from flask_jwt_extended import (
     jwt_required,
@@ -262,14 +262,10 @@ def generate_all():
 
     # TODO: assume index is already loaded
     project_id = Report.query.get(report_id).project_id
-    index = INDEX_DICT.get(project_id)
-    if not index:
-        logger.error(f"Index not loaded for project {project_id}, loading it now")
-        # load the index
-        index = load_index(project_id)
-        if index is None:
-            return jsonify({"error": "Index not found"}), 404
-        INDEX_DICT[project_id] = index
+    try:
+        index = index_cache.get_index(project_id)
+    except FileNotFoundError:
+        return jsonify({"error": "Index not found"}), 404
 
     writer = Writer(index)
     for prompt in prompts:
@@ -299,15 +295,10 @@ def write():
         return jsonify({"error": "No project_id provided"}), 400
 
     # assume the index is already loaded
-    index = INDEX_DICT.get(project_id)
-
-    if not index:
-        logger.error(f"Index not loaded for project {project_id}, loading it now")
-        # load the index
-        index = load_index(project_id)
-        if index is None:
-            return jsonify({"error": "Index not found"}), 404
-        INDEX_DICT[project_id] = index
+    try:
+        index = index_cache.get_index(project_id)
+    except FileNotFoundError:
+        return jsonify({"error": "Index not found"}), 404
 
     writer = Writer(index)
     response = writer.write(prompt)

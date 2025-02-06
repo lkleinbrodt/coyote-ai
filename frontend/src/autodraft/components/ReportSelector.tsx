@@ -48,7 +48,7 @@ export function ReportSelector() {
         })
         .catch((err) => {
           console.error("Failed to load reports:", err);
-          setLoadingError("Failed to load reports. Please try again later.");
+          setLoadingError("Failed to load reports.");
         });
     }
   }, [selectedProject, setAvailableReports, setSelectedReport, selectedReport]);
@@ -110,7 +110,7 @@ export function ReportSelector() {
 
   if (loadingError) {
     return (
-      <Alert variant="destructive" className="mb-4">
+      <Alert variant="destructive">
         <ExclamationTriangleIcon className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>{loadingError}</AlertDescription>
@@ -155,7 +155,6 @@ export function ReportSelector() {
         <SheetContent side="left">
           <SheetHeader>
             <SheetTitle>New Report</SheetTitle>
-            {/* Wrap your input+button in a form */}
             <form
               onSubmit={(e) => {
                 e.preventDefault(); // prevents a browser reload

@@ -21,7 +21,7 @@ class Dictbased_VectorDB:
         return np.mean(list(self.internal_store.values()), axis=0)
 
         # first, discard any vectors that are too similar to each other
-        # TODO: improve on this approach
+        # improve on this approach
         # # This doesnt really work
         # np_embeddings = np.array(list(self.internal_store.values()))
 

@@ -42,7 +42,7 @@ export default function NavBar() {
                 />
               </Link>
               {pageTitle && (
-                <span className="text-xl font-semibold text-background">
+                <span className="text-xl font-semibold text-background cursor-default">
                   {pageTitle}
                 </span>
               )}

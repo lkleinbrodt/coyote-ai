@@ -1,9 +1,29 @@
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from llama_index.core import VectorStoreIndex
+from backend.extensions import create_logger
+from backend.autodraft.utils import load_index
+
+logger = create_logger(__name__)
 
 
 class IndexCache:
+    # TODO: take the expiration component from below and add it here
+    # after X minutes, delete unused indices
+    def __init__(self):
+        self.cache = {}
+
+    def get_index(self, project_id):
+        if project_id in self.cache:
+            return self.cache[project_id]
+
+        logger.warning(f"Index not loaded for project {project_id}, loading it now")
+        # raises FileNotFoundError if not found
+        self.cache[project_id] = load_index(project_id)
+        return self.cache[project_id]
+
+
+class OldIndexCache:
     """
     A cache implementation for storing index data. Basically a dict with the following 2 features:
     - A maximum size, after which the oldest items are removed.

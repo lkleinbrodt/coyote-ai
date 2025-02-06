@@ -51,15 +51,7 @@ const ReportEditor = () => {
     setGeneratingAll(true);
     setResponsesGenerated(0);
 
-    //instead of doing it in one route, let's do it entry by entry
-    //this will allow us to update the UI as we go
-    // generateAll(selectedReport.id).then(() => {
-    //   getPrompts(selectedReport.id).then(setPrompts);
-    //   setGeneratingAll(false);
-    // });
-
     function requestResponse(prompt: Prompt) {
-      //TODO: lots of overlap with Entry.tsx
       if (!selectedProject) {
         if (!selectedProject) return Promise.reject("No project selected");
       }
@@ -129,11 +121,13 @@ const ReportEditor = () => {
 
   if (error) {
     return (
-      <Alert variant="destructive" className="mb-4">
-        <ExclamationTriangleIcon className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <div className="p-4">
+        <Alert variant="destructive" className="mb-4">
+          <ExclamationTriangleIcon className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
@@ -173,11 +167,7 @@ const ReportEditor = () => {
           <Button
             onClick={handleGenerateAll}
             className="flex justify-between ml-0 pl-0"
-            disabled={
-              prompts.length === 0 ||
-              generatingAll ||
-              !selectedProject?.index_available
-            }
+            disabled={prompts.length === 0 || generatingAll}
           >
             {generatingAll ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -191,11 +181,7 @@ const ReportEditor = () => {
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              disabled={
-                prompts.length === 0 ||
-                generatingAll ||
-                !selectedProject?.index_available
-              }
+              disabled={prompts.length === 0 || generatingAll}
             >
               <ChevronDownIcon className="h-4 w-4" />
             </Button>
