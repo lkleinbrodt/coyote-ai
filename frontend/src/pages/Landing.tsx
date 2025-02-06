@@ -21,22 +21,6 @@ const Landing: React.FC = () => {
 
   const products = [
     {
-      title: "Boids",
-      description: "Visualize boids in 3D",
-      icon: theme === "dark" ? "icons/boids-dark.png" : "icons/boids-light.png",
-      link: "/boids",
-    },
-    {
-      title: "Cheffrey",
-      description: "Your AI sous-chef helps you discover, share, and create",
-      icon:
-        theme === "dark"
-          ? "icons/chef_hat_stamp.png"
-          : "icons/chef_hat_stamp_light.png",
-      link: "https://apps.apple.com/us/app/cheffrey/id6503424946",
-    },
-
-    {
       title: "AutoDraft",
       description: "Generate AI-powered drafts for your projects",
       icon:
@@ -44,6 +28,22 @@ const Landing: React.FC = () => {
           ? "icons/drafting-compass-dark.png"
           : "icons/drafting-compass-light.png",
       link: "/autodraft",
+    },
+    {
+      title: "Boids",
+      description: "Visualize boids in 3D",
+      icon: theme === "dark" ? "icons/boids-dark.png" : "icons/boids-light.png",
+      link: "/boids",
+    },
+    {
+      title: "Cheffrey",
+      description:
+        "Your AI sous-chef helps you discover, share, and create delicious recipes",
+      icon:
+        theme === "dark"
+          ? "icons/chef_hat_stamp.png"
+          : "icons/chef_hat_stamp_light.png",
+      link: "https://apps.apple.com/us/app/cheffrey/id6503424946",
     },
 
     {
@@ -65,24 +65,23 @@ const Landing: React.FC = () => {
   ];
 
   return (
-    <div className="landing-page">
-      <div className="hero-section">
+    <div className="p-1">
+      <div className="flex flex-column flex-start z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-20">
             <h1 className="text-4xl sm:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-br from-primary to-secondary pb-1">
               Let AI lighten your load
             </h1>
             <p className="text-xl sm:text-2xl text-muted-foreground">
-              We help you leverage the power of AI to streamline your work and
-              improve your productivity
+              We help you leverage Artificial Intelligence to streamline your
+              work and improve your productivity
             </p>
           </div>
         </div>
       </div>
 
-      <div className="product-section">
-        <h1 className="text-6xl text-muted font-bold mb-4">Projects</h1>
-        <div className="product-grid">
+      <div className="flex flex-column mb-2">
+        <div className="grid grid-cols-4 gap-1.5 p-2">
           {products.map((product, index) => (
             <ProductCard key={index} {...product} />
           ))}

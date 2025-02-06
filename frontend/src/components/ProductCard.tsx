@@ -38,10 +38,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
     >
       <CardHeader>{renderIcon()}</CardHeader>
       <CardContent>
-        <CardTitle className="text-center h3 text-foreground">
+        <CardTitle className="text-center text-3xl text-foreground mb-3">
           {title}
         </CardTitle>
-        <CardDescription className="text-left text-muted-foreground">
+        <CardDescription className="text-left text-muted-foreground text-xl">
           {description}
         </CardDescription>
       </CardContent>
