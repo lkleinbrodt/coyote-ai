@@ -67,7 +67,6 @@ function ProjectSettings() {
     <div>
       <h2 className="text-2xl font-bold mb-6">Project Settings</h2>
       <div className="space-y-6">
-        {/* Metadata Card */}
         <Card>
           <CardHeader>
             <CardTitle>Project Information</CardTitle>
@@ -82,7 +81,6 @@ function ProjectSettings() {
           </CardContent>
         </Card>
 
-        {/* Actions Card */}
         <Card>
           <CardHeader>
             <CardTitle>Actions</CardTitle>

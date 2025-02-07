@@ -32,6 +32,18 @@ const Alert = React.forwardRef<
 ));
 Alert.displayName = "Alert";
 
+const AlertIcon = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { icon: React.ElementType }
+>(({ className, icon: Icon, ...props }, ref) => (
+  <Icon
+    ref={ref}
+    className={cn("absolute left-4 top-4 h-4 w-4", className)}
+    {...props}
+  />
+));
+AlertIcon.displayName = "AlertIcon";
+
 //TODO: add an AlertIcon, which is automatically put in the proper place (centered, to the left)
 
 const AlertTitle = React.forwardRef<
@@ -58,4 +70,4 @@ const AlertDescription = React.forwardRef<
 ));
 AlertDescription.displayName = "AlertDescription";
 
-export { Alert, AlertTitle, AlertDescription };
+export { Alert, AlertTitle, AlertDescription, AlertIcon };

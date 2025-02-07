@@ -1,4 +1,9 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+} from "@/components/ui/alert";
 import { ComponentNoneIcon, ReloadIcon } from "@radix-ui/react-icons";
 
 import { Button } from "@/components/ui/button";
@@ -119,8 +124,8 @@ const DataEditor = () => {
         <div>
           <h2 className="text-xl font-semibold mb-2">Source Files</h2>
           {availableFiles.length === 0 && (
-            <Alert className="mb-4">
-              <ComponentNoneIcon className="h-4 w-4" />
+            <Alert className="my-4">
+              <AlertIcon icon={ComponentNoneIcon} />
               <AlertTitle>No source files yet</AlertTitle>
               <AlertDescription className="text-muted-foreground">
                 Sources let AutoDraft base its answers on specific documents

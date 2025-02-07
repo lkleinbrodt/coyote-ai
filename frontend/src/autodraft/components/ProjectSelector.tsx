@@ -1,4 +1,9 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+} from "@/components/ui/alert";
 import {
   Sheet,
   SheetClose,
@@ -16,7 +21,6 @@ import { Input } from "@/components/ui/input";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { SelectBox } from "./SelectBox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/contexts/AuthContext";
 import { useWork } from "@/autodraft/WorkContext";
 
 export function ProjectSelector() {
@@ -33,7 +37,6 @@ export function ProjectSelector() {
     setAvailableProjects,
     loading,
   } = useWork();
-  const { user } = useAuth();
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -99,7 +102,7 @@ export function ProjectSelector() {
   if (loadingError) {
     return (
       <Alert variant="destructive">
-        <ExclamationTriangleIcon className="h-4 w-4" />
+        <AlertIcon icon={ExclamationTriangleIcon} />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>{loadingError}</AlertDescription>
       </Alert>

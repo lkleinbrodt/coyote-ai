@@ -1,6 +1,11 @@
 "use client";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+} from "@/components/ui/alert";
 import {
   Sheet,
   SheetClose,
@@ -111,7 +116,7 @@ export function ReportSelector() {
   if (loadingError) {
     return (
       <Alert variant="destructive">
-        <ExclamationTriangleIcon className="h-4 w-4" />
+        <AlertIcon icon={ExclamationTriangleIcon} />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>{loadingError}</AlertDescription>
       </Alert>

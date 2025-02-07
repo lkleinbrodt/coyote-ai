@@ -1,4 +1,9 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+} from "@/components/ui/alert";
 import {
   Card,
   CardContent,
@@ -123,7 +128,7 @@ const ReportEditor = () => {
     return (
       <div className="p-4">
         <Alert variant="destructive" className="mb-4">
-          <ExclamationTriangleIcon className="h-4 w-4" />
+          <AlertIcon icon={ExclamationTriangleIcon} />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -135,7 +140,7 @@ const ReportEditor = () => {
     return (
       <div className="p-4">
         <Alert variant="destructive" className="mb-4">
-          <ExclamationTriangleIcon className="h-4 w-4" />
+          <AlertIcon icon={ExclamationTriangleIcon} />
           <AlertTitle>No source files available</AlertTitle>
           <AlertDescription>
             Go to the data tab to upload files related to this project.
@@ -149,7 +154,7 @@ const ReportEditor = () => {
     <div className="p-4">
       {generationError && (
         <Alert variant="destructive" className="mb-4">
-          <ExclamationTriangleIcon className="h-4 w-4" />
+          <AlertIcon icon={ExclamationTriangleIcon} />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{generationError}</AlertDescription>
         </Alert>
