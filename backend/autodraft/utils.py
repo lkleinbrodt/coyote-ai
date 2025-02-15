@@ -1,6 +1,6 @@
 from llama_index.core import VectorStoreIndex, StorageContext
 from llama_index.core import load_index_from_storage
-from backend.autodraft.models import File
+from backend.autodraft.models import File, Document
 from llama_index.core import Document as LlamaDocument
 from backend.src.s3 import S3
 from backend.config import Config
@@ -10,7 +10,7 @@ S3_INDEX_DIR = Config.AUTODRAFT_BUCKET + "/indices"
 
 def save_index(index: VectorStoreIndex, project_id: int):
     s3 = S3(Config.AUTODRAFT_BUCKET)
-    # TODO: more config
+
     index.storage_context.persist(
         persist_dir=f"{S3_INDEX_DIR}/{project_id}",
         fs=s3.fs,
@@ -55,10 +55,8 @@ def update_index(project_id):
         for doc in documents
     ]
 
-    # TODO: delete docs that are no longer necessary
     index.refresh_ref_docs(llama_documents)
 
-    # Save the updated index to S3
     save_index(index, project_id)
 
     return index

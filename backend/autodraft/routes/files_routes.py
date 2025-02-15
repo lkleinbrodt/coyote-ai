@@ -5,6 +5,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from backend.extensions import db
 from backend.autodraft.models import File, Project, Document
+from backend.autodraft.utils import update_index
 from llama_index.core import SimpleDirectoryReader
 from flask_jwt_extended import jwt_required, current_user
 

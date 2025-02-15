@@ -250,33 +250,46 @@ def new_prompt():
     return jsonify(new_prompt.to_dict()), 200
 
 
+def _generate_response(prompt_text: str, prompt_id: int, project_id: int):
+    """Helper function to generate a response for a single prompt"""
+    try:
+        index = index_cache.get_index(project_id)
+    except FileNotFoundError:
+        raise FileNotFoundError("Index not found")
+
+    writer = Writer(index)
+    response = writer.write(prompt_text)
+    text = response.response
+    source_nodes = response.source_nodes
+
+    # Check for existing response and update or create new one
+    existing_response = Response.query.filter_by(prompt_id=prompt_id).first()
+    if existing_response:
+        return _update_response(
+            response_id=existing_response.id,
+            text=text,
+            source_nodes=source_nodes,
+        )
+    else:
+        return _add_response(prompt_id, text, source_nodes)
+
+
 @entries_bp.route("/generate-all", methods=["POST"])
 @jwt_required()
 def generate_all():
     report_id = request.get_json().get("report_id")
     if not report_id:
         return jsonify({"error": "No report_id provided"}), 400
-    # go through all the prompts and generate a response for all of them
-    prompts = Prompt.query.filter_by(report_id=report_id).all()
-    # TODO: use a helper function to consolidate utility with write()
 
-    # TODO: assume index is already loaded
+    prompts = Prompt.query.filter_by(report_id=report_id).all()
     project_id = Report.query.get(report_id).project_id
+
     try:
-        index = index_cache.get_index(project_id)
+        for prompt in prompts:
+            _generate_response(prompt.text, prompt.id, project_id)
+        db.session.commit()
     except FileNotFoundError:
         return jsonify({"error": "Index not found"}), 404
-
-    writer = Writer(index)
-    for prompt in prompts:
-        response = writer.write(prompt.text)
-        response = response.response
-        existing_response = Response.query.filter_by(prompt_id=prompt.id).first()
-        if existing_response:
-            new_response = _update_response(existing_response.id, response)
-        else:
-            new_response = _add_response(prompt.id, response)
-    db.session.commit()
 
     return jsonify({"success": "All responses generated"}), 200
 
@@ -294,29 +307,8 @@ def write():
     if not project_id:
         return jsonify({"error": "No project_id provided"}), 400
 
-    # assume the index is already loaded
     try:
-        index = index_cache.get_index(project_id)
+        new_response = _generate_response(prompt, prompt_id, project_id)
+        return jsonify(new_response.to_dict()), 200
     except FileNotFoundError:
         return jsonify({"error": "Index not found"}), 404
-
-    writer = Writer(index)
-    response = writer.write(prompt)
-    text = response.response
-    source_nodes = response.source_nodes
-    db.session.commit()
-
-    # new_response = _add_response(prompt_id, response)
-    # TODO: right now, we're only doing 1 response and we're just updating it
-    existing_response = Response.query.filter_by(prompt_id=prompt_id).first()
-
-    if existing_response:
-        new_response = _update_response(
-            response_id=existing_response.id,
-            text=text,
-            source_nodes=source_nodes,
-        )
-    else:
-        new_response = _add_response(prompt_id, text, source_nodes)
-
-    return jsonify(new_response.to_dict()), 200
