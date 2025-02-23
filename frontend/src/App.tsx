@@ -12,6 +12,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/LoginPage";
 import NavBar from "./components/NavBar";
 import NotFound from "./pages/NotFound";
+import Pet from "./pet/pages/Pet";
 import Poeltl from "./poeltl/pages/Poeltl";
 import Privacy from "./pages/Privacy";
 import PrivateRoute from "./components/PrivateRoute";
@@ -30,10 +31,12 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/auth" element={<AuthPage />} />
-                <Route path="/boids" element={<Boids />} />
-                <Route path="/poeltl" element={<Poeltl />} />
-                <Route path="/autodraft" element={<Autodraft />} />
-                <Route element={<PrivateRoute />}></Route>
+                <Route element={<PrivateRoute />}>
+                  <Route path="/boids" element={<Boids />} />
+                  <Route path="/pet" element={<Pet />} />
+                  <Route path="/poeltl" element={<Poeltl />} />
+                  <Route path="/autodraft" element={<Autodraft />} />
+                </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
