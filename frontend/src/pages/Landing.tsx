@@ -21,6 +21,13 @@ const Landing: React.FC = () => {
 
   const products = [
     {
+      title: "Games",
+      description: "Collection of interactive games and simulations",
+      icon: theme === "dark" ? "icons/games-dark.png" : "icons/games-light.png",
+      link: "/games",
+      featured: true,
+    },
+    {
       title: "AutoDraft",
       description: "Generate AI-powered drafts for your projects",
       icon:
@@ -28,12 +35,6 @@ const Landing: React.FC = () => {
           ? "icons/drafting-compass-dark.png"
           : "icons/drafting-compass-light.png",
       link: "/autodraft",
-    },
-    {
-      title: "Boids",
-      description: "Visualize boids in 3D",
-      icon: theme === "dark" ? "icons/boids-dark.png" : "icons/boids-light.png",
-      link: "/boids",
     },
     {
       title: "Cheffrey",
@@ -45,14 +46,12 @@ const Landing: React.FC = () => {
           : "icons/chef_hat_stamp_light.png",
       link: "https://apps.apple.com/us/app/cheffrey/id6503424946",
     },
-
-    {
-      title: "Poeltl-Chat",
-      description: "Play a game of NBA themed 20-questions against an AI",
-      icon: theme === "dark" ? "icons/team-dark.png" : "icons/team-light.png",
-      link: "/poeltl",
-    },
-
+    // {
+    //   title: "Poeltl-Chat",
+    //   description: "Play a game of NBA themed 20-questions against an AI",
+    //   icon: theme === "dark" ? "icons/team-dark.png" : "icons/team-light.png",
+    //   link: "/poeltl",
+    // },
     {
       title: "Reminder-Mate",
       description: "Get reminders for your tasks and events",
@@ -81,7 +80,7 @@ const Landing: React.FC = () => {
       </div>
 
       <div className="flex flex-column mb-2">
-        <div className="grid grid-cols-4 gap-1.5 p-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
           {products.map((product, index) => (
             <ProductCard key={index} {...product} />
           ))}

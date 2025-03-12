@@ -3,12 +3,18 @@ from backend.extensions import create_logger
 from backend.config import Config
 from backend.src.OpenRouter import OpenRouterClient
 import random
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = create_logger(__name__, level="DEBUG")
 
 poeltl = Blueprint("poeltl", __name__, url_prefix="/poeltl")
 
-openrouter_client = OpenRouterClient()
+openrouter_client = OpenRouterClient(
+    api_key=os.getenv("OPENROUTER_API_KEY"),
+)
 
 
 def pick_person():

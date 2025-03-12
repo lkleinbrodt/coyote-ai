@@ -36,7 +36,7 @@ export default function NavBar() {
             <div className="flex items-center gap-4">
               <Link to="/" className="flex items-center gap-4">
                 <img
-                  src="icons/coyote_logo.png"
+                  src="/icons/coyote_logo.png"
                   alt="logo"
                   className="w-10 h-10"
                 />

@@ -8,6 +8,8 @@ import AuthPage from "./pages/AuthPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import Autodraft from "./autodraft/pages/Autodraft";
 import Boids from "./boids/pages/Boids";
+import Games from "./games/pages/Games";
+import GravityQuest from "./games/GravityQuest/GravityQuest";
 import Landing from "./pages/Landing";
 import Login from "./pages/LoginPage";
 import NavBar from "./components/NavBar";
@@ -36,6 +38,11 @@ function App() {
                   <Route path="/pet" element={<Pet />} />
                   <Route path="/poeltl" element={<Poeltl />} />
                   <Route path="/autodraft" element={<Autodraft />} />
+                  <Route path="/games" element={<Games />} />
+                  <Route
+                    path="/games/gravity-quest"
+                    element={<GravityQuest />}
+                  />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
