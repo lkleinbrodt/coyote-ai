@@ -1,5 +1,4 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { User } from "lucide-react";
 
 interface PersonPickerProps {
   onClick: () => void;
@@ -9,17 +8,13 @@ interface PersonPickerProps {
 export default function PersonPicker({ onClick, loading }: PersonPickerProps) {
   return (
     <div
-      className="d-flex align-items-center justify-content-center flex-column z-10"
+      className="flex flex-col items-center justify-center z-10"
       onClick={!loading ? onClick : undefined}
       role="button"
       tabIndex={0}
     >
       <div>
-        <FontAwesomeIcon
-          icon={faUser}
-          size="4x"
-          color={`hsl(var(--foreground))`}
-        />
+        <User className="h-16 w-16 text-foreground" />
       </div>
       <div className="text-muted-foreground">
         {loading ? "Loading..." : "Pick a new person"}
