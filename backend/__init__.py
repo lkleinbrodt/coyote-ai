@@ -1,20 +1,21 @@
-from logging.handlers import SMTPHandler
-from logging import ERROR
-from flask import Flask
-from flask import request
-from backend.config import Config
-from flask_cors import CORS
-from flask_session import Session
-from backend.extensions import jwt, db, migrate
-from flask import Blueprint
-from flask import send_from_directory
-from .poeltl.routes import poeltl
-from .lifter.routes import lifter
-from .routes import auth_bp
-from .autodraft.routes import autodraft_bp
-from .models import *
-from .autodraft.models import *
 import os
+from logging import ERROR
+from logging.handlers import SMTPHandler
+
+from flask import Blueprint, Flask, request, send_from_directory
+from flask_cors import CORS
+
+from backend.config import Config
+from backend.extensions import db, jwt, migrate
+from flask_session import Session
+
+from .autodraft.models import *
+from .autodraft.routes import autodraft_bp
+from .lifter.routes import lifter
+from .models import *
+from .poeltl.routes import poeltl
+from .routes import auth_bp, billing_bp
+from .speech.routes import speech_bp
 
 
 def create_app(config_class: Config):
@@ -54,7 +55,9 @@ def create_app(config_class: Config):
     api_bp.register_blueprint(poeltl)
     api_bp.register_blueprint(lifter)
     api_bp.register_blueprint(auth_bp)
+    api_bp.register_blueprint(billing_bp)
     api_bp.register_blueprint(autodraft_bp)
+    api_bp.register_blueprint(speech_bp)
     app.register_blueprint(api_bp, url_prefix="/api")
 
     if not app.debug:

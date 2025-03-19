@@ -1,9 +1,10 @@
-from pathlib import Path
 import logging
-from typing import Optional
-from dotenv import load_dotenv
 import os
 from datetime import timedelta
+from pathlib import Path
+from typing import Optional
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -16,7 +17,7 @@ class Config:
         raise ValueError("SECRET_KEY is not set")
     ENV = os.environ.get("ENV", "dev").lower()
 
-    ADMIN_EMAILS = ["landon@coyote-ai.com"]
+    ADMIN_EMAILS = ["lkleinbrodt@gmail.com"]
     MAIL_SERVER = os.environ.get("MAIL_SERVER")
     MAIL_PORT = os.environ.get("MAIL_PORT")
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
@@ -50,6 +51,9 @@ class Config:
     TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
     TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER")
 
+    SPEECH_APPLE_BUNDLE_ID = None  # Will be overridden in production
+    SPEECH_DEVELOPMENT_MODE = True  # Will be False in production
+
 
 class DevelopmentConfig(Config):
     ENV = "development"
@@ -63,14 +67,28 @@ class DevelopmentConfig(Config):
 
     AUTODRAFT_BUCKET = "autodraft-dev"
 
+    SPEECH_APPLE_BUNDLE_ID = "com.development.speechcoach"
+    SPEECH_DEVELOPMENT_MODE = True
+
 
 class ProductionConfig(Config):
     ENV = "production"
     DEBUG = False
-    BASE_URL = "https://www.coyote-ai.com"
+    BASE_URL = "https://www.landonkleinbrodt.com"
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 
+    if SQLALCHEMY_DATABASE_URI:
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
+            "postgres://", "postgresql://"
+        )
+
     AUTODRAFT_BUCKET = "autodraft"
+
+    SPEECH_APPLE_BUNDLE_ID = os.environ.get("SPEECH_APPLE_BUNDLE_ID")
+    SPEECH_DEVELOPMENT_MODE = False
+
+    CACHE_TYPE = "FileSystemCache"
+    CACHE_DIR = os.path.join(os.getenv("TEMP", "/tmp"), "flask_cache")
 
 
 class TestingConfig(Config):

@@ -1,7 +1,9 @@
-from backend import create_app
-from dotenv import load_dotenv
-from backend.config import DevelopmentConfig, ProductionConfig, TestingConfig
 import os
+
+from dotenv import load_dotenv
+
+from backend import create_app
+from backend.config import DevelopmentConfig, ProductionConfig, TestingConfig
 
 load_dotenv(override=True)
 
@@ -21,4 +23,4 @@ def deploy_app():
 app = deploy_app()
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host="0.0.0.0", port=5001)
