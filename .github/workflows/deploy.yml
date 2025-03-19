@@ -2,21 +2,36 @@ name: Deploy to VPS
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      # Backend setup and test
+      # Backend setup
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
-      # Deploy both frontend and backend
+      # Frontend setup with caching
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      # Build frontend
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+
+      # Deploy backend and frontend
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         with:
@@ -25,20 +40,33 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e  # Exit on any error
-            
-            # Pull latest code
+
+            # Pull latest code (for backend)
             cd /var/www/coyote-ai
             git pull origin main
-            
+
             # Backend deployment
             source venv/bin/activate
             pip install -r requirements.txt
-            
-            # Frontend deployment - builds static files that Nginx serves
-            cd frontend
-            npm ci
-            npm run build || { echo "Frontend build failed"; exit 1; }
-            
-            # Restart only the application server to pick up backend changes
-            # No need to restart Nginx as it automatically serves the new static files
-            systemctl restart coyote-ai 
+
+      # Deploy built frontend files
+      - name: Deploy Frontend Build
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "frontend/dist/*"
+          target: "/var/www/coyote-ai/frontend/dist"
+          strip_components: 2
+          overwrite: true
+
+      # Restart services
+      - name: Restart Services
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            systemctl restart coyote-ai
