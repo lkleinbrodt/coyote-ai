@@ -24,6 +24,8 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e  # Exit on any error
+            
             # Pull latest code
             cd /var/www/coyote-ai
             git pull origin main
@@ -35,7 +37,7 @@ jobs:
             # Frontend deployment - builds static files that Nginx serves
             cd frontend
             npm ci
-            npm run build
+            npm run build || { echo "Frontend build failed"; exit 1; }
             
             # Restart only the application server to pick up backend changes
             # No need to restart Nginx as it automatically serves the new static files
