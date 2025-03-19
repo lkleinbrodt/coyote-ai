@@ -5,11 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "type-check": "tsc --noEmit",
-    "build:types": "tsc --emitDeclarationOnly",
-    "build:assets": "vite build --emptyOutDir",
-    "build": "npm run type-check && npm run build:types && npm run build:assets",
-    "analyze": "vite build --emptyOutDir --mode analyze",
+    "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
