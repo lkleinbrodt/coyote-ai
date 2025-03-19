@@ -333,11 +333,18 @@ const Game = () => {
       gameState.debugText.setVisible(false);
 
       const collectStarCallback = (
-        _: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-        s: Phaser.Types.Physics.Arcade.GameObjectWithBody
+        _object1:
+          | Phaser.Types.Physics.Arcade.GameObjectWithBody
+          | Phaser.Physics.Arcade.Body
+          | Phaser.Physics.Arcade.StaticBody
+          | Phaser.Tilemaps.Tile,
+        object2:
+          | Phaser.Types.Physics.Arcade.GameObjectWithBody
+          | Phaser.Physics.Arcade.Body
+          | Phaser.Physics.Arcade.StaticBody
+          | Phaser.Tilemaps.Tile
       ) => {
-        const star = s as Phaser.Physics.Arcade.Sprite;
-        star.disableBody(true, true);
+        (object2 as Phaser.Physics.Arcade.Sprite).disableBody(true, true);
 
         gameState.score += 10;
         gameState.scoreText!.setText("Score: " + gameState.score);
@@ -359,15 +366,25 @@ const Game = () => {
           bomb.setCollideWorldBounds(true);
           bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
           bomb.setGravityY(0);
-          this.physics.add.collider(bomb, gameState.platforms);
+          if (gameState.platforms) {
+            this.physics.add.collider(bomb, gameState.platforms);
+          }
         }
       };
 
       const hitBombCallback = (
-        p: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-        _: Phaser.Types.Physics.Arcade.GameObjectWithBody
+        object1:
+          | Phaser.Types.Physics.Arcade.GameObjectWithBody
+          | Phaser.Physics.Arcade.Body
+          | Phaser.Physics.Arcade.StaticBody
+          | Phaser.Tilemaps.Tile,
+        _object2:
+          | Phaser.Types.Physics.Arcade.GameObjectWithBody
+          | Phaser.Physics.Arcade.Body
+          | Phaser.Physics.Arcade.StaticBody
+          | Phaser.Tilemaps.Tile
       ) => {
-        const hitPlayer = p as Phaser.Physics.Arcade.Sprite;
+        const hitPlayer = object1 as Phaser.Physics.Arcade.Sprite;
         this.physics.pause();
         hitPlayer.setTint(0xff0000);
         hitPlayer.anims.play("turn");
