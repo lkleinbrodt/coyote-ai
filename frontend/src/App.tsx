@@ -30,9 +30,9 @@ const LoadingFallback = () => (
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <AuthProvider>
-        <BrowserRouter>
+    <BrowserRouter>
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+        <AuthProvider>
           <div className="min-h-screen bg-background">
             <NavBar />
             <main className="container mx-auto p-4">
@@ -58,9 +58,9 @@ function App() {
               </Suspense>
             </main>
           </div>
-        </BrowserRouter>
-      </AuthProvider>
-    </ThemeProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   );
 }
 
