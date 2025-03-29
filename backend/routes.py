@@ -22,7 +22,7 @@ billing_bp = Blueprint("billing", __name__, url_prefix="/billing")
 
 @base_bp.route("/")
 def index():
-    return "Hello, World!"
+    return jsonify({"message": "Hello, World!"})
 
 
 @billing_bp.route("/balance", methods=["GET"])

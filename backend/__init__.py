@@ -58,7 +58,7 @@ def create_app(config_class: Config):
     api_bp.register_blueprint(billing_bp)
     api_bp.register_blueprint(autodraft_bp)
     api_bp.register_blueprint(speech_bp)
-    api_bp.register_blueprint(base_bp)
+    app.register_blueprint(base_bp)
     app.register_blueprint(api_bp, url_prefix="/api")
 
     if not app.debug:
