@@ -15,9 +15,14 @@ from backend.src.OAuthSignIn import OAuthSignIn
 
 logger = create_logger(__name__, level="DEBUG")
 
-
+base_bp = Blueprint("base", __name__)
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 billing_bp = Blueprint("billing", __name__, url_prefix="/billing")
+
+
+@base_bp.route("/")
+def index():
+    return "Hello, World!"
 
 
 @billing_bp.route("/balance", methods=["GET"])
