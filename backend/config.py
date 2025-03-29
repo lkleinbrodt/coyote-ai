@@ -75,6 +75,7 @@ class ProductionConfig(Config):
     ENV = "production"
     DEBUG = False
     BASE_URL = "https://www.landonkleinbrodt.com"
+    SERVER_NAME = "landonkleinbrodt.com"
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 
     if SQLALCHEMY_DATABASE_URI:
