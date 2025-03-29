@@ -99,7 +99,7 @@ def oauth_authorize(provider):
 
     user_id = get_jwt_identity()
     if user_id:
-        return redirect(f"{current_app.config['BASE_URL']}/")
+        return redirect(f"{current_app.config['FRONTEND_URL']}/")
 
     oauth = OAuthSignIn.get_provider(provider)
     return oauth.authorize(next_path=request.args.get("next", "/"))
@@ -111,7 +111,7 @@ def oauth_callback(provider):
 
     user_id = get_jwt_identity()
     if user_id:
-        return redirect(f"{current_app.config['BASE_URL']}/")
+        return redirect(f"{current_app.config['FRONTEND_URL']}/")
 
     oauth = OAuthSignIn.get_provider(provider)
     try:
@@ -160,5 +160,5 @@ def oauth_callback(provider):
         },
     )
 
-    redirect_url = f"{current_app.config['BASE_URL']}/auth?access_token={access_token}&next={next_path}"
+    redirect_url = f"{current_app.config['FRONTEND_URL']}/auth?access_token={access_token}&next={next_path}"
     return redirect(redirect_url)

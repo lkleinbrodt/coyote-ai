@@ -58,7 +58,7 @@ class Config:
 class DevelopmentConfig(Config):
     ENV = "development"
     DEBUG = True
-    BASE_URL = "http://localhost:5173"
+    FRONTEND_URL = "http://localhost:5173"
     # SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
     # SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(Config.ROOT_DIR, "app.db")
     SQLALCHEMY_DATABASE_URI = (
@@ -74,7 +74,7 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     ENV = "production"
     DEBUG = False
-    BASE_URL = "https://api.landonkleinbrodt.com"
+    FRONTEND_URL = "https://landonkleinbrodt.com"
 
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 
@@ -95,7 +95,7 @@ class ProductionConfig(Config):
 class TestingConfig(Config):
     ENV = "testing"
     DEBUG = True
-    BASE_URL = "http://localhost:8000"
+    FRONTEND_URL = "http://localhost:8000"
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
 
     AUTODRAFT_BUCKET = "autodraft-test"
