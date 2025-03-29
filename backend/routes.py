@@ -161,4 +161,5 @@ def oauth_callback(provider):
     )
 
     redirect_url = f"{current_app.config['FRONTEND_URL']}/auth?access_token={access_token}&next={next_path}"
+    print(f"Redirecting to: {redirect_url}")
     return redirect(redirect_url)
