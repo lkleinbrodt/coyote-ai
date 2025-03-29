@@ -22,8 +22,8 @@ def create_app(config_class: Config):
 
     app = Flask(
         __name__,
-        static_folder=config_class.ROOT_DIR / "dist",
-        static_url_path="",
+        # static_folder=config_class.ROOT_DIR / "dist",
+        # static_url_path="",
     )
 
     app.config.from_object(config_class)
@@ -44,11 +44,11 @@ def create_app(config_class: Config):
     db.init_app(app)
     migrate.init_app(app, db)
 
-    @app.route("/", defaults={"path": ""})
-    @app.route("/<string:path>")
-    @app.route("/<path:path>")
-    def index(path):
-        return send_from_directory(app.static_folder, "index.html")
+    # @app.route("/", defaults={"path": ""})
+    # @app.route("/<string:path>")
+    # @app.route("/<path:path>")
+    # def index(path):
+    #     return send_from_directory(app.static_folder, "index.html")
 
     api_bp = Blueprint("api", __name__)
 
