@@ -19,7 +19,7 @@ const getPageTitle = (pathname: string) => {
     case "/boids":
       return "Boids";
     default:
-      return "Coyote-AI";
+      return "Landon Kleinbrodt";
   }
 };
 

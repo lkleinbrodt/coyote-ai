@@ -7,12 +7,15 @@ import {
 } from "@/components/ui/card";
 
 import React from "react";
+import { motion } from "framer-motion";
 
 interface ProductCardProps {
   title: string;
   description: string;
   icon: string;
   link: string;
+  category?: string;
+  featured?: boolean;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -20,32 +23,53 @@ const ProductCard: React.FC<ProductCardProps> = ({
   description,
   icon,
   link,
+  category,
+  featured,
 }) => {
   const renderIcon = () => {
     return (
-      <img
-        src={icon}
-        alt={title}
-        className="img-fluid max-w-[200px] max-h-[200px] object-contain"
-      />
+      <motion.div
+        whileHover={{ scale: 1.1 }}
+        transition={{ type: "spring", stiffness: 300 }}
+      >
+        <img
+          src={icon}
+          alt={title}
+          className="w-24 h-24 object-contain mx-auto mb-4"
+        />
+      </motion.div>
     );
   };
 
   return (
-    <Card
-      className="cursor-pointer shadow-none hover:shadow-lg hover:scale-105 transition-all duration-200 bg-card border-0"
-      onClick={() => (window.location.href = link)}
+    <motion.div
+      whileHover={{ y: -5 }}
+      transition={{ type: "spring", stiffness: 300 }}
     >
-      <CardHeader>{renderIcon()}</CardHeader>
-      <CardContent>
-        <CardTitle className="text-center text-3xl text-foreground mb-3">
-          {title}
-        </CardTitle>
-        <CardDescription className="text-left text-muted-foreground text-xl">
-          {description}
-        </CardDescription>
-      </CardContent>
-    </Card>
+      <Card
+        className={`cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur-sm border border-border/50 hover:border-primary/50 ${
+          featured ? "ring-2 ring-primary" : ""
+        }`}
+        onClick={() => (window.location.href = link)}
+      >
+        <CardHeader className="flex items-center justify-center pb-2">
+          {renderIcon()}
+          {category && (
+            <span className="text-xs font-medium text-primary/80 uppercase tracking-wider">
+              {category}
+            </span>
+          )}
+        </CardHeader>
+        <CardContent className="text-center">
+          <CardTitle className="text-2xl font-bold text-foreground mb-2">
+            {title}
+          </CardTitle>
+          <CardDescription className="text-muted-foreground text-base text-left">
+            {description}
+          </CardDescription>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
 

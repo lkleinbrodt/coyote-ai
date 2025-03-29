@@ -23,8 +23,8 @@ export default function Games() {
       path: "/games/gravity-quest",
       icon:
         theme === "dark"
-          ? "/icons/gravity-dark.png"
-          : "/icons/gravity-light.png",
+          ? "/icons/gravity-quest.png"
+          : "/icons/gravity-quest.png",
       featured: true,
     },
     {
