@@ -1,5 +1,3 @@
-import "./Autodraft.css";
-
 import { Suspense, lazy } from "react";
 import { WorkProvider, useWork } from "../WorkContext";
 

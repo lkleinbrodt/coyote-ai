@@ -1,5 +1,3 @@
-import "./GravityQuest.css";
-
 import Phaser from "phaser";
 import { useEffect } from "react";
 
@@ -645,7 +643,21 @@ const Game = () => {
     };
   }, []);
 
-  return <div id="game-container"></div>;
+  return (
+    <div
+      id="game-container"
+      style={{
+        width: "100%",
+        height: "calc(100vh - 4rem)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "hsl(var(--background))",
+        paddingTop: "4rem",
+        position: "relative",
+      }}
+    ></div>
+  );
 };
 
 export default Game;

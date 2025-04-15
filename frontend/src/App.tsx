@@ -35,7 +35,7 @@ function App() {
         <AuthProvider>
           <div className="min-h-screen bg-background">
             <NavBar />
-            <main className="container mx-auto p-4">
+            <main className="pt-[var(--navbar-height)]">
               <Suspense fallback={<LoadingFallback />}>
                 <Routes>
                   <Route path="/" element={<Landing />} />

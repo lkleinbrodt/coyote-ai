@@ -70,6 +70,10 @@ class DevelopmentConfig(Config):
     SPEECH_APPLE_BUNDLE_ID = "com.development.speechcoach"
     SPEECH_DEVELOPMENT_MODE = True
 
+    STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY_TESTING")
+    STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY_TESTING")
+    STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
+
 
 class ProductionConfig(Config):
     ENV = "production"
@@ -91,6 +95,9 @@ class ProductionConfig(Config):
     CACHE_TYPE = "FileSystemCache"
     CACHE_DIR = os.path.join(os.getenv("TEMP", "/tmp"), "flask_cache")
 
+    STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY")
+    STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
+
 
 class TestingConfig(Config):
     ENV = "testing"
@@ -99,3 +106,6 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
 
     AUTODRAFT_BUCKET = "autodraft-test"
+
+    STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY_TESTING")
+    STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY_TESTING")

@@ -10,7 +10,3 @@
   position: relative;
   background-color: hsl(var(--background));
 }
-
-.content-container {
-  padding-top: 64px;
-}

@@ -137,7 +137,7 @@ class OpenAICosts:
     GPT4_OUTPUT_COST = Decimal("0.06") * PROFIT_MODIFIER
 
     @classmethod
-    def estimate_analysis_cost(cls, duration_seconds: int) -> Decimal:
+    def estimate_analysis_cost(cls, duration_seconds: float) -> Decimal:
         """Estimate total cost for analysis based on duration"""
         # Calculate transcription cost
         transcription_cost = cls.calculate_whisper_cost(duration_seconds)
@@ -150,10 +150,11 @@ class OpenAICosts:
         # and we use that to estimate the output cost
         # we then add a small constant for the other costs
 
-        transcription_tokens = duration_seconds * 3.5
+        # Convert float values to Decimal for consistent decimal arithmetic
+        transcription_tokens = Decimal(str(duration_seconds * 3.5))
         analysis_tokens = transcription_tokens / 2
-        title_tokens = (10) * 2
-        moderation_tokens = (10) * 2
+        title_tokens = Decimal("20")  # 10 * 2
+        moderation_tokens = Decimal("20")  # 10 * 2
 
         analysis_input_cost = transcription_tokens * cls.GPT4_INPUT_COST
         analysis_output_cost = analysis_tokens * cls.GPT4_OUTPUT_COST

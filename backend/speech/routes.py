@@ -1,9 +1,7 @@
 import json
-import os
 from datetime import datetime
-from decimal import Decimal
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -365,3 +363,34 @@ def delete_recording(id: int):
         db.session.rollback()
         logger.error("Error deleting recording: %s", str(e), exc_info=True)
         return jsonify({"error": f"Failed to delete recording: {str(e)}"}), 500
+
+
+@speech_bp.route("/me", methods=["DELETE"])
+@jwt_required()
+def delete_speech_profile():
+    """Delete the current user's speech profile"""
+    user_id = get_jwt_identity()
+    speech_profile = SpeechProfile.query.filter_by(user_id=user_id).first()
+    if not speech_profile:
+        logger.error("Speech profile not found for user %s", user_id)
+        return jsonify({"error": "Speech profile not found"}), 404
+
+    try:
+        # Delete all recordings and their analyses
+        recordings = Recording.query.filter_by(profile_id=speech_profile.id).all()
+        for recording in recordings:
+            # Delete associated analysis first (due to foreign key constraint)
+            Analysis.query.filter_by(recording_id=recording.id).delete()
+            db.session.delete(recording)
+
+        # Delete the speech profile
+        db.session.delete(speech_profile)
+        db.session.commit()
+
+        logger.info("Successfully deleted speech profile for user %s", user_id)
+        return jsonify({"message": "Speech profile deleted successfully"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error("Error deleting speech profile: %s", str(e), exc_info=True)
+        return jsonify({"error": f"Failed to delete speech profile: {str(e)}"}), 500

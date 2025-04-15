@@ -18,8 +18,7 @@ export default function Games() {
   const games: GameCard[] = [
     {
       title: "Gravity Quest",
-      description:
-        "Collect all the stars while avoiding the gravity of the black hole.",
+      description: "Use your tractor beam to collect stars and avoid bombs.",
       path: "/games/gravity-quest",
       icon:
         theme === "dark"

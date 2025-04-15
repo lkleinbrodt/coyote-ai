@@ -107,6 +107,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     google_id = db.Column(db.String(255), nullable=True)
     apple_id = db.Column(db.String(255), nullable=True)
+    stripe_customer_id = db.Column(db.String(255), nullable=True)
 
     name = db.Column(db.String(255), nullable=True)
     image = db.Column(db.String(255), nullable=True)
