@@ -121,9 +121,6 @@ def signout():
 @jwt_required()
 def analyze_recording():
     """Analyze a recording"""
-    logger.debug("Received analyze request")
-    logger.debug("Request files: %s", request.files)
-    logger.debug("Request headers: %s", request.headers)
 
     audio_file = request.files.get("audio")
     duration = request.form.get("duration")
@@ -165,7 +162,6 @@ def analyze_recording():
 
         try:
             # 2. Transcribe audio and charge for it
-            logger.debug("Starting audio transcription")
             audio_data = audio_file.read()
             transcript = transcribe_audio(audio_data)
             transcription_cost = OpenAICosts.calculate_whisper_cost(duration_seconds)
@@ -204,7 +200,6 @@ def analyze_recording():
 
             if moderation_response.flagged:
                 reason = moderation_response.get_reason()
-                logger.error("Content Flagged: %s", reason)
                 return jsonify({"message": f"Content Flagged for {reason}"}), 400
 
             # 4. Get title

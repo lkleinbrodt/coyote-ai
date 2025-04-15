@@ -1,8 +1,9 @@
-from flask import redirect, url_for, request, Blueprint
 import logging
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+
+from flask import Blueprint, redirect, request, url_for
 from flask_jwt_extended import JWTManager
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -19,7 +20,9 @@ def create_logger(name, level="INFO"):
     # Check if handler already exists to prevent duplicate handlers
     if not logger.handlers:
         formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        console_handler = logging.StreamHandler()
+        import sys
+
+        console_handler = logging.StreamHandler(stream=sys.stdout)
         console_handler.setLevel(level)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
