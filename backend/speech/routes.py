@@ -203,8 +203,7 @@ def analyze_recording():
                 return jsonify({"message": f"Content Flagged for {reason}"}), 400
 
             # 4. Get title
-            title = get_title(transcript)
-            title_cost = OpenAICosts.calculate_gpt4_cost(transcript, title)
+            title, title_cost = get_title(transcript)
 
             transaction = Transaction(
                 user_id=user_id,
@@ -220,10 +219,7 @@ def analyze_recording():
             db.session.commit()
 
             # 5. Analyze speech
-            analysis_data = analyze_speech(transcript)
-            analysis_cost = OpenAICosts.calculate_gpt4_cost(
-                transcript, json.dumps(analysis_data)
-            )
+            analysis_data, analysis_cost = analyze_speech(transcript)
 
             # Charge for analysis
             transaction = Transaction(
