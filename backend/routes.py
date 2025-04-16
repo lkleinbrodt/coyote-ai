@@ -24,7 +24,15 @@ billing_bp = Blueprint("billing", __name__, url_prefix="/billing")
 
 @base_bp.route("/")
 def index():
-    return jsonify("Hmm... you're not supposed to be here.")
+    """API root endpoint - returns API status and basic information"""
+    return (
+        jsonify(
+            {
+                "status": "healthy",
+            }
+        ),
+        200,
+    )
 
 
 @billing_bp.route("/balance", methods=["GET"])

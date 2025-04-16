@@ -7,6 +7,9 @@ from openai import OpenAI
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+TITLE_MODEL = "gpt-4.1-nano-2025-04-14"
+ANALYSIS_MODEL = "gpt-4o-mini-2024-07-18"
+
 
 def transcribe_audio(audio_file: bytes) -> str:
     """Transcribe audio file using OpenAI's Whisper API"""
@@ -42,7 +45,7 @@ def analyze_speech(transcript: str) -> Dict[str, Any]:
     Transcript: {transcript}"""
 
     response = client.chat.completions.create(
-        model="gpt-4",
+        model=ANALYSIS_MODEL,
         messages=[
             {
                 "role": "system",
@@ -71,12 +74,12 @@ def analyze_speech(transcript: str) -> Dict[str, Any]:
 
 def get_title(transcript: str) -> str:
     """Get a title for the speech recording. Returns (title, raw_response)"""
-    prompt = f"""Generate a title for the following speech transcript.
+    prompt = f"""Generate a title for the following speech transcript. It will be used to identify the speech in the database and for the user to search for it. Be as short and concise as possible.
     Return ONLY a string with the title, no other text. Keep it short and concise.
     Transcript: {transcript}"""
 
     response = client.chat.completions.create(
-        model="gpt-4",
+        model=TITLE_MODEL,
         messages=[
             {
                 "role": "system",
