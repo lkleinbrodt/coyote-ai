@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Any, Dict, Tuple
 
 from openai import OpenAI
+from openai.types import CompletionUsage
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -133,7 +134,7 @@ def moderate_speech(transcript: str) -> ModerationResponse:
 class OpenAIResponse:
     """Represents a response from OpenAI API with usage data"""
 
-    def __init__(self, content: str, usage: dict):
+    def __init__(self, content: str, usage: CompletionUsage):
         self.content = content
         self.usage = usage
 
@@ -141,7 +142,7 @@ class OpenAIResponse:
 class OpenAICosts:
     """Configuration for OpenAI API costs"""
 
-    PROFIT_MODIFIER = Decimal("1.2")
+    PROFIT_MODIFIER = Decimal("1.25")
 
     # Cost per minute for Whisper API ($0.006 per second)
     WHISPER_COST_PER_MINUTE = Decimal("0.36") * PROFIT_MODIFIER  # $0.006 * 60
@@ -153,10 +154,10 @@ class OpenAICosts:
     GPT41_MINI_OUTPUT_COST = Decimal("1.6") * PROFIT_MODIFIER
 
     @classmethod
-    def calculate_gpt4_cost(cls, model: str, usage: dict) -> Decimal:
+    def calculate_gpt4_cost(cls, model: str, usage: CompletionUsage) -> Decimal:
         """Calculate cost for GPT-4 API usage based on actual token usage"""
-        prompt_tokens = Decimal(str(usage.get("prompt_tokens", 0)))
-        completion_tokens = Decimal(str(usage.get("completion_tokens", 0)))
+        prompt_tokens = Decimal(str(usage.prompt_tokens))
+        completion_tokens = Decimal(str(usage.completion_tokens))
 
         if model == TITLE_MODEL:
             input_cost = (prompt_tokens * cls.GPT41_NANO_INPUT_COST) / 1_000_000
