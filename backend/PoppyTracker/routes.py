@@ -10,6 +10,7 @@ from flask_jwt_extended import (
 )
 
 from backend.extensions import db
+from backend.openai_utils import extract_number_from_text
 from backend.src.auth import apple_signin
 
 from .models import DailyFeeding, Settings
@@ -165,3 +166,46 @@ def signin():
 
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+
+
+@poppy_bp.route("/daily/total/adjust", methods=["POST"])
+@jwt_required(optional=True)
+def adjust_total():
+    try:
+        data = request.get_json()
+        amount_input = data.get("amount", 0)
+        user_id = get_jwt_identity()
+
+        if not user_id:
+            user = data.get("user")
+            if user == "secret poppy access code":
+                user_id = "poppy"
+            else:
+                return jsonify({"error": "Invalid user", "status": "error"}), 400
+
+        # Try to convert input to float first
+        try:
+            amount = float(amount_input)
+        except (ValueError, TypeError):
+            # If conversion fails, try to extract number from text
+            amount = extract_number_from_text(str(amount_input), context="cups of food")
+
+        feeding = get_or_create_daily_feeding()
+        new_total = feeding.total_amount + amount
+
+        if new_total < 0:
+            return (
+                jsonify(
+                    {"error": "Resulting total cannot be negative", "status": "error"}
+                ),
+                400,
+            )
+
+        feeding.total_amount = new_total
+        feeding.last_updated_by = user_id
+        db.session.commit()
+
+        return jsonify({"total": feeding.total_amount})
+
+    except Exception as e:
+        return jsonify({"error": str(e), "status": "error"}), 500
