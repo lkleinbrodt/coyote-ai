@@ -14,6 +14,7 @@ from .autodraft.routes import autodraft_bp
 from .lifter.routes import lifter
 from .models import *
 from .poeltl.routes import poeltl
+from .PoppyTracker import poppy_bp
 from .routes import auth_bp, base_bp, billing_bp
 from .speech.routes import speech_bp
 
@@ -58,6 +59,7 @@ def create_app(config_class: Config):
     api_bp.register_blueprint(billing_bp)
     api_bp.register_blueprint(autodraft_bp)
     api_bp.register_blueprint(speech_bp)
+    api_bp.register_blueprint(poppy_bp, url_prefix="/poppy")  # Add PoppyTracker routes
     app.register_blueprint(base_bp)
     app.register_blueprint(api_bp, url_prefix="/api")
 
