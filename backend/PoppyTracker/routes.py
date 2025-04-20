@@ -1,6 +1,7 @@
 import json
 from datetime import date, datetime
 
+import pytz
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
@@ -13,27 +14,20 @@ from backend.extensions import db
 from backend.openai_utils import extract_number_from_text
 from backend.src.auth import apple_signin
 
-from .models import DailyFeeding, Settings
+from .models import DailyFeeding, pacific
 
 poppy_bp = Blueprint("poppy", __name__)
 
 
-def get_or_create_settings():
-    """Get existing settings or create default settings if none exist"""
-    settings = Settings.query.first()
-    if not settings:
-        settings = Settings()
-        db.session.add(settings)
-        db.session.commit()
-    return settings
-
-
 def get_or_create_daily_feeding():
     """Get today's feeding record or create a new one if none exists"""
-    today = date.today()
+    today = datetime.now(pacific).date()
     feeding = DailyFeeding.query.filter_by(date=today).first()
     if not feeding:
-        feeding = DailyFeeding(date=today)
+        # Get the most recent target to carry forward
+        last_feeding = DailyFeeding.query.order_by(DailyFeeding.date.desc()).first()
+        target = last_feeding.daily_target if last_feeding else 3.0
+        feeding = DailyFeeding(date=today, daily_target=target)
         db.session.add(feeding)
         db.session.commit()
     return feeding
@@ -70,7 +64,8 @@ def set_total():
 @jwt_required()
 def get_daily_total():
     try:
-        feeding = DailyFeeding.query.filter_by(date=date.today()).first()
+        today = datetime.now(pacific).date()
+        feeding = DailyFeeding.query.filter_by(date=today).first()
         total = feeding.total_amount if feeding else 0.0
 
         return jsonify({"total": total})
@@ -83,8 +78,8 @@ def get_daily_total():
 @jwt_required()
 def get_target():
     try:
-        settings = get_or_create_settings()
-        return jsonify({"target": settings.daily_target})
+        feeding = get_or_create_daily_feeding()
+        return jsonify({"target": feeding.daily_target})
 
     except Exception as e:
         return jsonify({"error": str(e), "status": "error"}), 500
@@ -100,11 +95,11 @@ def update_target():
         if target <= 0:
             return jsonify({"error": "Target must be positive", "status": "error"}), 400
 
-        settings = get_or_create_settings()
-        settings.daily_target = target
+        feeding = get_or_create_daily_feeding()
+        feeding.daily_target = target
         db.session.commit()
 
-        return jsonify({"target": settings.daily_target})
+        return jsonify({"target": feeding.daily_target})
 
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid target provided", "status": "error"}), 400
@@ -116,18 +111,17 @@ def update_target():
 @jwt_required()
 def get_history():
     try:
-        settings = get_or_create_settings()
         feedings = DailyFeeding.query.order_by(DailyFeeding.date.desc()).all()
 
         history = [
             {
                 "date": feeding.date.isoformat(),
                 "amountFed": feeding.total_amount,
-                "target": settings.daily_target,
+                "target": feeding.daily_target,
             }
             for feeding in feedings
         ]
-
+        print(history)
         return jsonify(history)
 
     except Exception as e:

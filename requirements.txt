@@ -21,3 +21,4 @@ stripe==11.6.0
 PyJWT==2.8.0
 cryptography==42.0.5
 platformdirs==4.3.6
+pytz==2024.1
