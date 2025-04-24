@@ -18,6 +18,10 @@ const getPageTitle = (pathname: string) => {
       return "AutoDraft";
     case "/boids":
       return "Boids";
+    case "/games":
+      return "Games";
+    case "/games/gravity-quest":
+      return "Gravity Quest";
     default:
       return "Landon Kleinbrodt";
   }

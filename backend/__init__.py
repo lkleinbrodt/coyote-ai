@@ -68,7 +68,7 @@ def create_app(config_class: Config):
             mailhost=(app.config["MAIL_SERVER"], app.config["MAIL_PORT"]),
             fromaddr=app.config["MAIL_USERNAME"],
             toaddrs=app.config["ADMIN_EMAILS"],
-            subject="Coyote-AI Application Error",
+            subject="LK API Application Error",
             credentials=(app.config["MAIL_USERNAME"], app.config["MAIL_PASSWORD"]),
             secure=(),
         )

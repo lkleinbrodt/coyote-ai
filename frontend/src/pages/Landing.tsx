@@ -68,7 +68,7 @@ const Landing: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex flex-column flex-start z-10"
+        className="flex flex-col flex-start z-10"
       >
         <div className="max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="text-center py-20">
@@ -86,7 +86,9 @@ const Landing: React.FC = () => {
               transition={{ delay: 0.4 }}
               className="text-xl sm:text-2xl text-muted-foreground text-left"
             >
-              I like to build software. Here's some stuff I've built.
+              I like to build software. This site is a collection of the things
+              I've built - games, AI tools, mobile apps, and whatever else I've
+              been messing around with lately. Enjoy!
             </motion.p>
           </div>
         </div>
@@ -96,7 +98,7 @@ const Landing: React.FC = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="flex flex-column mb-2"
+        className="flex flex-col mb-2"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
           {products.map((product, index) => (

@@ -5,6 +5,7 @@ export const VALID_REDIRECT_PATHS = [
   "/autodraft",
   "/boids",
   "/tower-builder",
+  "/games",
 ];
 
 export const isValidRedirectPath = (path: string): boolean => {

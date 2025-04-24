@@ -9,50 +9,50 @@ from flask_jwt_extended import (
     get_jwt_identity,
     jwt_required,
 )
+from sqlalchemy import func
 
 from backend.extensions import db
 from backend.openai_utils import extract_number_from_text
 from backend.src.auth import apple_signin
 
-from .models import DailyFeeding, pacific
+from .models import DailyTarget, Feeding, pacific
 
 poppy_bp = Blueprint("poppy", __name__)
 
 
-def get_or_create_daily_feeding():
-    """Get today's feeding record or create a new one if none exists"""
+def get_or_create_daily_target():
+    """Get today's target record or create a new one if none exists"""
     today = datetime.now(pacific).date()
-    feeding = DailyFeeding.query.filter_by(date=today).first()
-    if not feeding:
+    target = DailyTarget.query.filter_by(date=today).first()
+    if not target:
         # Get the most recent target to carry forward
-        last_feeding = DailyFeeding.query.order_by(DailyFeeding.date.desc()).first()
-        target = last_feeding.daily_target if last_feeding else 3.0
-        feeding = DailyFeeding(date=today, daily_target=target)
-        db.session.add(feeding)
+        last_target = DailyTarget.query.order_by(DailyTarget.date.desc()).first()
+        target_value = last_target.target if last_target else 3.0
+        target = DailyTarget(date=today, target=target_value)
+        db.session.add(target)
         db.session.commit()
-    return feeding
+    return target
 
 
-@poppy_bp.route("/daily/total", methods=["POST"])
+@poppy_bp.route("/feeding", methods=["POST"])
 @jwt_required()
-def set_total():
+def add_feeding():
     try:
         data = request.get_json()
         amount = float(data.get("amount", 0))
         user_id = get_jwt_identity()
 
-        if amount < 0:
-            return (
-                jsonify({"error": "Amount cannot be negative", "status": "error"}),
-                400,
-            )
+        if amount == 0:
+            return jsonify({"error": "Amount cannot be zero", "status": "error"}), 400
 
-        feeding = get_or_create_daily_feeding()
-        feeding.total_amount = amount
-        feeding.last_updated_by = user_id
+        # No need to set date, it will default to UTC now
+        feeding = Feeding(amount=amount, last_updated_by=user_id)
+        db.session.add(feeding)
         db.session.commit()
-
-        return jsonify({"total": feeding.total_amount})
+        new_total = get_daily_total()
+        out = feeding.to_dict()
+        out["total"] = new_total
+        return jsonify(out)
 
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid amount provided", "status": "error"}), 400
@@ -64,9 +64,31 @@ def set_total():
 @jwt_required()
 def get_daily_total():
     try:
-        today = datetime.now(pacific).date()
-        feeding = DailyFeeding.query.filter_by(date=today).first()
-        total = feeding.total_amount if feeding else 0.0
+        # Get today in Pacific timezone
+        pacific_today = datetime.now(pacific).date()
+
+        # Convert to UTC for database query
+        # Start of day in Pacific converted to UTC
+        start_of_day_pacific = datetime.combine(pacific_today, datetime.min.time())
+        start_of_day_pacific = pacific.localize(start_of_day_pacific)
+        start_of_day_utc = start_of_day_pacific.astimezone(pytz.UTC)
+
+        # End of day in Pacific converted to UTC
+        end_of_day_pacific = datetime.combine(pacific_today, datetime.max.time())
+        end_of_day_pacific = pacific.localize(end_of_day_pacific)
+        end_of_day_utc = end_of_day_pacific.astimezone(pytz.UTC)
+
+        # Remove timezone info since SQLAlchemy might store naive datetimes
+        start_of_day_utc = start_of_day_utc.replace(tzinfo=None)
+        end_of_day_utc = end_of_day_utc.replace(tzinfo=None)
+
+        # Calculate total from all feedings today (in Pacific time)
+        total = (
+            db.session.query(func.sum(Feeding.amount))
+            .filter(Feeding.date >= start_of_day_utc, Feeding.date <= end_of_day_utc)
+            .scalar()
+            or 0.0
+        )
 
         return jsonify({"total": total})
 
@@ -78,8 +100,8 @@ def get_daily_total():
 @jwt_required()
 def get_target():
     try:
-        feeding = get_or_create_daily_feeding()
-        return jsonify({"target": feeding.daily_target})
+        target = get_or_create_daily_target()
+        return jsonify({"target": target.target})
 
     except Exception as e:
         return jsonify({"error": str(e), "status": "error"}), 500
@@ -90,16 +112,18 @@ def get_target():
 def update_target():
     try:
         data = request.get_json()
-        target = float(data.get("target", 0))
+        target_value = float(data.get("target", 0))
+        user_id = get_jwt_identity()
 
-        if target <= 0:
+        if target_value <= 0:
             return jsonify({"error": "Target must be positive", "status": "error"}), 400
 
-        feeding = get_or_create_daily_feeding()
-        feeding.daily_target = target
+        target = get_or_create_daily_target()
+        target.target = target_value
+        target.last_updated_by = user_id
         db.session.commit()
 
-        return jsonify({"target": feeding.daily_target})
+        return jsonify({"target": target.target})
 
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid target provided", "status": "error"}), 400
@@ -111,18 +135,33 @@ def update_target():
 @jwt_required()
 def get_history():
     try:
-        feedings = DailyFeeding.query.order_by(DailyFeeding.date.desc()).all()
+        # Get all feedings ordered by date
+        feedings = Feeding.query.order_by(Feeding.date.desc()).all()
 
-        history = [
-            {
-                "date": feeding.date.isoformat(),
-                "amountFed": feeding.total_amount,
-                "target": feeding.daily_target,
-            }
-            for feeding in feedings
-        ]
-        print(history)
-        return jsonify(history)
+        # Get all targets
+        targets = {t.date: t.target for t in DailyTarget.query.all()}
+
+        # Group feedings by date and calculate totals
+        history = {}
+        for feeding in feedings:
+            # Convert UTC time to Pacific date for grouping
+            pacific_datetime = pytz.utc.localize(feeding.date).astimezone(pacific)
+            feeding_date = pacific_datetime.date()
+
+            if feeding_date not in history:
+                history[feeding_date] = {
+                    "date": feeding_date.isoformat(),
+                    "amountFed": 0.0,
+                    "target": targets.get(feeding_date, 3.0),
+                    "feedings": [],
+                }
+            history[feeding_date]["amountFed"] += feeding.amount
+            history[feeding_date]["feedings"].append(feeding.to_dict())
+
+        # Convert to list and sort by date descending
+        history_list = sorted(history.values(), key=lambda x: x["date"], reverse=True)
+
+        return jsonify(history_list)
 
     except Exception as e:
         return jsonify({"error": str(e), "status": "error"}), 500
@@ -162,9 +201,9 @@ def signin():
         return jsonify({"error": str(e)}), 400
 
 
-@poppy_bp.route("/daily/total/adjust", methods=["POST"])
+@poppy_bp.route("/feeding/adjust", methods=["POST"])
 @jwt_required(optional=True)
-def adjust_total():
+def adjust_feeding():
     try:
         data = request.get_json()
         amount_input = data.get("amount", 0)
@@ -184,22 +223,15 @@ def adjust_total():
             # If conversion fails, try to extract number from text
             amount = extract_number_from_text(str(amount_input), context="cups of food")
 
-        feeding = get_or_create_daily_feeding()
-        new_total = feeding.total_amount + amount
+        if amount == 0:
+            return jsonify({"error": "Amount cannot be zero", "status": "error"}), 400
 
-        if new_total < 0:
-            return (
-                jsonify(
-                    {"error": "Resulting total cannot be negative", "status": "error"}
-                ),
-                400,
-            )
-
-        feeding.total_amount = new_total
-        feeding.last_updated_by = user_id
+        # No need to set date, it will default to UTC now
+        feeding = Feeding(amount=amount, last_updated_by=user_id)
+        db.session.add(feeding)
         db.session.commit()
 
-        return jsonify({"total": feeding.total_amount})
+        return jsonify(feeding.to_dict())
 
     except Exception as e:
         return jsonify({"error": str(e), "status": "error"}), 500

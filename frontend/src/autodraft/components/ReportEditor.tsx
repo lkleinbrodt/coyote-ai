@@ -226,6 +226,16 @@ const ReportEditor = () => {
                   />
                 </CardContent>
               </Card>
+              <div className="flex flex-col items-center justify-center mt-10 gap-4">
+                <p className="text-sm text-gray-500">
+                  Or add your prompts manually
+                </p>
+                <NewPrompt
+                  prompts={prompts}
+                  setPrompts={setPrompts}
+                  reportID={selectedReport.id}
+                />
+              </div>
             </div>
           ) : (
             <>
