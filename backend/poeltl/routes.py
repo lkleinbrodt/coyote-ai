@@ -4,9 +4,7 @@ import random
 from dotenv import load_dotenv
 from flask import Blueprint, Response, jsonify, request, stream_with_context
 
-from backend.config import Config
 from backend.extensions import create_logger
-from backend.poeltl.utils import pick_person
 from backend.src.OpenRouter import OpenRouterClient
 
 load_dotenv()

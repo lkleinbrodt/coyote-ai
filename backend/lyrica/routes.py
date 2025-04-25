@@ -3,7 +3,7 @@ import time
 
 from flask import Blueprint, Response, jsonify, request, stream_with_context
 
-from backend.config import create_logger
+from backend.extensions import create_logger
 from backend.lyrica import ArtistClient
 
 logger = create_logger(__name__, level="DEBUG")
