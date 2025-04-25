@@ -1,10 +1,13 @@
-from flask import jsonify, Blueprint, request, Response, stream_with_context
-from backend.extensions import create_logger
-from backend.config import Config
-from backend.src.OpenRouter import OpenRouterClient
-import random
 import os
+import random
+
 from dotenv import load_dotenv
+from flask import Blueprint, Response, jsonify, request, stream_with_context
+
+from backend.config import Config
+from backend.extensions import create_logger
+from backend.poeltl.utils import pick_person
+from backend.src.OpenRouter import OpenRouterClient
 
 load_dotenv()
 
@@ -114,8 +117,14 @@ def pick_person():
 
 @poeltl.route("/get-person", methods=["GET"])
 def get_person():
-    person = pick_person()
-    return {"person": person}, 200
+    logger.info("Get person route accessed")
+    try:
+        person = pick_person()
+        logger.debug(f"Selected person: {person}")
+        return {"person": person}, 200
+    except Exception as e:
+        logger.error(f"Error picking person: {str(e)}", exc_info=True)
+        return jsonify({"error": "Failed to pick person"}), 500
 
 
 @poeltl.route("/ask", methods=["POST"])

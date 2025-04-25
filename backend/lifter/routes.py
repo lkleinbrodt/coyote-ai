@@ -1,10 +1,13 @@
-from flask import jsonify, Blueprint, request, Response, stream_with_context
-from backend.extensions import create_logger
 import json
+
 import pandas as pd
-from backend.src.s3 import S3
 from botocore.errorfactory import ClientError
+from flask import Blueprint, Response, jsonify, request, stream_with_context
+
 from backend.config import Config
+from backend.extensions import create_logger
+from backend.lifter.utils import load_lifts_from_s3
+from backend.src.s3 import S3
 
 S3_BUCKET = Config.LIFTER_BUCKET
 
@@ -40,7 +43,7 @@ def load_workouts_from_s3():
 
 @lifter.route("/")
 def home():
-    logger.debug("Home route accessed")
+    logger.info("Lifter home route accessed")
     return jsonify({"message": "Hello from Lifter Flask!"})
 
 
@@ -52,16 +55,26 @@ def get_types():
 
 @lifter.route("/get-lifts", methods=["GET"])
 def get_lifts():
+    logger.info("Get lifts route accessed")
     lift_type = request.args.get("type")
+    logger.debug(f"Requested lift type: {lift_type}")
 
-    lifts = load_lifts_from_s3()
+    try:
+        lifts = load_lifts_from_s3()
+        logger.debug(f"Successfully loaded lifts from S3")
+    except Exception as e:
+        logger.error(f"Error loading lifts from S3: {str(e)}", exc_info=True)
+        return jsonify({"error": "Failed to load lifts"}), 500
 
     if lift_type is not None:
         if lift_type not in lifts:
+            logger.warning(f"Invalid lift type requested: {lift_type}")
             return jsonify({"error": "Invalid lift type"}), 400
         else:
+            logger.debug(f"Returning lifts for type: {lift_type}")
             return jsonify(lifts[lift_type]), 200
 
+    logger.debug("Returning all lifts")
     return jsonify(lifts), 200
 
 
@@ -208,5 +221,6 @@ def add_lift():
 
 @lifter.route("/health", methods=["GET"])
 def health_check():
+    logger.info("Health check route accessed")
     response = {"status": "healthy", "message": "Server is running"}
     return jsonify(response), 200

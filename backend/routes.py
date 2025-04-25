@@ -25,6 +25,7 @@ billing_bp = Blueprint("billing", __name__, url_prefix="/billing")
 @base_bp.route("/")
 def index():
     """API root endpoint - returns API status and basic information"""
+    logger.info("Root endpoint accessed")
     return (
         jsonify(
             {
@@ -106,9 +107,10 @@ def add_funds():
 @auth_bp.route("/authorize/<provider>")
 @jwt_required(optional=True)
 def oauth_authorize(provider):
-
+    logger.info(f"OAuth authorization attempt for provider: {provider}")
     user_id = get_jwt_identity()
     if user_id:
+        logger.debug(f"User {user_id} already authenticated, redirecting to frontend")
         return redirect(f"{current_app.config['FRONTEND_URL']}/")
 
     oauth = OAuthSignIn.get_provider(provider)
@@ -245,6 +247,7 @@ def create_payment_sheet():
 @billing_bp.route("/payment-webhook", methods=["POST"])
 def stripe_webhook():
     """Handle Stripe webhook events"""
+    logger.info("Received Stripe webhook event")
     event = None
     payload = request.data
     sig_header = request.headers.get("stripe-signature")
@@ -260,19 +263,19 @@ def stripe_webhook():
                 event = stripe.Webhook.construct_event(
                     payload, sig_header, endpoint_secret
                 )
-            except stripe.error.SignatureVerificationError as e:
-                current_app.logger.error(
-                    f"⚠️  Webhook signature verification failed: {str(e)}"
+                logger.debug(
+                    f"Successfully verified Stripe webhook event: {event.type}"
                 )
+            except stripe.error.SignatureVerificationError as e:
+                logger.error(f"⚠️  Webhook signature verification failed: {str(e)}")
                 return jsonify(success=False), 400
         else:
             # If no endpoint secret, parse the basic event
             try:
                 event = json.loads(payload)
+                logger.debug(f"Parsed basic Stripe event: {event.get('type')}")
             except json.decoder.JSONDecodeError as e:
-                current_app.logger.error(
-                    f"⚠️  Webhook error while parsing basic request: {str(e)}"
-                )
+                logger.error(f"⚠️  Webhook error while parsing basic request: {str(e)}")
                 return jsonify(success=False), 400
 
         # Handle the event

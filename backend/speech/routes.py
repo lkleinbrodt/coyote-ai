@@ -35,22 +35,16 @@ speech_bp = Blueprint("speech", __name__, url_prefix="/speech")
 @speech_bp.route("/auth/apple/signin", methods=["POST"])
 def signin():
     """Handle Sign in with Apple authentication"""
+    logger.info("Apple signin route accessed")
     credentials = request.get_json()
 
     if not credentials or not credentials.get("identityToken"):
-        logger.error("No identity token provided")
+        logger.error("No identity token provided in Apple signin request")
         return jsonify({"error": "No identity token provided"}), 400
 
     try:
         user = apple_signin(credentials)
-
-        # check if they have a speech profile
-        speech_profile = SpeechProfile.query.filter_by(user_id=user.id).first()
-        if not speech_profile:
-            # create a new speech profile
-            speech_profile = SpeechProfile(user_id=user.id)
-            db.session.add(speech_profile)
-            db.session.commit()
+        logger.debug(f"Successfully authenticated user: {user.id}")
 
         access_token = create_access_token(
             identity=str(user.id),
@@ -58,13 +52,13 @@ def signin():
                 "id": user.id,
                 "name": user.name,
                 "email": user.email,
-                "role": speech_profile.role,
             },
         )
 
         refresh_token = create_refresh_token(
             identity=str(user.id),
         )
+        logger.info(f"Successfully created tokens for user: {user.id}")
         return jsonify(
             {
                 "access_token": access_token,
@@ -73,8 +67,11 @@ def signin():
         )
 
     except ValueError as e:
-        logger.error("Apple Sign In failed: %s", str(e))
+        logger.error(f"Apple signin error: {str(e)}", exc_info=True)
         return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logger.error(f"Unexpected error during Apple signin: {str(e)}", exc_info=True)
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @speech_bp.route("/me")
@@ -281,78 +278,98 @@ def analyze_recording():
 @jwt_required()
 def get_recordings():
     """Get all recordings for the current user"""
-
+    logger.info("Get recordings route accessed")
     user_id = get_jwt_identity()
+    logger.debug(f"Getting recordings for user: {user_id}")
+
     speech_profile = SpeechProfile.query.filter_by(user_id=user_id).first()
     if not speech_profile:
-        logger.error("Speech profile not found for user %s", user_id)
+        logger.error(f"Speech profile not found for user {user_id}")
         return jsonify({"error": "Speech profile not found"}), 404
 
-    recordings = Recording.query.filter_by(profile_id=speech_profile.id).all()
-    return jsonify([recording.to_dict() for recording in recordings])
+    try:
+        recordings = Recording.query.filter_by(profile_id=speech_profile.id).all()
+        logger.debug(f"Found {len(recordings)} recordings for user {user_id}")
+        return jsonify([recording.to_dict() for recording in recordings])
+    except Exception as e:
+        logger.error(f"Error fetching recordings: {str(e)}", exc_info=True)
+        return jsonify({"error": "Failed to fetch recordings"}), 500
 
 
 @speech_bp.route("/recordings/<int:id>", methods=["GET"])
 @jwt_required()
 def get_recording(id: int):
     """Get a recording by id"""
-    recording = Recording.query.filter_by(id=id).first()
-    # ensure the recording belongs to the current user
+    logger.info(f"Get recording route accessed for ID: {id}")
     user_id = get_jwt_identity()
-    speech_profile = SpeechProfile.query.filter_by(user_id=user_id).first()
-    if not speech_profile:
-        logger.error("Speech profile not found for user %s", user_id)
-        return jsonify({"error": "Speech profile not found"}), 404
+    logger.debug(f"User {user_id} requesting recording {id}")
 
-    if not recording or recording.profile_id != speech_profile.id:
-        logger.error("Recording not found for id %s", id)
-        return jsonify({"error": "Recording not found"}), 404
+    try:
+        recording = Recording.query.filter_by(id=id).first()
+        speech_profile = SpeechProfile.query.filter_by(user_id=user_id).first()
 
-    return jsonify(recording.to_dict())
+        if not speech_profile:
+            logger.error(f"Speech profile not found for user {user_id}")
+            return jsonify({"error": "Speech profile not found"}), 404
+
+        if not recording or recording.profile_id != speech_profile.id:
+            logger.error(
+                f"Recording {id} not found or unauthorized access by user {user_id}"
+            )
+            return jsonify({"error": "Recording not found"}), 404
+
+        logger.debug(f"Successfully retrieved recording {id} for user {user_id}")
+        return jsonify(recording.to_dict())
+    except Exception as e:
+        logger.error(f"Error fetching recording {id}: {str(e)}", exc_info=True)
+        return jsonify({"error": "Failed to fetch recording"}), 500
 
 
 @speech_bp.route("/recordings/<int:id>", methods=["DELETE"])
 @jwt_required()
 def delete_recording(id: int):
     """Delete a recording by id"""
-    # Get the recording
-    recording = Recording.query.filter_by(id=id).first()
-    if not recording:
-        logger.error("Recording not found for id %s", id)
-        return jsonify({"error": "Recording not found"}), 404
-
-    # Ensure the recording belongs to the current user
+    logger.info(f"Delete recording route accessed for ID: {id}")
     user_id = get_jwt_identity()
-    speech_profile = SpeechProfile.query.filter_by(user_id=user_id).first()
-    if not speech_profile:
-        logger.error("Speech profile not found for user %s", user_id)
-        return jsonify({"error": "Speech profile not found"}), 404
-
-    if recording.profile_id != speech_profile.id:
-        logger.error(
-            "Unauthorized deletion attempt for recording %s by user %s", id, user_id
-        )
-        return jsonify({"error": "Unauthorized"}), 403
+    logger.debug(f"User {user_id} attempting to delete recording {id}")
 
     try:
+        recording = Recording.query.filter_by(id=id).first()
+        if not recording:
+            logger.error(f"Recording {id} not found")
+            return jsonify({"error": "Recording not found"}), 404
+
+        speech_profile = SpeechProfile.query.filter_by(user_id=user_id).first()
+        if not speech_profile:
+            logger.error(f"Speech profile not found for user {user_id}")
+            return jsonify({"error": "Speech profile not found"}), 404
+
+        if recording.profile_id != speech_profile.id:
+            logger.error(
+                f"Unauthorized deletion attempt for recording {id} by user {user_id}"
+            )
+            return jsonify({"error": "Unauthorized"}), 403
+
         # Delete associated analysis first (due to foreign key constraint)
         Analysis.query.filter_by(recording_id=id).delete()
+        logger.debug(f"Deleted analysis for recording {id}")
 
         # Delete the recording
         db.session.delete(recording)
+        logger.debug(f"Deleted recording {id}")
 
         # Update profile stats
         speech_profile.total_recordings -= 1
+        logger.debug(f"Updated total recordings count for user {user_id}")
 
         # Commit the changes
         db.session.commit()
-
-        logger.info("Successfully deleted recording %s", id)
+        logger.info(f"Successfully deleted recording {id} for user {user_id}")
         return jsonify({"message": "Recording deleted successfully"}), 200
 
     except Exception as e:
         db.session.rollback()
-        logger.error("Error deleting recording: %s", str(e), exc_info=True)
+        logger.error(f"Error deleting recording {id}: {str(e)}", exc_info=True)
         return jsonify({"error": f"Failed to delete recording: {str(e)}"}), 500
 
 

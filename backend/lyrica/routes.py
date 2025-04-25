@@ -1,8 +1,10 @@
-from flask import jsonify, Blueprint, request, Response, stream_with_context
-from backend.config import create_logger
-from backend.lyrica import ArtistClient
 import json
 import time
+
+from flask import Blueprint, Response, jsonify, request, stream_with_context
+
+from backend.config import create_logger
+from backend.lyrica import ArtistClient
 
 logger = create_logger(__name__, level="DEBUG")
 
@@ -11,14 +13,22 @@ lyrica = Blueprint("lyrica", __name__, url_prefix="/lyrica")
 
 @lyrica.route("/search-artist/<artist_name>", methods=["GET"])
 def search_artist(artist_name: str):
+    logger.info(f"Searching for artist: {artist_name}")
 
     try:
         artist_id = ArtistClient.name_to_id(artist_name)
+        logger.debug(f"Found artist ID: {artist_id} for artist: {artist_name}")
     except ValueError as e:
-        logger.exception(e)
+        logger.error(f"Artist not found: {artist_name}", exc_info=True)
         return jsonify({"error": "Artist not found"}), 404
 
-    artist = ArtistClient.ArtistClient(artist_id=artist_id)
+    try:
+        artist = ArtistClient.ArtistClient(artist_id=artist_id)
+        logger.debug(f"Successfully created ArtistClient for ID: {artist_id}")
+    except Exception as e:
+        logger.error(f"Error creating ArtistClient: {str(e)}", exc_info=True)
+        return jsonify({"error": "Failed to create artist client"}), 500
+
     return jsonify({"id": artist.artist_id, "name": artist.artist.name}), 200
 
 
