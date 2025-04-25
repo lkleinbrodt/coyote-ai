@@ -6,7 +6,6 @@ from flask import Blueprint, Response, jsonify, request, stream_with_context
 
 from backend.config import Config
 from backend.extensions import create_logger
-from backend.lifter.utils import load_lifts_from_s3
 from backend.src.s3 import S3
 
 S3_BUCKET = Config.LIFTER_BUCKET
