@@ -8,11 +8,9 @@ from flask_jwt_extended import (
     get_jwt_identity,
     jwt_required,
 )
-from sqlalchemy import and_, extract, func
-from sqlalchemy.types import Date
+from sqlalchemy import func
 
 from backend.extensions import create_logger, db
-from backend.openai_utils import extract_number_from_text
 from backend.src.auth import apple_signin
 
 from .models import DailyTarget, Feeding
@@ -20,16 +18,26 @@ from .models import DailyTarget, Feeding
 logger = create_logger(__name__, level="DEBUG")
 poppy_bp = Blueprint("poppy", __name__)
 
+import pytz
+
+PACIFIC = pytz.timezone("America/Los_Angeles")
+
+
+def get_pacific_date(utc_timestamp=None):
+    if utc_timestamp is None:
+        utc_timestamp = datetime.now(pytz.utc)
+    return utc_timestamp.astimezone(PACIFIC).date()
+
 
 def get_or_create_daily_target():
     """Get today's target record or create a new one if none exists"""
-    today = datetime.utcnow().date()
-    target = DailyTarget.query.filter_by(date=today).first()
+    today_pacific = get_pacific_date()
+    target = DailyTarget.query.filter_by(date=today_pacific).first()
     if not target:
         # Get the most recent target to carry forward
         last_target = DailyTarget.query.order_by(DailyTarget.date.desc()).first()
         target_value = last_target.target if last_target else 3.0
-        target = DailyTarget(date=today, target=target_value)
+        target = DailyTarget(date=today_pacific, target=target_value)
         db.session.add(target)
         db.session.commit()
     return target
@@ -68,17 +76,28 @@ def add_feeding():
         # Create feeding with timestamp default (current time in UTC)
         feeding = Feeding(amount=amount, last_updated_by=user_id)
         db.session.add(feeding)
+        db.session.flush()
         db.session.commit()
         logger.debug(
             f"Successfully added feeding of amount {amount} for user {user_id}"
         )
 
         # Get the updated daily total for today in UTC
-        today_utc = datetime.utcnow().date()
+        now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
 
-        # Create UTC date range for query
-        start_of_day_utc = datetime.combine(today_utc, datetime.min.time())
-        end_of_day_utc = start_of_day_utc + timedelta(days=1)
+        # Step 2: convert to Pacific
+        now_pacific = now_utc.astimezone(PACIFIC)
+
+        # Step 3: get start/end of that Pacific day
+        pacific_date = now_pacific.date()
+        start_of_day_pacific = PACIFIC.localize(
+            datetime.combine(pacific_date, datetime.min.time())
+        )
+        end_of_day_pacific = start_of_day_pacific + timedelta(days=1)
+
+        # Step 4: convert those back to UTC for querying
+        start_of_day_utc = start_of_day_pacific.astimezone(pytz.utc)
+        end_of_day_utc = end_of_day_pacific.astimezone(pytz.utc)
 
         total = (
             db.session.query(func.sum(Feeding.amount))
@@ -111,9 +130,21 @@ def add_feeding():
 def get_daily_feedings():
     logger.info("Get daily feedings route accessed")
     try:
-        # Get today in UTC
-        today_utc = datetime.utcnow().date()
-        feedings = Feeding.query.filter(Feeding.timestamp >= today_utc).all()
+        now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
+        now_pacific = now_utc.astimezone(PACIFIC)
+        pacific_date = now_pacific.date()
+
+        start_of_day_pacific = PACIFIC.localize(
+            datetime.combine(pacific_date, datetime.min.time())
+        )
+        end_of_day_pacific = start_of_day_pacific + timedelta(days=1)
+
+        start_of_day_utc = start_of_day_pacific.astimezone(pytz.utc)
+        end_of_day_utc = end_of_day_pacific.astimezone(pytz.utc)
+
+        feedings = Feeding.query.filter(
+            Feeding.timestamp >= start_of_day_utc, Feeding.timestamp < end_of_day_utc
+        ).all()
         logger.debug(f"Found {len(feedings)} feedings for today")
         return jsonify([feeding.to_dict() for feeding in feedings])
     except Exception as e:
@@ -127,11 +158,21 @@ def get_daily_total():
     logger.info("Get daily total route accessed")
     try:
         # Get today in UTC
-        today_utc = datetime.utcnow().date()
+        now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
 
-        # Create UTC date range for query
-        start_of_day_utc = datetime.combine(today_utc, datetime.min.time())
-        end_of_day_utc = start_of_day_utc + timedelta(days=1)
+        # Step 2: convert to Pacific
+        now_pacific = now_utc.astimezone(PACIFIC)
+
+        # Step 3: get start/end of that Pacific day
+        pacific_date = now_pacific.date()
+        start_of_day_pacific = PACIFIC.localize(
+            datetime.combine(pacific_date, datetime.min.time())
+        )
+        end_of_day_pacific = start_of_day_pacific + timedelta(days=1)
+
+        # Step 4: convert those back to UTC for querying
+        start_of_day_utc = start_of_day_pacific.astimezone(pytz.utc)
+        end_of_day_utc = end_of_day_pacific.astimezone(pytz.utc)
 
         # Filter by timestamp being within today's range in UTC
         total = (
@@ -202,8 +243,13 @@ def update_target():
 @jwt_required()
 def get_history():
     try:
-        # Get all feedings ordered by timestamp
-        feedings = Feeding.query.order_by(Feeding.timestamp.desc()).all()
+        # Get feedings from last 7 days ordered by timestamp
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        feedings = (
+            Feeding.query.filter(Feeding.timestamp >= seven_days_ago)
+            .order_by(Feeding.timestamp.desc())
+            .all()
+        )
 
         # Get all targets
         targets = {t.date: t.target for t in DailyTarget.query.all()}
@@ -212,7 +258,11 @@ def get_history():
         history = {}
         for feeding in feedings:
             # Extract date component from timestamp
-            feeding_date = feeding.timestamp.date()
+            localized_ts = feeding.timestamp.replace(tzinfo=pytz.utc).astimezone(
+                pytz.timezone("America/Los_Angeles")
+            )
+            feeding_date = localized_ts.date()
+            # this date might be wrong because it's not converting to pacific time, so it's 7 hours shifted
 
             if feeding_date not in history:
                 history[feeding_date] = {
