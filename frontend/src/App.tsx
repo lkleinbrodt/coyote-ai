@@ -20,6 +20,9 @@ const Games = lazy(() => import("./games/pages/Games"));
 const GravityQuest = lazy(() => import("./games/GravityQuest/GravityQuest"));
 const Pet = lazy(() => import("./pet/pages/Pet"));
 const Poeltl = lazy(() => import("./poeltl/pages/Poeltl"));
+const ShootTheCreeps = lazy(
+  () => import("./games/ShootTheCreeps/ShootTheCreeps")
+);
 
 // Loading component
 const LoadingFallback = () => (
@@ -49,6 +52,10 @@ function App() {
                     <Route
                       path="/games/gravity-quest"
                       element={<GravityQuest />}
+                    />
+                    <Route
+                      path="/games/shoot-the-creeps"
+                      element={<ShootTheCreeps />}
                     />
                     <Route path="/pet" element={<Pet />} />
                     <Route path="/poeltl" element={<Poeltl />} />

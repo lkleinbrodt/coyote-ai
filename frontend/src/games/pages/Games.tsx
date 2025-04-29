@@ -27,6 +27,13 @@ export default function Games() {
       featured: true,
     },
     {
+      title: "Shoot The Creeps",
+      description:
+        "Defend your base from waves of creeps in this action-packed game.",
+      path: "/games/shoot-the-creeps",
+      icon: "/icons/ShootTheCreeps.png",
+    },
+    {
       title: "Boids Simulation",
       description: "Watch and interact with an AI-powered flocking simulation",
       path: "/boids",
