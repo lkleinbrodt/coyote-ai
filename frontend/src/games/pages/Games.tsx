@@ -29,7 +29,7 @@ export default function Games() {
     {
       title: "Shoot The Creeps",
       description:
-        "Defend your base from waves of creeps in this action-packed game.",
+        "My first Godot Game. Protect yourself from an onslaught of Creeps.",
       path: "/games/shoot-the-creeps",
       icon: "/icons/Shoot the Creeps.png",
     },
