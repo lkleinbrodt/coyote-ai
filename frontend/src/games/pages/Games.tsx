@@ -31,7 +31,7 @@ export default function Games() {
       description:
         "Defend your base from waves of creeps in this action-packed game.",
       path: "/games/shoot-the-creeps",
-      icon: "/icons/ShootTheCreeps.png",
+      icon: "/icons/Shoot the Creeps.png",
     },
     {
       title: "Boids Simulation",
