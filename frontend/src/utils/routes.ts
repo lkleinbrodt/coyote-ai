@@ -8,6 +8,7 @@ export const VALID_REDIRECT_PATHS = [
   "/games",
   "/games/shoot-the-creeps",
   "/games/gravity-quest",
+  "/explain",
 ];
 
 export const isValidRedirectPath = (path: string): boolean => {

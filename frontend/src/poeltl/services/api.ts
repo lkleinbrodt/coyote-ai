@@ -1,35 +1,19 @@
+import axiosInstance from "@/utils/axiosInstance";
+
 export const poeltlApi = {
   getPerson: async () => {
-    const response = await fetch("/api/poeltl/get-person", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
+    const response = await axiosInstance.get("/poeltl/get-person");
+    return response.data;
   },
 
   askQuestion: async (
     messages: { role: string; content: string }[],
     person: string
   ) => {
-    const response = await fetch("/api/poeltl/ask", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ messages, person }),
+    const response = await axiosInstance.post("/poeltl/ask", {
+      messages,
+      person,
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.body;
+    return response.data;
   },
 };

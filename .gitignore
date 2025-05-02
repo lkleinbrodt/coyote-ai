@@ -1,3 +1,4 @@
+.specstory/
 app.db
 .env
 data
@@ -30,3 +31,5 @@ dist-ssr
 
 *.env
 *.env >> .gitignore.env.example
+# SpecStory explanation file
+.specstory/.what-is-this.md

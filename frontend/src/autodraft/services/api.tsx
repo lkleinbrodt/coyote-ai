@@ -6,16 +6,16 @@ import {
   SourceFile,
 } from "@/autodraft/types";
 
-import axiosInstance from "@/autodraft/utils/axiosInstance";
+import axiosInstance from "@/utils/axiosInstance";
 
 // Fetch projects from the backend
 export const getProjects = async (): Promise<Project[]> => {
   try {
-    const response = await axiosInstance.get("/projects");
-    return response.data; // Assuming the response contains the data you need
+    const response = await axiosInstance.get("/autodraft/projects");
+    return response.data;
   } catch (error) {
     console.error("Error fetching projects:", error);
-    throw error; // Throw error so you can handle it in your component
+    throw error;
   }
 };
 
@@ -23,8 +23,8 @@ export const getProjects = async (): Promise<Project[]> => {
 export const getReports = async (projectID?: string): Promise<Report[]> => {
   try {
     const endpoint = projectID
-      ? `/reports?project_id=${projectID}`
-      : "/reports";
+      ? `/autodraft/reports?project_id=${projectID}`
+      : "/autodraft/reports";
     const response = await axiosInstance.get(endpoint);
     return response.data;
   } catch (error) {
@@ -35,7 +35,9 @@ export const getReports = async (projectID?: string): Promise<Report[]> => {
 
 export const newProject = async (name: string): Promise<Project> => {
   try {
-    const response = await axiosInstance.post("/new-project", { name });
+    const response = await axiosInstance.post("/autodraft/new-project", {
+      name,
+    });
     return response.data;
   } catch (error: any) {
     if (error.response && error.response.status === 409) {

@@ -1,10 +1,12 @@
 import { Navigate, useSearchParams } from "react-router-dom";
 
-import Cookies from "js-cookie"; // To store the token as a cookie
-import { isValidRedirectPath } from "../utils/routes";
+import { authService } from "@/services/auth";
+import { isValidRedirectPath } from "@/utils/routes";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AuthPage = () => {
   const [searchParams] = useSearchParams();
+  const { setUser } = useAuth();
   const accessToken = searchParams.get("access_token");
   const next = searchParams.get("next") || "/";
 
@@ -15,23 +17,19 @@ const AuthPage = () => {
 
   const redirectTo = isValidRedirectPath(next) ? next : "/";
 
-  // Store the token in a secure cookie
-  Cookies.set("accessToken", accessToken, { secure: true, sameSite: "strict" });
-
-  const user = JSON.parse(atob(accessToken.split(".")[1]));
-
-  const userDict = {
-    id: user.sub,
-    email: user.email,
-    name: user.name,
-    image: user.picture,
-    token: accessToken,
+  // Handle the auth callback and set user data
+  const handleAuthCallback = async () => {
+    try {
+      const user = await authService.handleAuthCallback(accessToken);
+      setUser(user);
+    } catch (error) {
+      console.error("Error handling auth callback:", error);
+      return <Navigate to="/login" replace />;
+    }
   };
 
-  Cookies.set("user", JSON.stringify(userDict), {
-    secure: true,
-    sameSite: "strict",
-  });
+  // Call the handler immediately
+  handleAuthCallback();
 
   return <Navigate to={redirectTo} replace />;
 };

@@ -1,7 +1,6 @@
 // src/explain/services/api.ts
 
-// Define the base URL directly, using environment variables
-const API_BASE_URL = `${import.meta.env.VITE_BASE_URL || ""}api/explain`;
+import axiosInstance from "@/utils/axiosInstance";
 
 export type ExplanationLevel = "child" | "student" | "professional" | "expert";
 
@@ -23,34 +22,23 @@ export const streamExplanation = async (
   const signal = controller.signal;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/stream/${level}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-      },
-      body: JSON.stringify({ topic }),
-      signal,
-    });
-
-    if (!response.ok) {
-      let errorJson;
-      try {
-        errorJson = await response.json();
-      } catch {
-        // Ignore parsing error
+    const response = await axiosInstance.post(
+      `/explain/stream/${level}`,
+      { topic },
+      {
+        headers: {
+          Accept: "text/event-stream",
+        },
+        responseType: "stream",
+        signal,
       }
-      const errorMessage =
-        errorJson?.error?.message ||
-        `HTTP error! Status: ${response.status} ${response.statusText}`;
-      throw new Error(errorMessage);
-    }
+    );
 
-    if (!response.body) {
+    if (!response.data) {
       throw new Error("Response body is null");
     }
 
-    reader = response.body.getReader();
+    reader = response.data.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
 

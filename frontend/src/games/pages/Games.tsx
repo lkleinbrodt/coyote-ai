@@ -53,11 +53,8 @@ export default function Games() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center py-20">
           <h1 className="text-4xl sm:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-br from-primary to-secondary pb-1">
-            Interactive Games
+            Games
           </h1>
-          <p className="text-xl sm:text-2xl text-muted-foreground">
-            Explore our collection of AI-powered games and simulations
-          </p>
         </div>
       </div>
 

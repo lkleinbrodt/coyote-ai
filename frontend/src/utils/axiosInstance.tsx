@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Create an axios instance with base URL and default configuration
 const axiosInstance = axios.create({
-  baseURL: `${import.meta.env.VITE_BASE_URL}api/autodraft`, // Remove trailing slash
+  baseURL: `${import.meta.env.VITE_BASE_URL}api`, // Base URL for all API calls
   withCredentials: true, // Send cookies with requests
 });
 
@@ -13,7 +13,6 @@ axiosInstance.interceptors.request.use(
     const token = Cookies.get("accessToken");
 
     if (token) {
-      // Set the Authorization header with the Bearer token
       config.headers.Authorization = `Bearer ${token}`;
     }
 

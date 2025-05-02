@@ -1,3 +1,4 @@
+import { AuthState, User } from "@/types/auth";
 import {
   ReactNode,
   createContext,
@@ -7,73 +8,89 @@ import {
 } from "react";
 
 import Cookies from "js-cookie";
+import { authService } from "@/services/auth";
 import { useNavigate } from "react-router-dom";
 
-interface User {
-  id: number;
-  email: string;
-  name: string;
-  image: string;
-  token: string;
-}
-
-interface AuthContextType {
-  user: User | null;
+interface AuthContextType extends AuthState {
   setUser: (user: User | null) => void;
-  loading: boolean;
-  logout: () => void;
-  login: (from: string) => void;
+  logout: () => Promise<void>;
+  login: (provider: string, from?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<AuthState>({
+    user: null,
+    loading: true,
+    error: null,
+  });
   const navigate = useNavigate();
+
   useEffect(() => {
     const userCookie = Cookies.get("user");
     if (userCookie) {
-      setUser(JSON.parse(userCookie));
+      try {
+        setState((prev) => ({
+          ...prev,
+          user: JSON.parse(userCookie),
+          loading: false,
+        }));
+      } catch (error) {
+        console.error("Error parsing user cookie:", error);
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: { message: "Invalid user data" },
+        }));
+      }
+    } else {
+      setState((prev) => ({ ...prev, loading: false }));
     }
-    setLoading(false);
   }, []);
 
   const handleSetUser = (newUser: User | null) => {
-    console.log("handleSetUser", newUser);
-    setUser(newUser);
+    setState((prev) => ({ ...prev, user: newUser, error: null }));
     if (newUser) {
-      Cookies.set("user", JSON.stringify(newUser));
+      Cookies.set("user", JSON.stringify(newUser), {
+        secure: true,
+        sameSite: "strict",
+      });
     } else {
       Cookies.remove("user");
     }
   };
 
   const logout = async () => {
+    await authService.logout();
     await navigate("/");
-
     // Ensure navigation completes before clearing user state
-    // React Router's navigation can be asynchronous
     await new Promise((resolve) => setTimeout(resolve, 100));
-
-    setUser(null);
-    Cookies.remove("user");
+    handleSetUser(null);
   };
 
-  const login = (from: string) => {
-    if (!from) {
-      from = "/";
+  const login = async (from: string = "/") => {
+    const provider = "google";
+    setState((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      await authService.login(provider, from);
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: { message: "Failed to initiate login" },
+      }));
     }
-    console.log("from", from);
-    const nextPath = encodeURIComponent(from);
-    console.log("nextPath", nextPath);
-    const baseUrl = import.meta.env.VITE_BASE_URL;
-    window.location.href = `${baseUrl}/api/auth/authorize/google?next=${nextPath}`;
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, setUser: handleSetUser, loading, logout, login }}
+      value={{
+        ...state,
+        setUser: handleSetUser,
+        logout,
+        login,
+      }}
     >
       {children}
     </AuthContext.Provider>
