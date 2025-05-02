@@ -51,6 +51,12 @@ const Landing: React.FC = () => {
       // category: "mobileApps",
     },
     {
+      title: "Explain Like I'm ___",
+      description: "Explore a topic at different levels of complexity",
+      icon: theme === "dark" ? "icons/ELI.png" : "icons/ELI.png",
+      link: "/explain",
+    },
+    {
       title: "Reminder-Mate",
       description: "Get reminders for your tasks and events",
       icon:

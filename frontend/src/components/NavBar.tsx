@@ -24,6 +24,8 @@ const getPageTitle = (pathname: string) => {
       return "Gravity Quest";
     case "/games/shoot-the-creeps":
       return "Shoot The Creeps";
+    case "/explain":
+      return "Explain Like I'm ___";
     default:
       return "Landon Kleinbrodt";
   }

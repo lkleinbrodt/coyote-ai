@@ -16,6 +16,7 @@ import { ThemeProvider } from "./components/theme-provider";
 // Lazy load components
 const Autodraft = lazy(() => import("./autodraft/pages/Autodraft"));
 const Boids = lazy(() => import("./boids/pages/Boids"));
+const ExplainPage = lazy(() => import("./pages/ExplainPage"));
 const Games = lazy(() => import("./games/pages/Games"));
 const GravityQuest = lazy(() => import("./games/GravityQuest/GravityQuest"));
 const Pet = lazy(() => import("./pet/pages/Pet"));
@@ -46,6 +47,7 @@ function App() {
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/privacy" element={<Privacy />} />
                   <Route element={<PrivateRoute />}>
+                    <Route path="/explain" element={<ExplainPage />} />
                     <Route path="/autodraft" element={<Autodraft />} />
                     <Route path="/boids" element={<Boids />} />
                     <Route path="/games" element={<Games />} />
