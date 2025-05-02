@@ -43,6 +43,10 @@ export const streamExplanation = async (
     let buffer = "";
 
     while (true) {
+      if (!reader) {
+        throw new Error("Stream reader is null");
+      }
+
       const { done, value } = await reader.read();
 
       if (done) {
