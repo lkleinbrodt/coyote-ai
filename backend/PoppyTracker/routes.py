@@ -156,9 +156,10 @@ def get_daily_feedings():
 @jwt_required(optional=True)
 def get_daily_total():
     logger.info("Get daily total route accessed")
-    user_id = get_jwt_identity()
-    if not user_id:
-        user = request.get_json().get("user")
+    try:
+        user_id = get_jwt_identity()
+        if not user_id:
+            user = request.args.get("user")
         if user != "secret poppy access code":
             return (
                 jsonify(
@@ -168,8 +169,6 @@ def get_daily_total():
             )
         else:
             user_id = -1
-
-    try:
         # Get today in UTC
         now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
 
