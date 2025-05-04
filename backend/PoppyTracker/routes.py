@@ -152,7 +152,7 @@ def get_daily_feedings():
         return jsonify({"error": {"message": str(e)}, "status": "error"}), 500
 
 
-@poppy_bp.route("/daily/total", methods=["GET"])
+@poppy_bp.route("/daily/total", methods=["GET", "POST"])
 @jwt_required(optional=True)
 def get_daily_total():
     logger.info("Get daily total route accessed")
