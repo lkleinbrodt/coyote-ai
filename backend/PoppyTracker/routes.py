@@ -153,9 +153,22 @@ def get_daily_feedings():
 
 
 @poppy_bp.route("/daily/total", methods=["GET"])
-@jwt_required()
+@jwt_required(optional=True)
 def get_daily_total():
     logger.info("Get daily total route accessed")
+    user_id = get_jwt_identity()
+    if not user_id:
+        user = request.get_json().get("user")
+        if user != "secret poppy access code":
+            return (
+                jsonify(
+                    {"error": {"message": "Invalid access code"}, "status": "error"}
+                ),
+                400,
+            )
+        else:
+            user_id = -1
+
     try:
         # Get today in UTC
         now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
@@ -184,7 +197,10 @@ def get_daily_total():
         )
         logger.debug(f"Daily total: {total}")
 
-        return jsonify({"total": total})
+        # get the target for today
+        target = get_or_create_daily_target()
+
+        return jsonify({"total": total, "target": target.target})
 
     except Exception as e:
         logger.error(f"Error getting daily total: {str(e)}", exc_info=True)
