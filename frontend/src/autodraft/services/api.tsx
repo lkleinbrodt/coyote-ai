@@ -53,7 +53,7 @@ export const newReport = async (
   projectID: string
 ): Promise<Report> => {
   try {
-    const response = await axiosInstance.post("/new-report", {
+    const response = await axiosInstance.post("/autodraft/new-report", {
       name,
       project_id: projectID,
     });
@@ -69,7 +69,9 @@ export const newReport = async (
 
 export const getFiles = async (projectID: string): Promise<SourceFile[]> => {
   try {
-    const response = await axiosInstance.get(`/files?project_id=${projectID}`);
+    const response = await axiosInstance.get(
+      `/autodraft/files?project_id=${projectID}`
+    );
     return response.data;
   } catch (error) {
     console.error("Error fetching files:", error);
@@ -87,7 +89,10 @@ export const uploadFile = async (
   formData.append("project_id", projectID.toString());
   formData.append("overwrite", overwrite.toString());
   try {
-    const response = await axiosInstance.post("/upload-file", formData);
+    const response = await axiosInstance.post(
+      "/autodraft/upload-file",
+      formData
+    );
 
     return response.data;
   } catch (error) {
@@ -98,7 +103,7 @@ export const uploadFile = async (
 
 export const createIndex = async (projectID: string) => {
   try {
-    const response = await axiosInstance.post("/create-index", {
+    const response = await axiosInstance.post("/autodraft/create-index", {
       project_id: projectID,
     });
     return response.data;
@@ -114,7 +119,7 @@ export const generateResponse = async (
   projectID: string
 ): Promise<Response> => {
   try {
-    const resp = await axiosInstance.post("/generate-response", {
+    const resp = await axiosInstance.post("/autodraft/generate-response", {
       prompt: prompt,
       project_id: projectID,
       prompt_id: promptID,
@@ -128,7 +133,7 @@ export const generateResponse = async (
 
 export const getPrompts = async (reportID: string): Promise<Prompt[]> => {
   try {
-    const response = await axiosInstance.get("/prompts", {
+    const response = await axiosInstance.get("/autodraft/prompts", {
       params: { report_id: reportID },
     });
     const prompts: Prompt[] = response.data;
@@ -144,7 +149,7 @@ export const newPrompt = async (
   reportID: string
 ): Promise<Prompt> => {
   try {
-    const response = await axiosInstance.post("/new-prompt", {
+    const response = await axiosInstance.post("/autodraft/new-prompt", {
       text,
       report_id: reportID,
     });
@@ -160,10 +165,13 @@ export const updatePrompt = async (
   promptID: string
 ): Promise<Prompt> => {
   try {
-    const response = await axiosInstance.post<Prompt>("/update-prompt", {
-      text,
-      prompt_id: promptID,
-    });
+    const response = await axiosInstance.post<Prompt>(
+      "/autodraft/update-prompt",
+      {
+        text,
+        prompt_id: promptID,
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error updating prompt:", error);
@@ -174,7 +182,7 @@ export const updatePrompt = async (
 export const indexAvailable = async (projectID: string): Promise<boolean> => {
   try {
     const response = await axiosInstance.get(
-      `/index-available?project_id=${projectID}`
+      `/autodraft/index-available?project_id=${projectID}`
     );
     return response.data.exists;
   } catch (error) {
@@ -185,7 +193,7 @@ export const indexAvailable = async (projectID: string): Promise<boolean> => {
 
 export const deleteIndex = async (projectID: string) => {
   try {
-    const response = await axiosInstance.post("/delete-index", {
+    const response = await axiosInstance.post("/autodraft/delete-index", {
       project_id: projectID,
     });
     return response.data;
@@ -200,7 +208,7 @@ export const updateResponse = async (
   responseID: string
 ): Promise<Response> => {
   try {
-    const response = await axiosInstance.post("/update-response", {
+    const response = await axiosInstance.post("/autodraft/update-response", {
       text,
       response_id: responseID,
     });
@@ -216,7 +224,7 @@ export const addResponse = async (
   promptID: string
 ): Promise<Response> => {
   try {
-    const response = await axiosInstance.post("/add-response", {
+    const response = await axiosInstance.post("/autodraft/add-response", {
       text,
       prompt_id: promptID,
     });
@@ -229,7 +237,7 @@ export const addResponse = async (
 
 export const updateIndex = async (projectID: string) => {
   try {
-    const response = await axiosInstance.post("/update-index", {
+    const response = await axiosInstance.post("/autodraft/update-index", {
       project_id: projectID,
     });
     return response.data;
@@ -261,7 +269,7 @@ export const updateOrCreateIndex = async (projectID: string) => {
 
 export const deleteFile = async (fileID: string) => {
   try {
-    const response = await axiosInstance.post("/delete-file", {
+    const response = await axiosInstance.post("/autodraft/delete-file", {
       file_id: fileID,
     });
     return response.data;
@@ -273,7 +281,7 @@ export const deleteFile = async (fileID: string) => {
 
 export const deletePrompt = async (promptID: string) => {
   try {
-    const response = await axiosInstance.post("/delete-prompt", {
+    const response = await axiosInstance.post("/autodraft/delete-prompt", {
       prompt_id: promptID,
     });
     return response.data;
@@ -294,7 +302,10 @@ export const uploadTemplate = async (
     formData.append("project_id", projectID);
     formData.append("report_id", reportID);
     console.log(formData.get("file"));
-    const response = await axiosInstance.post("/upload-template", formData);
+    const response = await axiosInstance.post(
+      "/autodraft/upload-template",
+      formData
+    );
     return response.data;
   } catch (error) {
     console.error("Error uploading template:", error);
@@ -304,7 +315,7 @@ export const uploadTemplate = async (
 
 export const generateAll = async (reportID: string) => {
   try {
-    const response = await axiosInstance.post("/generate-all", {
+    const response = await axiosInstance.post("/autodraft/generate-all", {
       report_id: reportID,
     });
     return response.data;
@@ -318,7 +329,7 @@ export const updateReport = async (
   updates: Partial<Report>
 ): Promise<Report> => {
   try {
-    const response = await axiosInstance.post("/update-report", {
+    const response = await axiosInstance.post("/autodraft/update-report", {
       report_id: reportId,
       ...updates,
     });
@@ -331,7 +342,7 @@ export const updateReport = async (
 
 export const deleteReport = async (reportId: string): Promise<void> => {
   try {
-    await axiosInstance.post("/delete-report", {
+    await axiosInstance.post("/autodraft/delete-report", {
       report_id: reportId,
     });
   } catch (error) {
@@ -345,7 +356,7 @@ export const updateProject = async (
   updates: Partial<Project>
 ): Promise<Project> => {
   try {
-    const response = await axiosInstance.post("/update-project", {
+    const response = await axiosInstance.post("/autodraft/update-project", {
       project_id: projectId,
       ...updates,
     });
@@ -358,7 +369,7 @@ export const updateProject = async (
 
 export const deleteProject = async (projectId: string): Promise<void> => {
   try {
-    await axiosInstance.post("/delete-project", {
+    await axiosInstance.post("/autodraft/delete-project", {
       project_id: projectId,
     });
   } catch (error) {

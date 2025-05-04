@@ -53,6 +53,8 @@ export const streamResponse = async (
         Authorization: `Bearer ${Cookies.get("accessToken")}`,
       },
       body: JSON.stringify(data),
+      credentials: "include", // This is equivalent to axios's withCredentials
+      mode: "cors", // Explicitly set CORS mode
     });
 
     if (!response.ok) {
