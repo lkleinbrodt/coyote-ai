@@ -160,15 +160,16 @@ def get_daily_total():
         user_id = get_jwt_identity()
         if not user_id:
             user = request.get_json().get("user")
-        if user != "secret poppy access code":
-            return (
-                jsonify(
-                    {"error": {"message": "Invalid access code"}, "status": "error"}
-                ),
-                400,
-            )
-        else:
-            user_id = -1
+            if user != "secret poppy access code":
+                user_id = -1
+            else:
+                return (
+                    jsonify(
+                        {"error": {"message": "Invalid access code"}, "status": "error"}
+                    ),
+                    400,
+                )
+
         # Get today in UTC
         now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
 
