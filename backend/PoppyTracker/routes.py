@@ -159,7 +159,7 @@ def get_daily_total():
     try:
         user_id = get_jwt_identity()
         if not user_id:
-            user = request.args.get("user")
+            user = request.get_json().get("user")
         if user != "secret poppy access code":
             return (
                 jsonify(
