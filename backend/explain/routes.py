@@ -119,7 +119,10 @@ def stream_explanation(level: str):
                 logger.error(f"Error in stream generation: {str(e)}", exc_info=True)
                 yield f"data: {json.dumps({'error': 'Failed to generate explanation'})}\n\n"
 
-        return Response(stream_with_context(generate()), mimetype="text/event-stream")
+        return Response(
+            stream_with_context(generate()),
+            mimetype="text/event-stream",
+        )
 
     except Exception as e:
         logger.error(f"Unexpected error processing request: {str(e)}", exc_info=True)

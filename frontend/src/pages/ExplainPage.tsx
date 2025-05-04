@@ -13,6 +13,16 @@ interface Explanations {
   expert: string;
 }
 
+// Status for each explanation
+type ExplanationStatus = "waiting" | "loading" | "complete" | "error";
+
+interface ExplanationStatuses {
+  child: ExplanationStatus;
+  student: ExplanationStatus;
+  professional: ExplanationStatus;
+  expert: ExplanationStatus;
+}
+
 const ExplainPage: React.FC = () => {
   const { toast } = useToast();
 
@@ -25,16 +35,76 @@ const ExplainPage: React.FC = () => {
     professional: "",
     expert: "",
   });
+  const [statuses, setStatuses] = useState<ExplanationStatuses>({
+    child: "complete",
+    student: "complete",
+    professional: "complete",
+    expert: "complete",
+  });
   const [error, setError] = useState<string | null>(null);
-  const [streamsCompleted, setStreamsCompleted] = useState<number>(0);
-  const [streamsErrored, setStreamsErrored] = useState<number>(0);
-  const [totalStreams, setTotalStreams] = useState<number>(0);
+  const [currentLevel, setCurrentLevel] = useState<ExplanationLevel | null>(
+    null
+  );
 
   // Handle input change
   const handleTopicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTopic(e.target.value);
     // Clear any previous errors when user starts typing
     if (error) setError(null);
+  };
+
+  // Process a single explanation level
+  const processLevel = async (level: ExplanationLevel): Promise<boolean> => {
+    setCurrentLevel(level);
+    setStatuses((prev) => ({
+      ...prev,
+      [level]: "loading",
+    }));
+
+    try {
+      await streamExplanation(
+        topic,
+        level,
+        (content) => {
+          setExplanations((prev) => ({
+            ...prev,
+            [level]: prev[level] + content,
+          }));
+        },
+        () => {
+          setStatuses((prev) => ({
+            ...prev,
+            [level]: "complete",
+          }));
+          return true;
+        },
+        (errorMessage) => {
+          toast({
+            title: `Error (${level})`,
+            description:
+              errorMessage || `Failed to generate ${level} explanation.`,
+            variant: "destructive",
+          });
+          setExplanations((prev) => ({
+            ...prev,
+            [level]: `Error: ${errorMessage}`,
+          }));
+          setStatuses((prev) => ({
+            ...prev,
+            [level]: "error",
+          }));
+          return false;
+        }
+      );
+      return true;
+    } catch (err) {
+      console.error(`Error in ${level} stream:`, err);
+      setStatuses((prev) => ({
+        ...prev,
+        [level]: "error",
+      }));
+      return false;
+    }
   };
 
   // Handle form submission
@@ -53,71 +123,48 @@ const ExplainPage: React.FC = () => {
       expert: "",
     });
 
+    // Set all to waiting initially
+    setStatuses({
+      child: "waiting",
+      student: "waiting",
+      professional: "waiting",
+      expert: "waiting",
+    });
+
+    // Process levels sequentially
     const levels: ExplanationLevel[] = [
       "child",
       "student",
       "professional",
       "expert",
     ];
-    setStreamsCompleted(0);
-    setStreamsErrored(0);
-    setTotalStreams(levels.length);
 
-    // Start all streams concurrently
-    const streamPromises = levels.map((level) => {
-      return streamExplanation(
-        topic,
-        level,
-        (content) => {
-          setExplanations((prev) => {
-            const newText = prev[level] + content;
-            return {
-              ...prev,
-              [level]: newText,
-            };
-          });
-        },
-        () => {
-          setStreamsCompleted((prev) => prev + 1);
-          if (streamsCompleted + streamsErrored === totalStreams) {
-            setIsLoading(false);
-          }
-        },
-        (errorMessage) => {
-          setStreamsErrored((prev) => prev + 1);
-          toast({
-            title: `Error (${level})`,
-            description:
-              errorMessage || `Failed to generate ${level} explanation.`,
-            variant: "destructive",
-          });
-          setExplanations((prev) => ({
-            ...prev,
-            [level]: `Error: ${errorMessage}`,
-          }));
-          if (streamsCompleted + streamsErrored === totalStreams) {
-            setIsLoading(false);
-          }
-        }
-      ).catch((err) => {
-        console.error(`Error in ${level} stream:`, err);
-        setStreamsErrored((prev) => prev + 1);
-        if (streamsCompleted + streamsErrored === totalStreams) {
-          setIsLoading(false);
-        }
-      });
-    });
+    for (const level of levels) {
+      const success = await processLevel(level);
+      if (!success) {
+        // If one fails, we still continue with the rest
+        continue;
+      }
+    }
 
-    try {
-      await Promise.all(streamPromises);
-    } catch (error) {
-      console.error("Error in explanation streams:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-      setIsLoading(false);
+    setIsLoading(false);
+    setCurrentLevel(null);
+  };
+
+  // Get content for display based on status
+  const getDisplayContent = (level: ExplanationLevel): string => {
+    const status = statuses[level];
+    if (status === "waiting") {
+      return "Waiting for my turn...";
+    } else if (status === "loading" && !explanations[level]) {
+      return "Generating explanation...";
+    } else if (
+      status === "error" &&
+      !explanations[level].startsWith("Error:")
+    ) {
+      return "An error occurred while generating this explanation.";
+    } else {
+      return explanations[level];
     }
   };
 
@@ -164,15 +211,29 @@ const ExplainPage: React.FC = () => {
 
       {/* Explanations Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4 max-w-7xl mx-auto">
-        <ExplanationCard title="Curious Child" content={explanations.child} />
-        <ExplanationCard title="Student" content={explanations.student} />
+        <ExplanationCard
+          title="Curious Child"
+          content={getDisplayContent("child")}
+          status={statuses.child}
+          isActive={currentLevel === "child"}
+        />
+        <ExplanationCard
+          title="Student"
+          content={getDisplayContent("student")}
+          status={statuses.student}
+          isActive={currentLevel === "student"}
+        />
         <ExplanationCard
           title="Professional"
-          content={explanations.professional}
+          content={getDisplayContent("professional")}
+          status={statuses.professional}
+          isActive={currentLevel === "professional"}
         />
         <ExplanationCard
           title="World-Class Expert"
-          content={explanations.expert}
+          content={getDisplayContent("expert")}
+          status={statuses.expert}
+          isActive={currentLevel === "expert"}
         />
       </div>
     </div>

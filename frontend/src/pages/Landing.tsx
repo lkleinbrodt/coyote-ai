@@ -47,7 +47,7 @@ const Landing: React.FC = () => {
         theme === "dark"
           ? "icons/chef_hat_stamp.png"
           : "icons/chef_hat_stamp_light.png",
-      link: "https://cheffrey.org",
+      link: "https://www.cheffrey.org/",
       // category: "mobileApps",
     },
     {
