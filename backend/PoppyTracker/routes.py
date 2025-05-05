@@ -156,11 +156,12 @@ def get_daily_feedings():
 @jwt_required(optional=True)
 def get_daily_total():
     logger.info("Get daily total route accessed")
+    data = request.get_json()
     try:
         user_id = get_jwt_identity()
         if not user_id:
-            user = request.get_json().get("user")
-            if user != "secret poppy access code":
+            user = data.get("user")
+            if user == "secret poppy access code":
                 user_id = -1
             else:
                 return (
