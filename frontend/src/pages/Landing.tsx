@@ -40,6 +40,13 @@ const Landing: React.FC = () => {
       // category: "aiTools",
     },
     {
+      title: "Email Assistant",
+      description: "View, filter, and manage your Gmail messages",
+      icon: theme === "dark" ? "icons/email-dark.svg" : "icons/email-light.svg",
+      link: "/email-assistant",
+      // category: "aiTools",
+    },
+    {
       title: "Cheffrey",
       description:
         "Discover recipes, plan meals, and share cookbooks with friends!",

@@ -11,6 +11,7 @@ from flask_session import Session
 
 from .autodraft.models import *
 from .autodraft.routes import autodraft_bp
+from .email.routes import email_bp
 from .explain.routes import explain_bp
 from .lifter.routes import lifter
 from .models import *
@@ -62,6 +63,7 @@ def create_app(config_class: Config):
     api_bp.register_blueprint(speech_bp)
     api_bp.register_blueprint(poppy_bp, url_prefix="/poppy")  # Add PoppyTracker routes
     api_bp.register_blueprint(explain_bp)  # Add explain routes
+    api_bp.register_blueprint(email_bp)  # Add email routes
     app.register_blueprint(base_bp)
     app.register_blueprint(api_bp, url_prefix="/api")
 
