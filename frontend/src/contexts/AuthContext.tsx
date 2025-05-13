@@ -2,6 +2,7 @@ import { AuthState, User } from "@/types/auth";
 import {
   ReactNode,
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -9,12 +10,12 @@ import {
 
 import Cookies from "js-cookie";
 import { authService } from "@/services/auth";
-import { useNavigate } from "react-router-dom";
 
 interface AuthContextType extends AuthState {
   setUser: (user: User | null) => void;
   logout: () => Promise<void>;
-  login: (provider: string, from?: string) => Promise<void>;
+  login: (from?: string) => Promise<void>;
+  isAuthenticated: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,36 +26,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: true,
     error: null,
   });
-  const navigate = useNavigate();
+
+  // Function to initialize auth state from cookies
+  const initializeAuth = useCallback(() => {
+    const userProfile = authService.getCurrentUserProfile();
+    setState((prev) => ({
+      ...prev,
+      user: userProfile,
+      loading: false,
+    }));
+  }, []);
 
   useEffect(() => {
-    const userCookie = Cookies.get("user");
-    if (userCookie) {
-      try {
-        setState((prev) => ({
-          ...prev,
-          user: JSON.parse(userCookie),
-          loading: false,
-        }));
-      } catch (error) {
-        console.error("Error parsing user cookie:", error);
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error: { message: "Invalid user data" },
-        }));
-      }
-    } else {
-      setState((prev) => ({ ...prev, loading: false }));
-    }
-  }, []);
+    initializeAuth();
+  }, [initializeAuth]);
 
   const handleSetUser = (newUser: User | null) => {
     setState((prev) => ({ ...prev, user: newUser, error: null }));
     if (newUser) {
       Cookies.set("user", JSON.stringify(newUser), {
-        secure: true,
-        sameSite: "strict",
+        secure: import.meta.env.PROD,
+        sameSite: "Lax",
       });
     } else {
       Cookies.remove("user");
@@ -62,19 +54,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    // Update local context state for immediate UI feedback
+    //we dont do this, because our logic will clear the cookies then force a page refresh, and a page refresh will have it set the state using cookies
+    // setState((prev) => ({
+    //   ...prev,
+    //   user: null,
+    //   loading: false,
+    //   error: null,
+    // }));
+
+    // Call authService.logout which will clear client cookies and trigger the redirect
     await authService.logout();
-    await navigate("/");
-    // Ensure navigation completes before clearing user state
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    handleSetUser(null);
+    // The page will be redirected by the backend, no need for additional navigation logic
   };
 
   const login = async (from: string = "/") => {
-    const provider = "google";
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
-      await authService.login(provider, from);
-    } catch (error) {
+      authService.initiateLogin("google", from);
+    } catch (err) {
+      console.error("Failed to initiate login:", err);
       setState((prev) => ({
         ...prev,
         loading: false,
@@ -83,6 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const isAuthenticated = useCallback(() => {
+    return !!state.user && !!Cookies.get("accessToken");
+  }, [state.user]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -90,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser: handleSetUser,
         logout,
         login,
+        isAuthenticated,
       }}
     >
       {children}

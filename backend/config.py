@@ -31,7 +31,28 @@ class Config:
     REMEMBER_COOKIE_SECURE = True  # Same for "remember me" cookie
     SESSION_COOKIE_HTTPONLY = True  # Prevent client-side JS access to cookie
 
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=90)
+    # JWT Configuration
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)  # Short-lived access token
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)  # Long-lived refresh token
+
+    # Tell Flask-JWT-Extended to look for JWTs in headers and cookies
+    JWT_TOKEN_LOCATION = ["headers", "cookies"]
+
+    # Only allow JWT cookies to be sent over HTTPS
+    JWT_COOKIE_SECURE = ENV.lower() == "production"  # True in production, False in dev
+
+    # Set SameSite for CSRF protection
+    JWT_COOKIE_SAMESITE = "Lax"  # "Lax" or "Strict". "Lax" is often a good balance
+
+    # Configure which cookie(s) to look for JWTs in
+    JWT_ACCESS_COOKIE_NAME = "access_token_cookie"
+    JWT_REFRESH_COOKIE_NAME = "refresh_token_cookie"
+    JWT_COOKIE_PATH = "/api/auth"
+    JWT_REFRESH_COOKIE_PATH = "/api/auth/refresh"
+
+    # CSRF protection for cookie-based JWTs
+    JWT_COOKIE_CSRF_PROTECT = True
+    JWT_CSRF_IN_COOKIES = True
 
     LIFTER_BUCKET = "coyote-lifter"
 
@@ -70,6 +91,10 @@ class DevelopmentConfig(Config):
     SPEECH_APPLE_BUNDLE_ID = "com.development.speechcoach"
     SPEECH_DEVELOPMENT_MODE = True
 
+    JWT_COOKIE_SECURE = False  # Allow HTTP for localhost development
+    JWT_COOKIE_CSRF_PROTECT = False  # Simplify development
+    JWT_REFRESH_COOKIE_PATH = "/api/auth/refresh"
+
     STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY_TESTING")
     STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY_TESTING")
     STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
@@ -89,6 +114,9 @@ class ProductionConfig(Config):
 
     AUTODRAFT_BUCKET = "autodraft"
 
+    JWT_COOKIE_SECURE = True
+    JWT_COOKIE_CSRF_PROTECT = True
+
     SPEECH_APPLE_BUNDLE_ID = os.environ.get("SPEECH_APPLE_BUNDLE_ID")
     SPEECH_DEVELOPMENT_MODE = False
 
@@ -106,6 +134,9 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
 
     AUTODRAFT_BUCKET = "autodraft-test"
+
+    JWT_COOKIE_SECURE = False
+    JWT_COOKIE_CSRF_PROTECT = False
 
     STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY_TESTING")
     STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY_TESTING")

@@ -2,8 +2,15 @@ import json
 from decimal import Decimal
 
 import stripe
-from flask import Blueprint, current_app, jsonify, redirect, request
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+from flask import Blueprint, current_app, jsonify, make_response, redirect, request
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    get_jwt_identity,
+    jwt_required,
+    set_refresh_cookies,
+    unset_jwt_cookies,
+)
 
 from backend.extensions import create_logger, db
 from backend.models import (
@@ -163,6 +170,7 @@ def oauth_callback(provider):
     # Get the next parameter from the OAuth state
     next_path = request.args.get("state", "/")
 
+    # Create access token with user info
     access_token = create_access_token(
         identity=str(user.id),
         additional_claims={
@@ -172,9 +180,25 @@ def oauth_callback(provider):
         },
     )
 
+    # Create refresh token
+    refresh_token = create_refresh_token(identity=str(user.id))
+
+    # Prepare redirect URL with access token
     redirect_url = f"{current_app.config['FRONTEND_URL']}/auth?access_token={access_token}&next={next_path}"
-    print(f"Redirecting to: {redirect_url}")
-    return redirect(redirect_url)
+
+    # Create response with redirect
+    response = make_response(redirect(redirect_url))
+
+    # Set refresh token as HttpOnly cookie
+    set_refresh_cookies(
+        response,
+        refresh_token,
+    )
+
+    logger.debug(
+        f"OAuth callback successful for user {user.id}. Redirecting with access token and refresh cookie."
+    )
+    return response
 
 
 @billing_bp.route("/stripe/publishable_key", methods=["GET"])
@@ -370,3 +394,48 @@ def stripe_webhook():
     except Exception as e:
         current_app.logger.error(f"Error handling webhook: {str(e)}")
         return jsonify(success=False), 500
+
+
+@auth_bp.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh_token():
+    """Endpoint to refresh access token using refresh token cookie"""
+    current_user_identity = get_jwt_identity()
+
+    # Fetch user from database to get latest claims
+    user = User.query.get(current_user_identity)
+    if not user:
+        logger.error(f"User {current_user_identity} not found during token refresh")
+        return jsonify({"error": "User not found"}), 404
+
+    # Create new access token with latest user info
+    new_access_token = create_access_token(
+        identity=current_user_identity,
+        additional_claims={
+            "name": user.name,
+            "email": user.email,
+            "image": user.image,
+        },
+    )
+
+    logger.debug(f"Token refreshed for user {current_user_identity}")
+    return jsonify(access_token=new_access_token), 200
+
+
+@auth_bp.route("/logout", methods=["GET"])
+@jwt_required(verify_type=False, optional=True)
+def logout():
+    """
+    Endpoint to logout user by clearing JWT cookies and redirecting to frontend homepage.
+    - GET: Clears cookies and redirects browser to frontend home.
+    - POST: API call for backward compatibility, returns JSON response.
+    """
+
+    # Redirect flow - create a redirect response
+    frontend_home_url = f"{current_app.config['FRONTEND_URL']}/"
+    response = make_response(redirect(frontend_home_url))
+    unset_jwt_cookies(response)
+    logger.debug(
+        f"User logged out via redirect flow. Redirecting to {frontend_home_url}"
+    )
+    return response
