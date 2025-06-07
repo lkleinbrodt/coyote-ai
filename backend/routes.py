@@ -11,6 +11,7 @@ from flask_jwt_extended import (
     set_refresh_cookies,
     unset_jwt_cookies,
 )
+from sqlalchemy import text
 
 from backend.extensions import create_logger, db
 from backend.models import (
@@ -49,13 +50,14 @@ def ping_db():
     """Lightweight endpoint to keep the database connection active"""
     # Verify API key
     api_key = request.headers.get("X-API-Key")
-    if not api_key or api_key != current_app.config["PING_DB_API_KEY"]:
+    if api_key or api_key != current_app.config["PING_DB_API_KEY"]:
         logger.warning("Invalid or missing API key for ping-db endpoint")
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
         # Perform a lightweight database operation
-        db.session.execute("SELECT 1")
+
+        db.session.execute(text("SELECT 1"))
         logger.debug("Database ping successful")
         return (
             jsonify({"status": "success", "message": "Database connection active"}),
