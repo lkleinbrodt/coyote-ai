@@ -17,6 +17,11 @@ class Config:
         raise ValueError("SECRET_KEY is not set")
     ENV = os.environ.get("ENV", "dev").lower()
 
+    # API Keys
+    PING_DB_API_KEY = os.environ.get("PING_DB_API_KEY")
+    if not PING_DB_API_KEY:
+        raise ValueError("PING_DB_API_KEY is not set")
+
     ADMIN_EMAILS = ["lkleinbrodt@gmail.com"]
     MAIL_SERVER = os.environ.get("MAIL_SERVER")
     MAIL_PORT = os.environ.get("MAIL_PORT")

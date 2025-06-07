@@ -16,7 +16,7 @@ from .lifter.routes import lifter
 from .models import *
 from .poeltl.routes import poeltl
 from .PoppyTracker import poppy_bp
-from .routes import auth_bp, base_bp, billing_bp
+from .routes import api_bp, auth_bp, base_bp, billing_bp
 from .speech.routes import speech_bp
 
 
@@ -52,8 +52,6 @@ def create_app(config_class: Config):
     # def index(path):
     #     return send_from_directory(app.static_folder, "index.html")
 
-    api_bp = Blueprint("api", __name__)
-
     api_bp.register_blueprint(poeltl)
     api_bp.register_blueprint(lifter)
     api_bp.register_blueprint(auth_bp)
@@ -63,7 +61,7 @@ def create_app(config_class: Config):
     api_bp.register_blueprint(poppy_bp, url_prefix="/poppy")  # Add PoppyTracker routes
     api_bp.register_blueprint(explain_bp)  # Add explain routes
     app.register_blueprint(base_bp)
-    app.register_blueprint(api_bp, url_prefix="/api")
+    app.register_blueprint(api_bp)
 
     if not app.debug:
         mail_handler = SMTPHandler(

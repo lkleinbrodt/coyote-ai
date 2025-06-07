@@ -25,6 +25,7 @@ from backend.src.OAuthSignIn import OAuthSignIn
 logger = create_logger(__name__, level="DEBUG")
 
 base_bp = Blueprint("base", __name__)
+api_bp = Blueprint("api", __name__, url_prefix="/api")
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 billing_bp = Blueprint("billing", __name__, url_prefix="/billing")
 
@@ -41,6 +42,28 @@ def index():
         ),
         200,
     )
+
+
+@base_bp.route("/ping-db", methods=["GET"])
+def ping_db():
+    """Lightweight endpoint to keep the database connection active"""
+    # Verify API key
+    api_key = request.headers.get("X-API-Key")
+    if not api_key or api_key != current_app.config["PING_DB_API_KEY"]:
+        logger.warning("Invalid or missing API key for ping-db endpoint")
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        # Perform a lightweight database operation
+        db.session.execute("SELECT 1")
+        logger.debug("Database ping successful")
+        return (
+            jsonify({"status": "success", "message": "Database connection active"}),
+            200,
+        )
+    except Exception as e:
+        logger.error(f"Database ping failed: {str(e)}")
+        return jsonify({"error": "Database connection failed"}), 500
 
 
 @billing_bp.route("/balance", methods=["GET"])
