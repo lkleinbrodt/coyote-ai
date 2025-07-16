@@ -77,6 +77,15 @@ class Analysis(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
 
     def to_dict(self):
+        # Parse feedback as JSON if it's a string, otherwise return as is
+        feedback_data = self.feedback
+        if isinstance(self.feedback, str):
+            try:
+                feedback_data = json.loads(self.feedback)
+            except (json.JSONDecodeError, TypeError):
+                # If parsing fails, return as string (backward compatibility)
+                feedback_data = self.feedback
+
         return {
             "id": self.id,
             "recording_id": self.recording_id,
@@ -86,7 +95,7 @@ class Analysis(db.Model):
             "filler_word_count": self.filler_word_count,
             "tone_analysis": self.tone_analysis,
             "content_structure": self.content_structure,
-            "feedback": self.feedback,
+            "feedback": feedback_data,
             "created_at": self.created_at,
         }
 

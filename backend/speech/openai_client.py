@@ -47,6 +47,7 @@ def analyze_speech(transcript: str) -> Tuple[Dict[str, Any], Decimal]:
 
     response = client.chat.completions.create(
         model=ANALYSIS_MODEL,
+        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
@@ -59,17 +60,11 @@ def analyze_speech(transcript: str) -> Tuple[Dict[str, Any], Decimal]:
 
     response_text = response.choices[0].message.content
     try:
-        # Find the first { and last } to extract the JSON object
-        start = response_text.find("{")
-        end = response_text.rfind("}") + 1
-        if start >= 0 and end > start:
-            json_str = response_text[start:end]
-            analysis_data = json.loads(json_str)
-            cost = OpenAICosts.calculate_gpt4_cost(ANALYSIS_MODEL, response.usage)
-            return analysis_data, cost
-        else:
-            raise ValueError("No valid JSON found in response")
-    except (json.JSONDecodeError, ValueError) as e:
+        # The parsing is now much more reliable with response_format
+        analysis_data = json.loads(response_text)
+        cost = OpenAICosts.calculate_gpt4_cost(ANALYSIS_MODEL, response.usage)
+        return analysis_data, cost
+    except json.JSONDecodeError as e:
         print(f"Error parsing JSON response: {e}")
         print(f"Raw response: {response_text}")
         raise

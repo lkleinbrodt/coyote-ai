@@ -158,115 +158,126 @@ def analyze_recording():
             )
 
         try:
-            # 2. Transcribe audio and charge for it
-            audio_data = audio_file.read()
-            transcript = transcribe_audio(audio_data)
-            transcription_cost = OpenAICosts.calculate_whisper_cost(duration_seconds)
+            # Use a single transaction for the whole process
+            with db.session.begin_nested():
+                # 2. Transcribe audio and charge for it
+                audio_data = audio_file.read()
+                transcript = transcribe_audio(audio_data)
+                transcription_cost = OpenAICosts.calculate_whisper_cost(
+                    duration_seconds
+                )
 
-            # Create and complete transcription transaction
-            transaction = Transaction(
-                user_id=user_id,
-                balance_id=balance.id,
-                application="speech",
-                amount=-transcription_cost,
-                transaction_type=TransactionType.USAGE,
-                operation=SpeechOperation.TRANSCRIPTION.value,
-                status=TransactionStatus.COMPLETED,
-            )
-            db.session.add(transaction)
-            balance.debit(transcription_cost)
-            db.session.commit()
+                # Create and complete transcription transaction
+                transaction = Transaction(
+                    user_id=user_id,
+                    balance_id=balance.id,
+                    application="speech",
+                    amount=-transcription_cost,
+                    transaction_type=TransactionType.USAGE,
+                    operation=SpeechOperation.TRANSCRIPTION.value,
+                    status=TransactionStatus.COMPLETED,
+                )
+                db.session.add(transaction)
+                balance.debit(transcription_cost)
+                # NO db.session.commit() HERE
 
-            # 3. Check moderation
-            moderation_response = moderate_speech(transcript)
-            moderation_cost = OpenAICosts.calculate_moderation_cost()
+                # 3. Check moderation
+                moderation_response = moderate_speech(transcript)
+                moderation_cost = OpenAICosts.calculate_moderation_cost()
 
-            # Charge for moderation
-            transaction = Transaction(
-                user_id=user_id,
-                balance_id=balance.id,
-                application="speech",
-                amount=-moderation_cost,
-                transaction_type=TransactionType.USAGE,
-                operation=SpeechOperation.MODERATION.value,
-                status=TransactionStatus.COMPLETED,
-            )
-            db.session.add(transaction)
-            balance.debit(moderation_cost)
-            db.session.commit()
+                # Charge for moderation
+                transaction = Transaction(
+                    user_id=user_id,
+                    balance_id=balance.id,
+                    application="speech",
+                    amount=-moderation_cost,
+                    transaction_type=TransactionType.USAGE,
+                    operation=SpeechOperation.MODERATION.value,
+                    status=TransactionStatus.COMPLETED,
+                )
+                db.session.add(transaction)
+                balance.debit(moderation_cost)
+                # NO db.session.commit() HERE
 
-            if moderation_response.flagged:
-                reason = moderation_response.get_reason()
-                return jsonify({"message": f"Content Flagged for {reason}"}), 400
+                if moderation_response.flagged:
+                    reason = moderation_response.get_reason()
+                    return jsonify({"message": f"Content Flagged for {reason}"}), 400
 
-            # 4. Get title
-            title, title_cost = get_title(transcript)
+                # 4. Get title
+                title, title_cost = get_title(transcript)
 
-            transaction = Transaction(
-                user_id=user_id,
-                balance_id=balance.id,
-                application="speech",
-                amount=-title_cost,
-                transaction_type=TransactionType.USAGE,
-                operation=SpeechOperation.TITLE.value,
-                status=TransactionStatus.COMPLETED,
-            )
-            db.session.add(transaction)
-            balance.debit(title_cost)
-            db.session.commit()
+                transaction = Transaction(
+                    user_id=user_id,
+                    balance_id=balance.id,
+                    application="speech",
+                    amount=-title_cost,
+                    transaction_type=TransactionType.USAGE,
+                    operation=SpeechOperation.TITLE.value,
+                    status=TransactionStatus.COMPLETED,
+                )
+                db.session.add(transaction)
+                balance.debit(title_cost)
+                # NO db.session.commit() HERE
 
-            # 5. Analyze speech
-            analysis_data, analysis_cost = analyze_speech(transcript)
+                # 5. Analyze speech
+                analysis_data, analysis_cost = analyze_speech(transcript)
 
-            # Charge for analysis
-            transaction = Transaction(
-                user_id=user_id,
-                balance_id=balance.id,
-                application="speech",
-                amount=-analysis_cost,
-                transaction_type=TransactionType.USAGE,
-                operation=SpeechOperation.ANALYSIS.value,
-                status=TransactionStatus.COMPLETED,
-            )
-            db.session.add(transaction)
-            balance.debit(analysis_cost)
-            db.session.commit()
+                # Charge for analysis
+                transaction = Transaction(
+                    user_id=user_id,
+                    balance_id=balance.id,
+                    application="speech",
+                    amount=-analysis_cost,
+                    transaction_type=TransactionType.USAGE,
+                    operation=SpeechOperation.ANALYSIS.value,
+                    status=TransactionStatus.COMPLETED,
+                )
+                db.session.add(transaction)
+                balance.debit(analysis_cost)
+                # NO db.session.commit() HERE
 
-            # Create recording record
-            recording = Recording(
-                profile_id=speech_profile.id,
-                title=title,
-                duration=duration_seconds,
-                file_path="",  # TODO: Save file and store path
-                created_at=datetime.utcnow(),
-            )
-            db.session.add(recording)
-            db.session.commit()
+                # Create recording record
+                recording = Recording(
+                    profile_id=speech_profile.id,
+                    title=title,
+                    duration=duration_seconds,
+                    file_path="",  # TODO: Implement S3 storage for audio files
+                    # This TODO should be addressed in a future update to store audio files
+                    # in S3 for potential playback functionality. For now, we only store
+                    # the transcript and analysis results to minimize storage costs.
+                    created_at=datetime.utcnow(),
+                )
+                db.session.add(recording)
 
-            # Create analysis record
-            analysis = Analysis(
-                recording_id=recording.id,
-                transcript=transcript,
-                clarity_score=analysis_data["clarity"],
-                pace_score=analysis_data["pace"],
-                filler_word_count=analysis_data["fillerWords"],
-                tone_analysis=analysis_data["toneAnalysis"],
-                content_structure=analysis_data["contentStructure"],
-                feedback=analysis_data["suggestions"],
-                created_at=datetime.utcnow(),
-            )
-            db.session.add(analysis)
+                # Create analysis record
+                analysis = Analysis(
+                    recording_id=recording.id,
+                    transcript=transcript,
+                    clarity_score=analysis_data["clarity"],
+                    pace_score=analysis_data["pace"],
+                    filler_word_count=analysis_data["fillerWords"],
+                    tone_analysis=analysis_data["toneAnalysis"],
+                    content_structure=analysis_data["contentStructure"],
+                    feedback=json.dumps(
+                        analysis_data["suggestions"]
+                    ),  # Store as JSON string
+                    created_at=datetime.utcnow(),
+                )
+                db.session.add(analysis)
 
-            # Update profile stats
-            speech_profile.total_recordings += 1
-            speech_profile.last_practice = datetime.utcnow()
-            db.session.commit()
+                # Update profile stats
+                speech_profile.total_recordings += 1
+                speech_profile.last_practice = datetime.utcnow()
+
+            # The 'with' block will automatically commit if no errors occurred.
+            # If any error was raised, it will automatically roll back.
+            db.session.commit()  # Final commit of the outer transaction
 
             return jsonify(recording.to_dict())
 
         except Exception as e:
-            db.session.rollback()
-            logger.error("Error during analysis: %s", str(e))
+            # The rollback is now handled automatically by the 'with' block context manager
+            logger.error("Error during analysis, transaction rolled back: %s", str(e))
             raise e
 
     except Exception as e:
