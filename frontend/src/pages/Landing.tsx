@@ -27,6 +27,7 @@ const Landing: React.FC = () => {
       description: "Collection of interactive games and simulations",
       icon: theme === "dark" ? "icons/games-dark.png" : "icons/games-light.png",
       link: "/games",
+      softwareType: "web",
       // category: "games",
     },
     {
@@ -37,6 +38,7 @@ const Landing: React.FC = () => {
           ? "icons/drafting-compass-dark.png"
           : "icons/drafting-compass-light.png",
       link: "/autodraft",
+      softwareType: "web",
       // category: "aiTools",
     },
     {
@@ -48,13 +50,23 @@ const Landing: React.FC = () => {
           ? "icons/chef_hat_stamp.png"
           : "icons/chef_hat_stamp_light.png",
       link: "https://www.cheffrey.org/",
+      softwareType: "mobile",
       // category: "mobileApps",
+    },
+    {
+      title: "CopyCat Bundler",
+      description:
+        "VSCode extension that bundles your entire codebase into a single context window.",
+      icon: "icons/copycat.png",
+      link: "https://marketplace.visualstudio.com/items?itemName=LandonKleinbrodt.copycatBundler",
+      softwareType: "ide",
     },
     {
       title: "Explain Like I'm ___",
       description: "Explore a topic at different levels of complexity",
       icon: theme === "dark" ? "icons/ELI.png" : "icons/ELI.png",
       link: "/explain",
+      softwareType: "web",
     },
     {
       title: "Reminder-Mate",
@@ -64,6 +76,7 @@ const Landing: React.FC = () => {
           ? "icons/reminder-dark.png"
           : "icons/reminder-light.png",
       link: "https://reminder-mate.vercel.app/",
+      softwareType: "web",
       // category: "mobileApps",
     },
   ];
@@ -119,6 +132,15 @@ const Landing: React.FC = () => {
           ))}
         </div>
       </motion.div>
+      <footer className="w-full text-center text-xs text-muted-foreground py-2 opacity-80">
+        <a href="/privacy" className="underline hover:text-primary">
+          Privacy Policy
+        </a>
+        {" | "}
+        <a href="/terms" className="underline hover:text-primary">
+          Terms of Service
+        </a>
+      </footer>
     </div>
   );
 };

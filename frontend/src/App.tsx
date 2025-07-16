@@ -5,12 +5,14 @@ import { Suspense, lazy } from "react";
 
 import AuthPage from "./pages/AuthPage";
 import { AuthProvider } from "./contexts/AuthContext";
+// import Consulting from "./pages/Consulting";
 import Landing from "./pages/Landing";
 import Login from "./pages/LoginPage";
 import NavBar from "./components/NavBar";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import PrivateRoute from "./components/PrivateRoute";
+import Terms from "./pages/Terms";
 import { ThemeProvider } from "./components/theme-provider";
 
 // Lazy load components
@@ -46,6 +48,8 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
+                  {/* <Route path="/consulting" element={<Consulting />} /> */}
                   <Route element={<PrivateRoute />}>
                     <Route path="/explain" element={<ExplainPage />} />
                     <Route path="/autodraft" element={<Autodraft />} />
