@@ -46,7 +46,7 @@ const UserItem = () => {
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div>
-            <div className="text-lg font-bold text-white">{name}</div>
+            <div className="text-lg font-bold text-foreground">{name}</div>
             <div className="text-xs text-muted-foreground">{email}</div>
           </div>
         </DropdownMenuTrigger>
