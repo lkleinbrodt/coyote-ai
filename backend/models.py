@@ -127,6 +127,9 @@ class User(db.Model):
         "Project", secondary=user_project_association, back_populates="users"
     )
 
+    # SideQuest relationships
+    sidequest_quests = relationship("SideQuest", backref="user", lazy="dynamic")
+
     def __repr__(self):
         return f"<User {self.id}>"
 

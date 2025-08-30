@@ -17,6 +17,8 @@ from .models import (
     SideQuest,
     SideQuestUser,
 )
+from backend.models import User
+
 
 logger = create_logger(__name__)
 

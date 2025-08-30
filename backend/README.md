@@ -105,3 +105,38 @@ SideQuest is a quest generation app that creates personalized daily tasks for us
 - **Speech**: Speech coaching and analysis
 - **Lifter**: Workout tracking and planning
 - **Lyrica**: Music analysis and recommendations
+
+## Backend API
+
+## Authentication Architecture
+
+**CRITICAL**: This backend uses a hybrid JWT authentication system that supports both web and mobile clients:
+
+### Web Apps (Browser-based)
+
+- **Token Storage**: HTTP-only cookies with CSRF protection
+- **Token Lifetime**: Short-lived (15 min) access tokens + refresh tokens (30 days)
+- **Endpoints**: Standard OAuth flow with cookie-based JWT storage
+
+### Mobile Apps (iOS)
+
+- **Token Storage**: Authorization headers (`Bearer <token>`)
+- **Token Lifetime**: Long-lived (1 year) access tokens (no refresh needed)
+- **Endpoints**: `/api/auth/mobile/login-with-apple` for Apple Sign-In
+- **Validation**: Real-time Apple JWT validation using Apple's public keys
+
+### Key Implementation Details
+
+- **JWT Configuration**: `JWT_TOKEN_LOCATION = ["headers", "cookies"]` in config
+- **Error Handling**: Standardized JWT error responses in `backend/__init__.py`
+- **Apple Auth Service**: Located in `backend/src/apple_auth_service.py`
+- **Bundle ID**: `com.landokleinbrodt.sidequest` for Apple validation
+
+### Why This Matters
+
+- **Single Codebase**: One backend serves both web and mobile
+- **Security**: Web uses secure cookies, mobile uses long-lived tokens
+- **User Experience**: Mobile users don't need to re-authenticate frequently
+- **Maintenance**: Single authentication logic for both platforms
+
+**DO NOT** change the JWT configuration or error handlers without understanding the implications for both web and mobile clients.

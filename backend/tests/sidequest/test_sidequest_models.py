@@ -91,7 +91,7 @@ class TestSideQuest:
         )
         
         # Should expire at end of day
-        tomorrow = datetime.now() + timedelta(days=1)
+        tomorrow = datetime.utcnow() + timedelta(days=1)
         expected_expiry = tomorrow.replace(hour=23, minute=59, second=59, microsecond=0)
         
         assert quest.expires_at.date() == expected_expiry.date()
@@ -150,7 +150,7 @@ class TestSideQuest:
             category="fitness",
             estimated_time="5 minutes",
             difficulty="easy",
-            expires_at=datetime.now() - timedelta(hours=1)
+            expires_at=datetime.utcnow() - timedelta(hours=1)
         )
         
         assert expired_quest.is_expired() is True
@@ -162,7 +162,7 @@ class TestSideQuest:
             category="fitness",
             estimated_time="5 minutes",
             difficulty="easy",
-            expires_at=datetime.now() + timedelta(hours=1)
+            expires_at=datetime.utcnow() + timedelta(hours=1)
         )
         
         assert future_quest.is_expired() is False
@@ -231,20 +231,16 @@ class TestModelRelationships:
         assert test_user.sidequest_profile == test_sidequest_user
         assert test_sidequest_user.user == test_user
     
-    def test_sidequest_user_quests_relationship(self, test_sidequest_user, test_quest):
-        """Test relationship between SideQuestUser and SideQuest."""
-        # Refresh to get the relationship
-        test_sidequest_user = test_sidequest_user
-        test_quest = test_quest
-        
-        assert test_quest in test_sidequest_user.quests
-        assert test_quest.user == test_sidequest_user
+    def test_sidequest_user_quests_relationship(self, test_user, test_sidequest_user, test_quest):
+        """Test relationship between User and SideQuest through SideQuestUser."""
+        # The quest should be linked to the main user
+        assert test_quest.user_id == test_user.id
+        # The quest should be accessible through the user's sidequest_quests relationship
+        assert test_quest in test_user.sidequest_quests
     
-    def test_sidequest_user_generation_logs_relationship(self, test_sidequest_user, test_generation_log):
-        """Test relationship between SideQuestUser and QuestGenerationLog."""
-        # Refresh to get the relationship
-        test_sidequest_user = test_sidequest_user
-        test_generation_log = test_generation_log
-        
-        assert test_generation_log in test_sidequest_user.generation_logs
-        assert test_generation_log.user == test_sidequest_user
+    def test_sidequest_user_generation_logs_relationship(self, test_user, test_sidequest_user, test_generation_log):
+        """Test relationship between User and QuestGenerationLog through SideQuestUser."""
+        # The generation log should be linked to the main user
+        assert test_generation_log.user_id == test_user.id
+        # The generation log should be accessible through the user's sidequest_generation_logs relationship
+        assert test_generation_log in test_user.sidequest_generation_logs

@@ -1,9 +1,9 @@
 import json
 import logging
+import os
 from datetime import datetime, timedelta
 from flask import url_for
 from flask.testing import FlaskClient
-from flask_migrate import upgrade
 
 import pytest
 from backend.models import User, UserBalance
@@ -21,8 +21,7 @@ def app():
 
     app = create_app(TestingConfig)
     with app.app_context(), app.test_request_context():
-        # Run migrations to create tables
-        upgrade()
+        # Create tables directly instead of running migrations
         db.create_all()
 
         # Initialize test data

@@ -41,10 +41,16 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True  # Prevent client-side JS access to cookie
 
     # JWT Configuration
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)  # Short-lived access token
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)  # Long-lived refresh token
+    # CRITICAL: This hybrid setup supports both web (cookies) and mobile (headers) clients
+    # Web apps use short-lived tokens with refresh, mobile apps use long-lived tokens
+    # DO NOT change JWT_TOKEN_LOCATION without understanding the implications
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)  # Short-lived access token for web
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)  # Long-lived refresh token for web
+
+    # Mobile tokens can override this with custom expiration in the route
 
     # Tell Flask-JWT-Extended to look for JWTs in headers and cookies
+    # Headers are for mobile apps, cookies are for web apps
     JWT_TOKEN_LOCATION = ["headers", "cookies"]
 
     # Only allow JWT cookies to be sent over HTTPS
@@ -62,6 +68,10 @@ class Config:
     # CSRF protection for cookie-based JWTs
     JWT_COOKIE_CSRF_PROTECT = True
     JWT_CSRF_IN_COOKIES = True
+
+    # Header configuration for mobile apps
+    JWT_HEADER_NAME = "Authorization"
+    JWT_HEADER_TYPE = "Bearer"
 
     LIFTER_BUCKET = "coyote-lifter"
 

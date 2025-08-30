@@ -1,7 +1,4 @@
-import json
-from decimal import Decimal
-
-import stripe
+from datetime import timedelta
 from flask import Blueprint, current_app, jsonify, make_response, redirect, request
 from flask_jwt_extended import (
     create_access_token,
@@ -15,13 +12,10 @@ from sqlalchemy import text
 
 from backend.extensions import create_logger, db
 from backend.models import (
-    Transaction,
-    TransactionStatus,
-    TransactionType,
     User,
-    UserBalance,
 )
 from backend.src.OAuthSignIn import OAuthSignIn
+from backend.src.apple_auth_service import AppleAuthService
 
 logger = create_logger(__name__, level="DEBUG")
 
@@ -161,3 +155,103 @@ def logout():
         f"User logged out via redirect flow. Redirecting to {frontend_home_url}"
     )
     return response
+
+
+# iOS/Mobile App Authentication Endpoints
+@auth_bp.route("/mobile/login-with-apple", methods=["POST"])
+def mobile_login_with_apple():
+    """Mobile app login endpoint using Apple Sign-In"""
+    try:
+        data = request.get_json()
+        if not data:
+            return (
+                jsonify({"success": False, "error": {"message": "No data provided"}}),
+                400,
+            )
+
+        # Extract Apple credential from request
+        credential = data.get("appleIdToken")
+        if not credential:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "No Apple credential provided"},
+                    }
+                ),
+                400,
+            )
+
+        identity_token = credential.get("identityToken")
+        if not identity_token:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "Credential object missing identityToken"},
+                    }
+                ),
+                400,
+            )
+
+        # Get the user's name if they provide it on first sign-up
+        full_name = credential.get("fullName", {})
+
+        # Use the Apple authentication service
+        from backend.src.apple_auth_service import AppleAuthService
+
+        apple_service = AppleAuthService(db.session)
+
+        try:
+            user = apple_service.authenticate_with_apple(identity_token, full_name)
+        except Exception as e:
+            logger.error(f"Apple authentication failed: {str(e)}")
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": f"Authentication failed: {str(e)}"},
+                    }
+                ),
+                401,
+            )
+
+        # Create long-lived access token (1 year) - simpler for mobile
+        access_token = create_access_token(
+            identity=str(user.id),
+            additional_claims={
+                "name": user.name,
+                "email": user.email,
+                "image": user.image,
+                "role": getattr(user, "role", "user"),
+            },
+            expires_delta=timedelta(days=365),  # 1 year token
+        )
+
+        logger.info(f"Mobile Apple login successful for user {user.id}")
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": {
+                        "access_token": access_token,
+                        "user": {
+                            "id": user.id,
+                            "name": user.name,
+                            "email": user.email,
+                            "image": user.image,
+                            "role": getattr(user, "role", "user"),
+                        },
+                    },
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logger.error(f"Mobile Apple login error: {str(e)}", exc_info=True)
+        return (
+            jsonify({"success": False, "error": {"message": "Login failed"}}),
+            500,
+        )

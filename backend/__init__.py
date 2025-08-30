@@ -2,7 +2,7 @@ import os
 from logging import ERROR
 from logging.handlers import SMTPHandler
 
-from flask import Blueprint, Flask, request, send_from_directory
+from flask import Blueprint, Flask, request, send_from_directory, jsonify
 from flask_cors import CORS
 
 from backend.config import Config
@@ -37,6 +37,71 @@ def create_app(config_class: Config):
     Session(app)
     db.init_app(app)
     migrate.init_app(app, db)
+
+    # JWT Error Handlers for consistent responses
+    @jwt.unauthorized_loader
+    def unauthorized_response(callback):
+        """Handle missing or invalid JWT tokens"""
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "Authentication required",
+                        "code": "UNAUTHORIZED",
+                    },
+                }
+            ),
+            401,
+        )
+
+    @jwt.invalid_token_loader
+    def invalid_token_response(callback):
+        """Handle invalid JWT tokens"""
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "Invalid authentication token",
+                        "code": "INVALID_TOKEN",
+                    },
+                }
+            ),
+            401,
+        )
+
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        """Handle expired JWT tokens"""
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "Authentication token has expired",
+                        "code": "TOKEN_EXPIRED",
+                    },
+                }
+            ),
+            401,
+        )
+
+    @jwt.revoked_token_loader
+    def revoked_token_callback(jwt_header, jwt_payload):
+        """Handle revoked JWT tokens"""
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "Authentication token has been revoked",
+                        "code": "TOKEN_REVOKED",
+                    },
+                }
+            ),
+            401,
+        )
 
     # @app.route("/", defaults={"path": ""})
     # @app.route("/<string:path>")
