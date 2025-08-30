@@ -26,6 +26,9 @@ const Poeltl = lazy(() => import("./poeltl/pages/Poeltl"));
 const ShootTheCreeps = lazy(
   () => import("./games/ShootTheCreeps/ShootTheCreeps")
 );
+const CharacterExplorerPage = lazy(
+  () => import("./character_explorer/pages/CharacterExplorerPage")
+);
 
 // Loading component
 const LoadingFallback = () => (
@@ -65,6 +68,10 @@ function App() {
                     />
                     <Route path="/pet" element={<Pet />} />
                     <Route path="/poeltl" element={<Poeltl />} />
+                    <Route
+                      path="/character-explorer"
+                      element={<CharacterExplorerPage />}
+                    />
                   </Route>
                   <Route path="*" element={<NotFound />} />
                 </Routes>

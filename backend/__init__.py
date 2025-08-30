@@ -9,15 +9,7 @@ from backend.config import Config
 from backend.extensions import db, jwt, migrate
 from flask_session import Session
 
-from .autodraft.models import *
-from .autodraft.routes import autodraft_bp
-from .explain.routes import explain_bp
-from .lifter.routes import lifter
-from .models import *
-from .poeltl.routes import poeltl
-from .PoppyTracker import poppy_bp
-from .routes import api_bp, auth_bp, base_bp, billing_bp
-from .speech.routes import speech_bp
+from backend.routes import api_bp, base_bp
 
 
 def create_app(config_class: Config):
@@ -52,14 +44,6 @@ def create_app(config_class: Config):
     # def index(path):
     #     return send_from_directory(app.static_folder, "index.html")
 
-    api_bp.register_blueprint(poeltl)
-    api_bp.register_blueprint(lifter)
-    api_bp.register_blueprint(auth_bp)
-    api_bp.register_blueprint(billing_bp)
-    api_bp.register_blueprint(autodraft_bp)
-    api_bp.register_blueprint(speech_bp)
-    api_bp.register_blueprint(poppy_bp, url_prefix="/poppy")  # Add PoppyTracker routes
-    api_bp.register_blueprint(explain_bp)  # Add explain routes
     app.register_blueprint(base_bp)
     app.register_blueprint(api_bp)
 

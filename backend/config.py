@@ -22,6 +22,10 @@ class Config:
     if not PING_DB_API_KEY:
         raise ValueError("PING_DB_API_KEY is not set")
 
+    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+    if not OPENAI_API_KEY:
+        raise ValueError("OPENAI_API_KEY is not set")
+
     ADMIN_EMAILS = ["lkleinbrodt@gmail.com"]
     MAIL_SERVER = os.environ.get("MAIL_SERVER")
     MAIL_PORT = os.environ.get("MAIL_PORT")
@@ -80,6 +84,11 @@ class Config:
     SPEECH_APPLE_BUNDLE_ID = None  # Will be overridden in production
     SPEECH_DEVELOPMENT_MODE = True  # Will be False in production
 
+    # Character Explorer Configuration
+    EMBEDDING_MODEL = "all-MiniLM-L6-v2"  # 384 dimensions
+    EMBEDDING_DIMENSION = 384
+    DIALOGUE_EXTRACTION_MODEL = "anthropic/claude-3-haiku"
+
 
 class DevelopmentConfig(Config):
     ENV = "development"
@@ -134,9 +143,14 @@ class ProductionConfig(Config):
 
 class TestingConfig(Config):
     ENV = "testing"
+    TESTING = True
     DEBUG = True
     FRONTEND_URL = "http://localhost:8000"
-    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+
+    # PostgreSQL test database
+    SQLALCHEMY_DATABASE_URI = (
+        "postgresql://sidequest_user:sidequest_password@localhost:5434/sidequest_test"
+    )
 
     AUTODRAFT_BUCKET = "autodraft-test"
 
@@ -145,3 +159,19 @@ class TestingConfig(Config):
 
     STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY_TESTING")
     STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY_TESTING")
+
+    SPEECH_DEVELOPMENT_MODE = True
+    SPEECH_APPLE_BUNDLE_ID = "com.test.speechcoach"
+
+    # Fixed secret keys for testing
+    SECRET_KEY = "testing-secret-key"
+    JWT_SECRET_KEY = "testing-secret-key"
+    OPENAI_API_KEY = "test_openai_key"
+    PING_DB_API_KEY = "test_ping_db_key"
+
+    # Mail configuration for tests
+    MAIL_SERVER = "localhost"
+    MAIL_PORT = 587
+    MAIL_USERNAME = "test@example.com"
+    MAIL_PASSWORD = "test_password"
+    ADMIN_EMAILS = ["admin@example.com"]

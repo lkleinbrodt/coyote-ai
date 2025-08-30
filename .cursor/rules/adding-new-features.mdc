@@ -1,8 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: false
----
-When implementing a new feature for this repository, use the `NewFeatureGuide.md` file as a guide on how to do it. It will explain guidelines and best practices for adding new features and pages to this website.
-
-When using this guide, you will also be supplied with a PRD by the user and also a work-tracker file.

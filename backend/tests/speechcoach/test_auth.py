@@ -2,8 +2,8 @@ import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 
-from speech_coach import db
-from speech_coach.models.speech import SpeechProfile
+from backend import db
+from backend.speech.models import SpeechProfile
 
 
 def test_apple_signin_success(client: FlaskClient, mock_apple_user: dict):
