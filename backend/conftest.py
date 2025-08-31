@@ -1,13 +1,9 @@
-import json
 import logging
-import os
-from datetime import datetime, timedelta
-from flask import url_for
-from flask.testing import FlaskClient
+
+from flask_migrate import upgrade
 
 import pytest
 from backend.models import User, UserBalance
-from backend.sidequest.models import SideQuestUser, SideQuest, QuestGenerationLog
 from backend.extensions import db
 from backend import create_app
 from backend.tests.setup_db import init_test_db
@@ -22,14 +18,10 @@ def app():
     app = create_app(TestingConfig)
     with app.app_context(), app.test_request_context():
         # Create tables directly instead of running migrations
+        upgrade()
         db.create_all()
-
-        # Initialize test data
         init_test_db(db)
-
         yield app
-
-        # Cleanup after each test
         db.session.rollback()
         db.drop_all()
 
@@ -53,3 +45,45 @@ def test_user(app):
     db.session.commit()
 
     return user
+
+
+# we use pytest-docker package
+# it auto runs docker compose up and down for us
+# creating the test db.
+
+
+@pytest.fixture(scope="session")
+def docker_compose_file():
+    return TestingConfig.BACKEND_DIR / "docker-compose.test.yml"
+
+
+@pytest.fixture(scope="session")
+def docker_compose_project_name():
+    return "pytest_sidequest"
+
+
+@pytest.fixture(scope="session", autouse=True)
+def wait_for_postgres(docker_services):
+    """
+    Ensure the PostgreSQL service is ready before tests start.
+    """
+
+    def is_postgres_ready():
+        import psycopg2
+
+        try:
+            conn = psycopg2.connect(
+                host="localhost",
+                port=5434,
+                database="sidequest_test",
+                user="sidequest_user",
+                password="sidequest_password",
+            )
+            conn.close()
+            return True
+        except psycopg2.OperationalError:
+            return False
+
+    docker_services.wait_until_responsive(
+        timeout=30.0, pause=0.1, check=is_postgres_ready
+    )

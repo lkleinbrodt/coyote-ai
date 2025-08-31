@@ -17,6 +17,7 @@ import os
 
 from backend.sidequest.models import QuestCategory, SideQuest
 from backend.sidequest.services import QuestGenerationService
+from backend.sidequest.background_removal import BackgroundRemovalService
 from backend.extensions import db
 from app import deploy_app
 import logging
@@ -374,6 +375,19 @@ def main():
                 raise e
 
         logger.info("\nIcon generation complete!")
+
+    # Remove backgrounds from generated icons
+    logger.info("Removing backgrounds from generated icons...")
+    try:
+        background_service = BackgroundRemovalService(output_dir="icons_processed")
+        os.makedirs("icons_processed", exist_ok=True)
+        for category in categories:
+            background_service.batch_process(f"icons/{category.value}", method="auto")
+    except Exception as e:
+        logger.error(f"✗ Failed to remove backgrounds from generated icons: {str(e)}")
+        raise e
+
+    logger.info("Background removal complete!")
 
 
 if __name__ == "__main__":

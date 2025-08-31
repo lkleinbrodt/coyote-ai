@@ -16,8 +16,6 @@ def create_app(config_class: Config):
 
     app = Flask(
         __name__,
-        # static_folder=config_class.ROOT_DIR / "dist",
-        # static_url_path="",
     )
 
     app.config.from_object(config_class)

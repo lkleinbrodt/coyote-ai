@@ -449,10 +449,10 @@ class UserService:
 
         return profile
 
-    def update_user_preferences(
+    def update_user_profile(
         self, user_id: int, preferences: Dict[str, Any]
     ) -> SideQuestUser:
-        """Update user preferences"""
+        """Update user profile"""
         profile = self.get_or_create_user_profile(user_id)
 
         # Update preference fields
@@ -518,10 +518,6 @@ class QuestService:
             query = query.filter(SideQuest.expires_at > datetime.now())
 
         return query.order_by(SideQuest.created_at.desc()).all()
-
-    def get_active_quests(self, user_id: int) -> List[SideQuest]:
-        """Get active quests for a user"""
-        return self.get_user_quests(user_id, include_expired=True)
 
     def get_available_quests(self, user_id: int) -> List[SideQuest]:
         """Get available quests for a user (open quests within generation window)"""
@@ -607,15 +603,15 @@ class QuestService:
                 "error": str(e),
             }
 
-    def mark_quest_selected(self, quest_id: int, user_id: int) -> bool:
-        """Mark a quest as selected by the user"""
+    def mark_quest_accept(self, quest_id: int, user_id: int) -> bool:
+        """Mark a quest as accepted by the user"""
         quest = self.db.query(SideQuest).filter_by(id=quest_id, user_id=user_id).first()
         if not quest:
             return False
 
-        quest.mark_selected()
+        quest.accept()
         self.db.commit()
-        logger.info(f"Quest {quest_id} marked as selected by user {user_id}")
+        logger.info(f"Quest {quest_id} marked as accepted by user {user_id}")
         return True
 
     def mark_quest_completed(
@@ -634,18 +630,6 @@ class QuestService:
         self.db.commit()
 
         logger.info(f"Quest {quest_id} marked as completed by user {user_id}")
-        return True
-
-    def mark_quest_skipped(self, quest_id: int, user_id: int) -> bool:
-        """Mark a quest as skipped by the user"""
-        quest = self.db.query(SideQuest).filter_by(id=quest_id, user_id=user_id).first()
-        if not quest:
-            return False
-
-        quest.mark_skipped()
-        self.db.commit()
-
-        logger.info(f"Quest {quest_id} marked as skipped by user {user_id}")
         return True
 
     def get_quest_history(self, user_id: int, days: int = 7) -> Dict[str, Any]:
@@ -678,3 +662,17 @@ class QuestService:
             "stats": stats,
             "quests": [q.to_dict() for q in quests],
         }
+
+
+from backend.sidequest.models import QuestBoard
+
+
+class QuestBoardService:
+    """Service for managing quest boards"""
+
+    def __init__(self, db_session: Session):
+        self.db = db_session
+
+    def get_user_quest_board(self, user_id: int) -> QuestBoard:
+        """Get a user's quest board"""
+        return self.db.query(QuestBoard).filter_by(user_id=user_id).first()

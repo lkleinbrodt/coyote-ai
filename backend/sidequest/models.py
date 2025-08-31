@@ -34,6 +34,17 @@ class QuestRating(str, Enum):
     THUMBS_DOWN = "thumbs_down"
 
 
+class QuestStatus(str, Enum):
+    """Quest status states"""
+
+    POTENTIAL = "potential"
+    ACCEPTED = "accepted"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    ABANDONED = "abandoned"
+    DECLINED = "declined"
+
+
 class SideQuestUser(db.Model):
     """SideQuest user preferences and settings"""
 
@@ -74,7 +85,7 @@ class SideQuestUser(db.Model):
 
     # Relationships
     user = db.relationship(
-        "User", backref=db.backref("sidequest.sidequest_profile", uselist=False)
+        "User", backref=db.backref("sidequest_profile", uselist=False)
     )
 
     def __init__(self, **kwargs):
@@ -134,6 +145,9 @@ class SideQuest(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    quest_board_id = db.Column(
+        db.Integer, db.ForeignKey("sidequest.sidequest_quest_boards.id"), nullable=True
+    )
 
     # Quest content
     text = db.Column(db.Text, nullable=False)
@@ -143,9 +157,9 @@ class SideQuest(db.Model):
     tags = db.Column(JSON, nullable=False, default=[])
 
     # Quest state
-    selected = db.Column(db.Boolean, nullable=False, default=False)
-    completed = db.Column(db.Boolean, nullable=False, default=False)
-    skipped = db.Column(db.Boolean, nullable=False, default=False)
+    status = db.Column(
+        db.Enum(QuestStatus), nullable=False, default=QuestStatus.POTENTIAL
+    )
 
     # Completion details
     completed_at = db.Column(db.DateTime, nullable=True)
@@ -170,13 +184,8 @@ class SideQuest(db.Model):
         # Ensure mutable defaults are properly initialized
         if self.tags is None:
             self.tags = []
-        # Ensure boolean defaults are properly initialized
-        if self.selected is None:
-            self.selected = False
-        if self.completed is None:
-            self.completed = False
-        if self.skipped is None:
-            self.skipped = False
+        if self.status is None:
+            self.status = QuestStatus.POTENTIAL
         if self.fallback_used is None:
             self.fallback_used = False
         # Set expiration to end of day if not specified
@@ -194,9 +203,7 @@ class SideQuest(db.Model):
             "estimatedTime": self.estimated_time,
             "difficulty": self.difficulty.value if self.difficulty else None,
             "tags": self.tags or [],
-            "selected": self.selected,
-            "completed": self.completed,
-            "skipped": self.skipped,
+            "status": self.status.value if self.status else None,
             "completedAt": self.completed_at.isoformat() if self.completed_at else None,
             "feedback": (
                 {
@@ -204,15 +211,18 @@ class SideQuest(db.Model):
                         self.feedback_rating.value if self.feedback_rating else None
                     ),
                     "comment": self.feedback_comment,
-                    "completed": self.completed,
                     "timeSpent": self.time_spent,
                 }
-                if self.feedback_rating or self.feedback_comment or self.completed
+                if self.feedback_rating or self.feedback_comment
                 else None
             ),
             "createdAt": self.created_at.isoformat(),
             "expiresAt": self.expires_at.isoformat(),
         }
+
+    def is_completed(self):
+        """Check if quest is completed"""
+        return self.status == QuestStatus.COMPLETED
 
     def is_expired(self):
         """Check if quest has expired"""
@@ -220,7 +230,7 @@ class SideQuest(db.Model):
 
     def is_open(self):
         """Check if quest is open (not yet acted upon)"""
-        return not (self.selected or self.completed or self.skipped)
+        return not (self.status == QuestStatus.POTENTIAL)
 
     def is_within_generation_window(self, hours: int = 24):
         """Check if quest is within the generation window (default 24 hours)"""
@@ -233,19 +243,23 @@ class SideQuest(db.Model):
         self, feedback_rating=None, feedback_comment=None, time_spent=None
     ):
         """Mark quest as completed with feedback"""
-        self.completed = True
+        self.status = QuestStatus.COMPLETED
         self.completed_at = datetime.utcnow()
         self.feedback_rating = feedback_rating
         self.feedback_comment = feedback_comment
         self.time_spent = time_spent
 
-    def mark_skipped(self):
-        """Mark quest as skipped"""
-        self.skipped = True
+    def accept(self):
+        """Accept quest"""
+        self.status = QuestStatus.ACCEPTED
 
-    def mark_selected(self):
-        """Mark quest as selected"""
-        self.selected = True
+    def abandon(self):
+        """Abandon quest"""
+        self.status = QuestStatus.ABANDONED
+
+    def decline(self):
+        """Decline quest"""
+        self.status = QuestStatus.DECLINED
 
 
 class QuestGenerationLog(db.Model):
@@ -276,7 +290,7 @@ class QuestGenerationLog(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
 
     # Relationships
-    user = db.relationship("User", backref="sidequest.sidequest_generation_logs")
+    user = db.relationship("User", backref="sidequest_generation_logs")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -297,3 +311,27 @@ class QuestGenerationLog(db.Model):
             "tokens_used": self.tokens_used,
             "created_at": self.created_at.isoformat(),
         }
+
+
+class QuestBoard(db.Model):
+    """Daily quest board for a user"""
+
+    __table_args__ = {"schema": "sidequest"}
+    __tablename__ = "sidequest_quest_boards"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    # Board metadata
+    last_refreshed = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    updated_at = db.Column(
+        db.DateTime, nullable=False, default=db.func.now(), onupdate=db.func.now()
+    )
+
+    # Relationships
+    user = db.relationship("User", backref=db.backref("quest_boards", uselist=False))
+    quests = db.relationship("SideQuest", backref="quest_board", lazy="dynamic")

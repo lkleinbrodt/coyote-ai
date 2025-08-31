@@ -14,6 +14,7 @@ from backend.extensions import create_logger, db
 from backend.src.apple_auth_service import get_apple_auth_service
 from .services import QuestGenerationService, UserService, QuestService
 from .models import QuestCategory, QuestDifficulty, SideQuestUser
+from backend.models import User
 
 logger = create_logger(__name__)
 sidequest_bp = Blueprint("sidequest", __name__, url_prefix="/sidequest")
@@ -193,49 +194,6 @@ def generate_daily_quests():
         return (
             jsonify(
                 {"success": False, "error": {"message": "Failed to generate quests"}}
-            ),
-            500,
-        )
-
-
-@sidequest_bp.route("/quests/active", methods=["GET"])
-@jwt_required()
-def get_active_quests():
-    """Get active quests for the authenticated user"""
-    try:
-        user_id = get_jwt_identity()
-        if not user_id:
-            return (
-                jsonify(
-                    {"success": False, "error": {"message": "Authentication required"}}
-                ),
-                401,
-            )
-
-        quest_service = QuestService(db.session)
-        quests = quest_service.get_active_quests(user_id)
-
-        quests_data = [quest.to_dict() for quest in quests]
-
-        return (
-            jsonify(
-                {
-                    "success": True,
-                    "data": {
-                        "quests": quests_data,
-                        "count": len(quests_data),
-                        "user_id": user_id,
-                    },
-                }
-            ),
-            200,
-        )
-
-    except Exception as e:
-        logger.error(f"Error getting active quests: {str(e)}", exc_info=True)
-        return (
-            jsonify(
-                {"success": False, "error": {"message": "Failed to get active quests"}}
             ),
             500,
         )
@@ -742,10 +700,10 @@ def skip_quest(quest_id: int):
         )
 
 
-@sidequest_bp.route("/preferences", methods=["GET"])
+@sidequest_bp.route("/me", methods=["GET"])
 @jwt_required()
-def get_user_preferences():
-    """Get user preferences and profile"""
+def get_user_profile():
+    """Get user profile"""
     try:
         user_id = get_jwt_identity()
         if not user_id:
@@ -756,11 +714,11 @@ def get_user_preferences():
                 401,
             )
 
-        logger.info(f"Fetching preferences for user {user_id}")
+        logger.info(f"Fetching profile for user {user_id}")
 
         user_service = UserService(db.session)
         profile = user_service.get_or_create_user_profile(user_id)
-        logger.info(f"Preferences fetched for user {user_id}: {profile.to_dict()}")
+        logger.info(f"Profile fetched for user {user_id}: {profile.to_dict()}")
         return (
             jsonify({"success": True, "data": profile.to_dict()}),
             200,
@@ -776,10 +734,10 @@ def get_user_preferences():
         )
 
 
-@sidequest_bp.route("/preferences", methods=["PUT"])
+@sidequest_bp.route("/me", methods=["PUT"])
 @jwt_required()
-def update_user_preferences():
-    """Update user preferences"""
+def update_user_profile():
+    """Update user profile"""
     try:
         user_id = get_jwt_identity()
         if not user_id:
@@ -798,7 +756,7 @@ def update_user_preferences():
                 jsonify(
                     {
                         "success": False,
-                        "error": {"message": "Preference data is required"},
+                        "error": {"message": "Profile data is required"},
                     }
                 ),
                 400,
@@ -807,7 +765,7 @@ def update_user_preferences():
         logger.info(f"Updating preferences for user {user_id}: {data}")
 
         user_service = UserService(db.session)
-        profile = user_service.update_user_preferences(user_id, data)
+        profile = user_service.update_user_profile(user_id, data)
 
         return (
             jsonify(
@@ -1038,6 +996,130 @@ def signin():
         )
 
 
+@sidequest_bp.route("/auth/anonymous/signin", methods=["POST"])
+def anonymous_signin():
+    """Handle anonymous user authentication"""
+    logger.info("Anonymous signin route accessed")
+
+    try:
+        data = request.get_json(silent=True)
+        if not data:
+            print("No data provided")
+            return (
+                jsonify({"success": False, "error": {"message": "No data provided"}}),
+                400,
+            )
+
+        # Extract device UUID from request
+        device_uuid = data.get("device_uuid")
+        if not device_uuid:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "No device UUID provided"},
+                    }
+                ),
+                400,
+            )
+
+        # Validate UUID format - only accept UUID v4
+        try:
+            import uuid
+
+            # Parse the UUID first to check if it's valid
+            parsed_uuid = uuid.UUID(device_uuid)
+
+            # Specifically reject anything not version 4
+            if parsed_uuid.version != 4:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": {"message": "Invalid device UUID format"},
+                        }
+                    ),
+                    400,
+                )
+
+        except (ValueError, TypeError):
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "Invalid device UUID format"},
+                    }
+                ),
+                400,
+            )
+
+        # Check if user with this anon_id already exists
+        user = User.query.filter_by(anon_id=device_uuid).first()
+
+        if not user:
+            # Create new anonymous user
+            logger.info(f"Creating new anonymous user with device UUID: {device_uuid}")
+            user = User(anon_id=device_uuid)
+            db.session.add(user)
+            db.session.commit()
+            logger.debug(f"Anonymous user created with ID: {user.id}")
+        else:
+            logger.info(f"Anonymous user found with device UUID: {device_uuid}")
+
+        # Check if user needs a SideQuest profile created
+        sidequest_user = SideQuestUser.query.filter_by(user_id=user.id).first()
+        if not sidequest_user:
+            logger.info(f"Creating new SideQuest profile for anonymous user {user.id}")
+            sidequest_user = SideQuestUser(
+                user_id=user.id,
+                onboarding_completed=False,  # New users need to complete onboarding
+            )
+            db.session.add(sidequest_user)
+            db.session.commit()
+            logger.debug(f"SideQuest profile created for anonymous user {user.id}")
+
+        # Create long-lived access token (1 year) - same as Apple users
+        access_token = create_access_token(
+            identity=str(user.id),
+            additional_claims={
+                "anon_id": user.anon_id,
+                "name": user.name,
+                "email": user.email,
+                "image": user.image,
+                "role": getattr(user, "role", "user"),
+            },
+            expires_delta=timedelta(days=365),  # 1 year token
+        )
+
+        logger.info(f"Anonymous signin successful for user {user.id}")
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "access_token": access_token,
+                    "user": {
+                        "id": str(user.id),
+                        "name": user.name,
+                        "email": user.email,
+                        "image": user.image,
+                        "role": getattr(user, "role", "user"),
+                    },
+                },
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Anonymous signin error: {str(e)}", exc_info=True)
+        print(e)
+        return (
+            jsonify(
+                {"success": False, "error": {"message": "Anonymous signin failed"}}
+            ),
+            500,
+        )
+
+
 @sidequest_bp.route("/health", methods=["GET"])
 def health_check():
     """Health check endpoint for SideQuest service"""
@@ -1061,3 +1143,25 @@ def health_check():
             jsonify({"success": False, "error": {"message": "Service unhealthy"}}),
             500,
         )
+
+
+@sidequest_bp.route("/me", methods=["DELETE"])
+@jwt_required()
+def delete_user():
+    """Delete user"""
+    user_id = get_jwt_identity()
+    # get sidequest profile
+    sidequest_profile = SideQuestUser.query.filter_by(user_id=user_id).first()
+    if not sidequest_profile:
+        return (
+            jsonify(
+                {"success": False, "error": {"message": "SideQuest profile not found"}}
+            ),
+            404,
+        )
+    # delete sidequest profile
+    db.session.delete(sidequest_profile)
+    db.session.commit()
+    return jsonify(
+        {"success": True, "message": "SideQuest profile deleted successfully"}
+    )

@@ -1,5 +1,7 @@
 import "./App.css";
 
+import * as SplashScreen from "expo-splash-screen";
+
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Suspense, lazy } from "react";
 
@@ -33,6 +35,8 @@ const LoadingFallback = () => (
     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
   </div>
 );
+
+SplashScreen.preventAutoHideAsync();
 
 function App() {
   return (

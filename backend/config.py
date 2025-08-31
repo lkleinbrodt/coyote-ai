@@ -10,7 +10,7 @@ load_dotenv()
 
 
 class Config:
-    ROOT_DIR = Path(os.path.abspath(os.path.dirname(__file__))).parent
+    BACKEND_DIR = Path(os.path.abspath(os.path.dirname(__file__)))
     SECRET_KEY = os.environ.get("SECRET_KEY")
     JWT_SECRET_KEY = SECRET_KEY
     if not SECRET_KEY:
@@ -104,8 +104,6 @@ class DevelopmentConfig(Config):
     ENV = "development"
     DEBUG = True
     FRONTEND_URL = "http://localhost:5173"
-    # SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
-    # SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(Config.ROOT_DIR, "app.db")
     SQLALCHEMY_DATABASE_URI = (
         "postgresql://coyote-user:coyote-password@localhost:5432/coyote-db-dev"
     )

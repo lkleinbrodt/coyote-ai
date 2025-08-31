@@ -105,8 +105,9 @@ class Transaction(db.Model):
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    google_id = db.Column(db.String(255), nullable=True)
-    apple_id = db.Column(db.String(255), nullable=True)
+    google_id = db.Column(db.String(255), nullable=True, unique=True)
+    apple_id = db.Column(db.String(255), nullable=True, unique=True)
+    anon_id = db.Column(db.String(255), nullable=True, unique=True)
     stripe_customer_id = db.Column(db.String(255), nullable=True)
 
     name = db.Column(db.String(255), nullable=True)
@@ -135,6 +136,18 @@ class User(db.Model):
 
     def __str__(self) -> str:
         return f"<User {self.id}>"
+
+    @property
+    def auth_type(self):
+        """Determine the authentication type based on which ID field is set"""
+        if self.apple_id:
+            return "apple"
+        elif self.google_id:
+            return "google"
+        elif self.anon_id:
+            return "anonymous"
+        else:
+            return "unknown"
 
 
 @jwt.user_lookup_loader

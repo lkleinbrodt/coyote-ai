@@ -1,7 +1,12 @@
 from datetime import datetime, timedelta
 import random
 from backend.models import User, UserBalance
-from backend.sidequest.models import SideQuestUser, SideQuest, QuestGenerationLog
+from backend.sidequest.models import (
+    SideQuestUser,
+    SideQuest,
+    QuestGenerationLog,
+    QuestStatus,
+)
 from backend.sidequest.models import QuestCategory, QuestDifficulty, QuestRating
 
 
@@ -84,13 +89,11 @@ def init_test_db(db):
             difficulty=difficulty,
             tags=[category.value, difficulty.value],
             expires_at=datetime.now() + timedelta(days=random.randint(1, 7)),
-            selected=random.choice([True, False]),
-            completed=random.choice([True, False]),
-            skipped=random.choice([True, False]),
+            status=random.choice(list(QuestStatus)),
         )
 
         # Add completion details for completed quests
-        if quest.completed:
+        if quest.is_completed():
             quest.completed_at = datetime.now() - timedelta(hours=random.randint(1, 24))
             quest.feedback_rating = random.choice(list(QuestRating))
             quest.feedback_comment = random.choice(

@@ -189,7 +189,7 @@ class TestSideQuestServices:
             assert profile.onboarding_completed is False  # Default
 
     def test_user_service_update_preferences(self, test_sidequest_user, app):
-        """Test UserService update_user_preferences."""
+        """Test UserService update_user_profile."""
         with app.app_context():
             from backend.extensions import db
 
@@ -202,7 +202,7 @@ class TestSideQuestServices:
                 "notifications_enabled": False,
             }
 
-            updated_profile = user_service.update_user_preferences(
+            updated_profile = user_service.update_user_profile(
                 test_sidequest_user.user_id, new_preferences
             )
 
@@ -322,7 +322,7 @@ class TestSideQuestAPI:
 
     def test_get_user_preferences_unauthorized(self, client):
         """Test getting preferences without authentication."""
-        response = client.get("/api/sidequest/preferences")
+        response = client.get("/api/sidequest/me")
         assert response.status_code == 401
 
         data = response.get_json()
@@ -336,25 +336,38 @@ class TestSideQuestAPI:
         self, client, test_sidequest_user, auth_headers
     ):
         """Test getting preferences with authentication."""
-        response = client.get("/api/sidequest/preferences", headers=auth_headers)
+        response = client.get("/api/sidequest/me", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.get_json()
         assert data["success"] is True
-        assert "preferences" in data["data"]
+        assert all(
+            key in data["data"]
+            for key in [
+                "categories",
+                "difficulty",
+                "max_time",
+                "include_completed",
+                "include_skipped",
+                "notifications_enabled",
+                "notification_time",
+                "timezone",
+                "onboarding_completed",
+            ]
+        )
         assert "user_id" in data["data"]
 
-    def test_update_user_preferences_unauthorized(self, client):
+    def test_update_user_profile_unauthorized(self, client):
         """Test updating preferences without authentication."""
-        response = client.put("/api/sidequest/preferences", json={})
+        response = client.put("/api/sidequest/me", json={})
         assert response.status_code == 401
 
-    def test_update_user_preferences_authorized(
+    def test_update_user_profile_authorized(
         self, client, test_sidequest_user, auth_headers, quest_preferences
     ):
         """Test updating preferences with authentication."""
         response = client.put(
-            "/api/sidequest/preferences", json=quest_preferences, headers=auth_headers
+            "/api/sidequest/me", json=quest_preferences, headers=auth_headers
         )
         assert response.status_code == 200
 

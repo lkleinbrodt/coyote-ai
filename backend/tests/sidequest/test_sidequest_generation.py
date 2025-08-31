@@ -178,27 +178,21 @@ class TestQuestGenerationService:
             # Mock the OpenAI client at the instance level
             mock_client = Mock()
             mock_response = Mock()
-            mock_response.choices = [
-                Mock(
-                    message=Mock(
-                        content=json.dumps(
-                            {
-                                "quests": [
-                                    {
-                                        "text": "Do 10 jumping jacks",
-                                        "category": "fitness",
-                                        "estimated_time": "5 minutes",
-                                        "difficulty": "easy",
-                                        "tags": ["exercise", "quick"],
-                                    }
-                                ]
-                            }
-                        )
-                    )
-                )
-            ]
-            mock_client.chat.completions.create.return_value = mock_response
-            service.openai_client = mock_client
+            mock_response = json.dumps(
+                {
+                    "quests": [
+                        {
+                            "text": "Do 10 jumping jacks",
+                            "category": "fitness",
+                            "estimated_time": "5 minutes",
+                            "difficulty": "easy",
+                            "tags": ["exercise", "quick"],
+                        }
+                    ]
+                }
+            )
+            mock_client.chat.return_value = mock_response
+            service.client = mock_client
 
             preferences = {
                 "categories": ["fitness"],
@@ -223,8 +217,8 @@ class TestQuestGenerationService:
 
             # Mock OpenAI failure
             mock_client = Mock()
-            mock_client.chat.completions.create.side_effect = Exception("API Error")
-            service.openai_client = mock_client
+            mock_client.chat.side_effect = Exception("API Error")
+            service.client = mock_client
 
             preferences = {
                 "categories": ["fitness"],
@@ -246,42 +240,35 @@ class TestQuestGenerationService:
 
             # Mock the OpenAI client at the instance level
             mock_client = Mock()
-            mock_response = Mock()
-            mock_response.choices = [
-                Mock(
-                    message=Mock(
-                        content=json.dumps(
-                            {
-                                "quests": [
-                                    {
-                                        "text": "Do 10 jumping jacks",
-                                        "category": "fitness",
-                                        "estimated_time": "5 minutes",
-                                        "difficulty": "easy",
-                                        "tags": ["exercise", "quick"],
-                                    },
-                                    {
-                                        "text": "Take 5 deep breaths",
-                                        "category": "mindfulness",
-                                        "estimated_time": "2 minutes",
-                                        "difficulty": "easy",
-                                        "tags": ["breathing", "calm"],
-                                    },
-                                    {
-                                        "text": "Organize one drawer",
-                                        "category": "chores",
-                                        "estimated_time": "10 minutes",
-                                        "difficulty": "easy",
-                                        "tags": ["organization", "tidiness"],
-                                    },
-                                ]
-                            }
-                        )
-                    )
-                )
-            ]
-            mock_client.chat.completions.create.return_value = mock_response
-            service.openai_client = mock_client
+            mock_response = json.dumps(
+                {
+                    "quests": [
+                        {
+                            "text": "Do 10 jumping jacks",
+                            "category": "fitness",
+                            "estimated_time": "5 minutes",
+                            "difficulty": "easy",
+                            "tags": ["exercise", "quick"],
+                        },
+                        {
+                            "text": "Take 5 deep breaths",
+                            "category": "mindfulness",
+                            "estimated_time": "2 minutes",
+                            "difficulty": "easy",
+                            "tags": ["breathing", "calm"],
+                        },
+                        {
+                            "text": "Organize one drawer",
+                            "category": "chores",
+                            "estimated_time": "10 minutes",
+                            "difficulty": "easy",
+                            "tags": ["organization", "tidiness"],
+                        },
+                    ]
+                }
+            )
+            mock_client.chat.return_value = mock_response
+            service.client = mock_client
 
             preferences = {
                 "categories": ["fitness", "mindfulness", "chores"],
@@ -311,7 +298,7 @@ class TestQuestGenerationService:
                 assert quest.id is not None
                 assert quest.user_id == 1001
                 assert quest.fallback_used is False
-                assert quest.model_used == "gpt-4o-mini"
+                assert quest.model_used == "meta-llama/llama-3.3-70b-instruct"
 
     def test_generate_daily_quests_fallback(self, app):
         """Test daily quest generation falling back to curated quests."""
@@ -323,8 +310,8 @@ class TestQuestGenerationService:
 
             # Mock OpenAI failure
             mock_client = Mock()
-            mock_client.chat.completions.create.side_effect = Exception("API Error")
-            service.openai_client = mock_client
+            mock_client.chat.side_effect = Exception("API Error")
+            service.client = mock_client
 
             preferences = {
                 "categories": ["fitness", "mindfulness"],

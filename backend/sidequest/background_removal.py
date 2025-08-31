@@ -1,6 +1,10 @@
 """
 Background removal service for post-processing generated icons.
 Removes unwanted backgrounds from AI-generated images to create clean, transparent icons.
+# Background removal service dependencies
+Pillow>=10.0.0
+numpy>=1.24.0
+rembg>=2.0.0  # AI-powered background removal (optional but recommended)
 """
 
 import os
