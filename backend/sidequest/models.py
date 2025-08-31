@@ -239,9 +239,7 @@ class SideQuest(db.Model):
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
         return self.generated_at >= cutoff_time
 
-    def mark_completed(
-        self, feedback_rating=None, feedback_comment=None, time_spent=None
-    ):
+    def complete(self, feedback_rating=None, feedback_comment=None, time_spent=None):
         """Mark quest as completed with feedback"""
         self.status = QuestStatus.COMPLETED
         self.completed_at = datetime.utcnow()
@@ -260,6 +258,23 @@ class SideQuest(db.Model):
     def decline(self):
         """Decline quest"""
         self.status = QuestStatus.DECLINED
+
+    def fail(self):
+        """Mark quest as failed"""
+        self.status = QuestStatus.FAILED
+
+    def cleanup(self):
+        """
+        Cleanup old quests.
+        If status is:
+        Potential -> mark as declined
+        Accepted -> mark as failed
+        otherwise, do nothing
+        """
+        if self.status == QuestStatus.POTENTIAL:
+            self.decline()
+        elif self.status == QuestStatus.ACCEPTED:
+            self.fail()
 
 
 class QuestGenerationLog(db.Model):
@@ -335,3 +350,10 @@ class QuestBoard(db.Model):
     # Relationships
     user = db.relationship("User", backref=db.backref("quest_boards", uselist=False))
     quests = db.relationship("SideQuest", backref="quest_board", lazy="dynamic")
+
+    def cleanup(self):
+        """
+        Cleanup old quests.
+        """
+        for quest in self.quests:
+            quest.cleanup()

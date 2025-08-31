@@ -9,11 +9,11 @@ from sqlalchemy.orm import Session
 
 from backend.extensions import create_logger
 
-from .models import (
+from backend.sidequest.models import (
     QuestCategory,
     QuestDifficulty,
     QuestGenerationLog,
-    QuestRating,
+    QuestBoard,
     SideQuest,
     SideQuestUser,
 )
@@ -184,6 +184,7 @@ class QuestGenerationService:
         user_id: int,
         preferences: Dict[str, Any],
         context: Optional[Dict[str, Any]] = None,
+        add_to_board: bool = True,
     ) -> List[SideQuest]:
         """Generate 3 personalized daily quests for a user"""
         start_time = time.time()
@@ -214,6 +215,19 @@ class QuestGenerationService:
             model_used = None
 
         # Create quest objects and save to database
+        # add to quest board
+        if add_to_board:
+            quest_board = self.db.query(QuestBoard).filter_by(user_id=user_id).first()
+            if quest_board:
+                quest_board_id = quest_board.id
+            else:
+                quest_board = QuestBoard(user_id=user_id)
+                self.db.add(quest_board)
+                self.db.commit()
+                self.db.refresh(quest_board)
+                quest_board_id = quest_board.id
+        else:
+            quest_board_id = None
         quest_objects = []
         for quest_data in quests:
             quest = SideQuest(
@@ -225,6 +239,7 @@ class QuestGenerationService:
                 tags=quest_data["tags"],
                 model_used=model_used,
                 fallback_used=fallback_used,
+                quest_board_id=quest_board_id,
             )
             self.db.add(quest)
             quest_objects.append(quest)
@@ -429,250 +444,3 @@ Generate quests that will bring joy and novelty to the user's day!"""
                 return int(time_str)
         except (ValueError, IndexError):
             return 15  # Default fallback
-
-
-class UserService:
-    """Service for managing SideQuest user profiles and preferences"""
-
-    def __init__(self, db_session: Session):
-        self.db = db_session
-
-    def get_or_create_user_profile(self, user_id: int) -> SideQuestUser:
-        """Get existing user profile or create a new one"""
-        profile = self.db.query(SideQuestUser).filter_by(user_id=user_id).first()
-
-        if not profile:
-            profile = SideQuestUser(user_id=user_id)
-            self.db.add(profile)
-            self.db.commit()
-            logger.info(f"Created new SideQuest profile for user {user_id}")
-
-        return profile
-
-    def update_user_profile(
-        self, user_id: int, preferences: Dict[str, Any]
-    ) -> SideQuestUser:
-        """Update user profile"""
-        profile = self.get_or_create_user_profile(user_id)
-
-        # Update preference fields
-        if "categories" in preferences:
-            profile.categories = preferences["categories"]
-        if "difficulty" in preferences:
-            profile.difficulty = QuestDifficulty(preferences["difficulty"])
-        if "max_time" in preferences:
-            profile.max_time = preferences["max_time"]
-        if "include_completed" in preferences:
-            profile.include_completed = preferences["include_completed"]
-        if "include_skipped" in preferences:
-            profile.include_skipped = preferences["include_skipped"]
-        if "notifications_enabled" in preferences:
-            profile.notifications_enabled = preferences["notifications_enabled"]
-        if "notification_time" in preferences:
-            profile.notification_time = preferences["notification_time"]
-        if "timezone" in preferences:
-            profile.timezone = preferences["timezone"]
-        if "onboarding_completed" in preferences:
-            profile.onboarding_completed = preferences["onboarding_completed"]
-
-        profile.updated_at = datetime.now()
-        self.db.commit()
-
-        logger.info(f"Updated preferences for user {user_id}")
-        return profile
-
-    def mark_onboarding_completed(self, user_id: int) -> SideQuestUser:
-        """Mark user's onboarding as completed"""
-        profile = self.get_or_create_user_profile(user_id)
-        profile.onboarding_completed = True
-        profile.updated_at = datetime.now()
-        self.db.commit()
-
-        logger.info(f"Marked onboarding completed for user {user_id}")
-        return profile
-
-
-class QuestService:
-    """Service for managing quest interactions and feedback"""
-
-    def __init__(self, db_session: Session):
-        self.db = db_session
-
-    def get_user_quests(
-        self,
-        user_id: int,
-        date: Optional[datetime] = None,
-        include_expired: bool = False,
-    ) -> List[SideQuest]:
-        """Get quests for a user, optionally filtered by date"""
-        query = self.db.query(SideQuest).filter_by(user_id=user_id)
-
-        if date:
-            start_of_day = date.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_of_day = start_of_day + timedelta(days=1)
-            query = query.filter(
-                SideQuest.created_at >= start_of_day, SideQuest.created_at < end_of_day
-            )
-
-        if not include_expired:
-            query = query.filter(SideQuest.expires_at > datetime.now())
-
-        return query.order_by(SideQuest.created_at.desc()).all()
-
-    def get_available_quests(self, user_id: int) -> List[SideQuest]:
-        """Get available quests for a user (open quests within generation window)"""
-        # Get quests that are:
-        # 1. For this user
-        # 2. Open (not selected, completed, or skipped)
-        # 3. Within the generation window (last 24 hours)
-        # 4. Not expired
-        cutoff_time = datetime.utcnow() - timedelta(hours=24)
-
-        quests = (
-            self.db.query(SideQuest)
-            .filter(
-                SideQuest.user_id == user_id,
-                SideQuest.selected == False,
-                SideQuest.completed == False,
-                SideQuest.skipped == False,
-                SideQuest.generated_at >= cutoff_time,
-                SideQuest.expires_at > datetime.utcnow(),
-            )
-            .order_by(SideQuest.generated_at.desc())
-            .all()
-        )
-
-        return quests
-
-    def refresh_user_quests(
-        self,
-        user_id: int,
-        preferences: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
-        openai_api_key: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        """Refresh quests for a user:
-        - quests with no action (not selected, completed, or skipped) should be marked as skipped
-        - quests that are selected or completed should not be touched
-
-        """
-        try:
-            # Get current open quests for this user
-            open_quests = self.get_available_quests(user_id)
-
-            # Mark old open quests as skipped
-            old_quests_skipped = 0
-            for quest in open_quests:
-                if quest.is_open():
-                    quest.mark_skipped()
-                    old_quests_skipped += 1
-
-            # Commit the skipped quests
-            self.db.commit()
-
-            # Generate new quests
-            if openai_api_key:
-                from .services import QuestGenerationService
-
-                quest_generation_service = QuestGenerationService(
-                    self.db, openai_api_key
-                )
-                new_quests = quest_generation_service.generate_daily_quests(
-                    user_id, preferences, context
-                )
-            else:
-                # Fallback to some basic quests if no OpenAI key
-                new_quests = []
-                logger.warning(
-                    "No OpenAI API key provided for quest refresh, using fallback"
-                )
-
-            return {
-                "success": True,
-                "quests": new_quests,
-                "old_quests_skipped": old_quests_skipped,
-                "error": None,
-            }
-
-        except Exception as e:
-            logger.error(f"Error refreshing quests for user {user_id}: {str(e)}")
-            return {
-                "success": False,
-                "quests": [],
-                "old_quests_skipped": 0,
-                "error": str(e),
-            }
-
-    def mark_quest_accept(self, quest_id: int, user_id: int) -> bool:
-        """Mark a quest as accepted by the user"""
-        quest = self.db.query(SideQuest).filter_by(id=quest_id, user_id=user_id).first()
-        if not quest:
-            return False
-
-        quest.accept()
-        self.db.commit()
-        logger.info(f"Quest {quest_id} marked as accepted by user {user_id}")
-        return True
-
-    def mark_quest_completed(
-        self, quest_id: int, user_id: int, feedback: Dict[str, Any]
-    ) -> bool:
-        """Mark a quest as completed with feedback"""
-        quest = self.db.query(SideQuest).filter_by(id=quest_id, user_id=user_id).first()
-        if not quest:
-            return False
-
-        rating = QuestRating(feedback["rating"]) if feedback.get("rating") else None
-        comment = feedback.get("comment")
-        time_spent = feedback.get("timeSpent")
-
-        quest.mark_completed(rating, comment, time_spent)
-        self.db.commit()
-
-        logger.info(f"Quest {quest_id} marked as completed by user {user_id}")
-        return True
-
-    def get_quest_history(self, user_id: int, days: int = 7) -> Dict[str, Any]:
-        """Get quest history and statistics for a user"""
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
-
-        quests = (
-            self.db.query(SideQuest)
-            .filter(
-                SideQuest.user_id == user_id,
-                SideQuest.created_at >= start_date,
-                SideQuest.created_at <= end_date,
-            )
-            .all()
-        )
-
-        stats = {
-            "total": len(quests),
-            "selected": sum(1 for q in quests if q.selected),
-            "completed": sum(1 for q in quests if q.completed),
-            "skipped": sum(1 for q in quests if q.skipped),
-            "total_time": sum(q.time_spent or 0 for q in quests if q.time_spent),
-        }
-
-        return {
-            "period": f"Last {days} days",
-            "start_date": start_date.isoformat(),
-            "end_date": end_date.isoformat(),
-            "stats": stats,
-            "quests": [q.to_dict() for q in quests],
-        }
-
-
-from backend.sidequest.models import QuestBoard
-
-
-class QuestBoardService:
-    """Service for managing quest boards"""
-
-    def __init__(self, db_session: Session):
-        self.db = db_session
-
-    def get_user_quest_board(self, user_id: int) -> QuestBoard:
-        """Get a user's quest board"""
-        return self.db.query(QuestBoard).filter_by(user_id=user_id).first()

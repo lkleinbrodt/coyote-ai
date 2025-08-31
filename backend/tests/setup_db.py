@@ -8,6 +8,7 @@ from backend.sidequest.models import (
     QuestStatus,
 )
 from backend.sidequest.models import QuestCategory, QuestDifficulty, QuestRating
+from backend.sidequest.services import QuestService
 
 
 def init_test_db(db):
@@ -76,13 +77,16 @@ def init_test_db(db):
     ]
 
     quests = []
+    service = QuestService(db.session)
     for i in range(20):
         user = random.choice(sidequest_users)
         category = random.choice(list(QuestCategory))
         difficulty = random.choice(list(QuestDifficulty))
 
+        quest_board = service.get_or_create_board(user.user_id)
+
         quest = SideQuest(
-            user_id=user.id,
+            user_id=user.user_id,
             text=random.choice(quest_texts),
             category=category,
             estimated_time=f"{random.randint(5, 30)} minutes",
@@ -90,6 +94,7 @@ def init_test_db(db):
             tags=[category.value, difficulty.value],
             expires_at=datetime.now() + timedelta(days=random.randint(1, 7)),
             status=random.choice(list(QuestStatus)),
+            quest_board_id=quest_board.id,
         )
 
         # Add completion details for completed quests

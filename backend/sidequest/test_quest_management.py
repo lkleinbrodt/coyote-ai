@@ -14,7 +14,7 @@ from .services import QuestBoardService, QuestService
 from .routes import sidequest_bp
 
 
-class TestQuestBoardModel:
+class TestModels:
     """Test the new QuestBoard model"""
 
     def test_quest_board_creation(self):
@@ -52,26 +52,6 @@ class TestQuestBoardModel:
         assert board.quests[0].text == "Test quest"
         assert quest.quest_board_id == board.id
 
-
-class TestSideQuestModel:
-    """Test the updated SideQuest model with new status field"""
-
-    def test_quest_creation_with_status(self):
-        """Test creating a quest with the new status field"""
-        # This will fail until status field is implemented
-        quest = SideQuest(
-            user_id=1,
-            text="Test quest",
-            category=QuestCategory.FITNESS,
-            estimated_time="5 minutes",
-            difficulty=QuestDifficulty.EASY,
-            status=QuestStatus.POTENTIAL,
-        )
-
-        assert quest.status == QuestStatus.POTENTIAL
-        assert quest.text == "Test quest"
-        assert quest.category == QuestCategory.FITNESS
-
     def test_quest_status_transitions(self):
         """Test valid quest status transitions"""
         # This will fail until status validation is implemented
@@ -95,24 +75,8 @@ class TestSideQuestModel:
         with pytest.raises(ValueError):
             quest.status = "invalid_status"
 
-    def test_quest_board_association(self):
-        """Test quest association with quest board"""
-        # This will fail until quest_board_id field is implemented
-        board = QuestBoard(user_id=1)
-        quest = SideQuest(
-            user_id=1,
-            text="Test quest",
-            category=QuestCategory.FITNESS,
-            estimated_time="5 minutes",
-            difficulty=QuestDifficulty.EASY,
-            status=QuestStatus.POTENTIAL,
-            quest_board_id=board.id,
-        )
 
-        assert quest.quest_board_id == board.id
-
-
-class TestQuestBoardService:
+class TestServices:
     """Test the new QuestBoardService"""
 
     def test_get_user_quest_board_fresh(self):
