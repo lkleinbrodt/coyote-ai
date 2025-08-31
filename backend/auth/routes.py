@@ -197,13 +197,12 @@ def mobile_login_with_apple():
         # Get the user's name if they provide it on first sign-up
         full_name = credential.get("fullName", {})
 
-        # Use the Apple authentication service
-        from backend.src.apple_auth_service import AppleAuthService
-
         apple_service = AppleAuthService(db.session)
 
         try:
-            user = apple_service.authenticate_with_apple(identity_token, full_name)
+            user = apple_service.authenticate_with_apple(
+                credential, client_id=None, app_name="SideQuest"
+            )
         except Exception as e:
             logger.error(f"Apple authentication failed: {str(e)}")
             return (

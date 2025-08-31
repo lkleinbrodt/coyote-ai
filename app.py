@@ -23,4 +23,7 @@ def deploy_app():
 app = deploy_app()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001)
+    if os.environ.get("ENV", "dev") == "dev":
+        app.run(host="0.0.0.0", port=5000, debug=True)
+    else:
+        app.run(host="0.0.0.0", port=5000)

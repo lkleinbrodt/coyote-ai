@@ -37,6 +37,8 @@ class QuestRating(str, Enum):
 class SideQuestUser(db.Model):
     """SideQuest user preferences and settings"""
 
+    __table_args__ = {"schema": "sidequest"}
+
     __tablename__ = "sidequest_users"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -72,7 +74,7 @@ class SideQuestUser(db.Model):
 
     # Relationships
     user = db.relationship(
-        "User", backref=db.backref("sidequest_profile", uselist=False)
+        "User", backref=db.backref("sidequest.sidequest_profile", uselist=False)
     )
 
     def __init__(self, **kwargs):
@@ -127,6 +129,7 @@ class SideQuestUser(db.Model):
 class SideQuest(db.Model):
     """Individual quest instances"""
 
+    __table_args__ = {"schema": "sidequest"}
     __tablename__ = "sidequest_quests"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -237,6 +240,7 @@ class SideQuest(db.Model):
 class QuestGenerationLog(db.Model):
     """Log of quest generation requests for analytics"""
 
+    __table_args__ = {"schema": "sidequest"}
     __tablename__ = "sidequest_generation_logs"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -261,7 +265,7 @@ class QuestGenerationLog(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
 
     # Relationships
-    user = db.relationship("User", backref="sidequest_generation_logs")
+    user = db.relationship("User", backref="sidequest.sidequest_generation_logs")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

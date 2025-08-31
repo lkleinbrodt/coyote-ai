@@ -26,7 +26,7 @@ from backend.speech.openai_client import (
     moderate_speech,
     transcribe_audio,
 )
-from backend.src.auth import apple_signin
+from backend.src.apple_auth_service import get_apple_auth_service
 
 logger = create_logger(__name__, level="DEBUG")
 speech_bp = Blueprint("speech", __name__, url_prefix="/speech")
@@ -43,7 +43,11 @@ def signin():
         return jsonify({"error": "No identity token provided"}), 400
 
     try:
-        user = apple_signin(credentials)
+        # Use the consolidated Apple Auth Service
+        user = get_apple_auth_service().authenticate_with_apple(
+            credentials, 
+            app_name="SpeechCoach"
+        )
         logger.debug(f"Successfully authenticated user: {user.id}")
 
         access_token = create_access_token(

@@ -130,7 +130,7 @@ SideQuest is a quest generation app that creates personalized daily tasks for us
 - **JWT Configuration**: `JWT_TOKEN_LOCATION = ["headers", "cookies"]` in config
 - **Error Handling**: Standardized JWT error responses in `backend/__init__.py`
 - **Apple Auth Service**: Located in `backend/src/apple_auth_service.py`
-- **Bundle ID**: `com.landokleinbrodt.sidequest` for Apple validation
+- **Bundle ID**: `com.lkleinbrodt.SideQuest` for Apple validation
 
 ### Why This Matters
 

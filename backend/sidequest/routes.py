@@ -1,13 +1,19 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any
 
 from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    jwt_required,
+    get_jwt_identity,
+    create_access_token,
+    create_refresh_token,
+)
 from sqlalchemy.orm import Session
 
 from backend.extensions import create_logger, db
+from backend.src.apple_auth_service import get_apple_auth_service
 from .services import QuestGenerationService, UserService, QuestService
-from .models import QuestCategory, QuestDifficulty
+from .models import QuestCategory, QuestDifficulty, SideQuestUser
 
 logger = create_logger(__name__)
 sidequest_bp = Blueprint("sidequest", __name__, url_prefix="/sidequest")
@@ -485,14 +491,9 @@ def get_user_preferences():
 
         user_service = UserService(db.session)
         profile = user_service.get_or_create_user_profile(user_id)
-
+        logger.info(f"Preferences fetched for user {user_id}: {profile.to_dict()}")
         return (
-            jsonify(
-                {
-                    "success": True,
-                    "data": {"preferences": profile.to_dict(), "user_id": user_id},
-                }
-            ),
+            jsonify({"success": True, "data": profile.to_dict()}),
             200,
         )
 
@@ -664,6 +665,106 @@ def get_quest_history():
                     "error": {"message": "Failed to fetch quest history"},
                 }
             ),
+            500,
+        )
+
+
+@sidequest_bp.route("/auth/apple/signin", methods=["POST"])
+def signin():
+    """Handle Sign in with Apple authentication"""
+    logger.info("Apple signin route accessed")
+
+    try:
+        credentials = request.get_json()
+        if not credentials:
+            return (
+                jsonify({"success": False, "error": {"message": "No data provided"}}),
+                400,
+            )
+
+        # Extract Apple credential from request
+        credential = credentials.get("appleIdToken")
+        if not credential:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "No Apple credential provided"},
+                    }
+                ),
+                400,
+            )
+
+        identity_token = credential.get("identityToken")
+        if not identity_token:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "Credential object missing identityToken"},
+                    }
+                ),
+                400,
+            )
+
+        # Use the consolidated Apple Auth Service with SideQuest bundle ID
+        user = get_apple_auth_service().authenticate_with_apple(
+            credential, client_id="com.lkleinbrodt.SideQuest", app_name="SideQuest"
+        )
+        logger.debug(f"Successfully authenticated user: {user.id}")
+
+        # Check if user needs a SideQuest profile created
+        sidequest_user = SideQuestUser.query.filter_by(user_id=user.id).first()
+        if not sidequest_user:
+            logger.info(f"Creating new SideQuest profile for user {user.id}")
+            sidequest_user = SideQuestUser(
+                user_id=user.id,
+                onboarding_completed=False,  # New users need to complete onboarding
+            )
+            db.session.add(sidequest_user)
+            db.session.commit()
+            logger.debug(f"SideQuest profile created for user {user.id}")
+
+        # Create long-lived access token (1 year) - simpler for mobile
+        access_token = create_access_token(
+            identity=str(user.id),
+            additional_claims={
+                "name": user.name,
+                "email": user.email,
+                "image": user.image,
+                "role": getattr(user, "role", "user"),
+            },
+            expires_delta=timedelta(days=365),  # 1 year token
+        )
+
+        logger.info(f"Mobile Apple login successful for user {user.id}")
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "access_token": access_token,
+                    "user": {
+                        "id": str(user.id),
+                        "name": user.name,
+                        "email": user.email,
+                        "image": user.image,
+                        "role": getattr(user, "role", "user"),
+                    },
+                },
+            }
+        )
+
+    except ValueError as e:
+        logger.error(f"Apple signin error: {str(e)}", exc_info=True)
+        return (
+            jsonify({"success": False, "error": {"message": str(e)}}),
+            400,
+        )
+    except Exception as e:
+        logger.error(f"Mobile Apple login error: {str(e)}", exc_info=True)
+        return (
+            jsonify({"success": False, "error": {"message": "Login failed"}}),
             500,
         )
 
