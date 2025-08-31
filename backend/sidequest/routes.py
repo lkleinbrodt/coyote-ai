@@ -148,15 +148,28 @@ def generate_daily_quests():
                 503,
             )
 
-        # Generate quests
+        # Check if user has available quests first
+        quest_service = QuestService(db.session)
+        available_quests = quest_service.get_available_quests(user_id)
 
-        quest_service = QuestGenerationService(db.session, openai_api_key)
-        quests = quest_service.generate_daily_quests(user_id, preferences, context)
+        if available_quests:
+            # User has open quests within generation window, return those
+            logger.info(
+                f"User {user_id} has {len(available_quests)} available quests, returning existing ones"
+            )
+            quests_data = [quest.to_dict() for quest in available_quests]
+        else:
+            # No available quests, generate new ones
+            logger.info(f"User {user_id} has no available quests, generating new ones")
+            quest_generation_service = QuestGenerationService(
+                db.session, openai_api_key
+            )
+            quests = quest_generation_service.generate_daily_quests(
+                user_id, preferences, context
+            )
+            quests_data = [quest.to_dict() for quest in quests]
 
-        # Convert quests to dictionary format for response
-        quests_data = [quest.to_dict() for quest in quests]
-
-        logger.info(f"Successfully generated {len(quests)} quests for user {user_id}")
+        logger.info(f"Returning {len(quests_data)} quests for user {user_id}")
 
         return (
             jsonify(
@@ -180,6 +193,98 @@ def generate_daily_quests():
         return (
             jsonify(
                 {"success": False, "error": {"message": "Failed to generate quests"}}
+            ),
+            500,
+        )
+
+
+@sidequest_bp.route("/quests/active", methods=["GET"])
+@jwt_required()
+def get_active_quests():
+    """Get active quests for the authenticated user"""
+    try:
+        user_id = get_jwt_identity()
+        if not user_id:
+            return (
+                jsonify(
+                    {"success": False, "error": {"message": "Authentication required"}}
+                ),
+                401,
+            )
+
+        quest_service = QuestService(db.session)
+        quests = quest_service.get_active_quests(user_id)
+
+        quests_data = [quest.to_dict() for quest in quests]
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": {
+                        "quests": quests_data,
+                        "count": len(quests_data),
+                        "user_id": user_id,
+                    },
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting active quests: {str(e)}", exc_info=True)
+        return (
+            jsonify(
+                {"success": False, "error": {"message": "Failed to get active quests"}}
+            ),
+            500,
+        )
+
+
+@sidequest_bp.route("/quests/available", methods=["GET"])
+@jwt_required()
+def get_available_quests():
+    """Get available quests for the authenticated user (open quests within generation window)"""
+    try:
+        user_id = get_jwt_identity()
+        if not user_id:
+            return (
+                jsonify(
+                    {"success": False, "error": {"message": "Authentication required"}}
+                ),
+                401,
+            )
+
+        logger.info(f"Fetching available quests for user {user_id}")
+
+        quest_service = QuestService(db.session)
+        quests = quest_service.get_available_quests(user_id)
+
+        quests_data = [quest.to_dict() for quest in quests]
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": {
+                        "quests": quests_data,
+                        "count": len(quests_data),
+                        "user_id": user_id,
+                        "generated_at": datetime.now().isoformat(),
+                    },
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logger.error(f"Error fetching available quests: {str(e)}", exc_info=True)
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {"message": "Failed to fetch available quests"},
+                }
             ),
             500,
         )
@@ -411,6 +516,170 @@ def complete_quest(quest_id: int):
         return (
             jsonify(
                 {"success": False, "error": {"message": "Failed to complete quest"}}
+            ),
+            500,
+        )
+
+
+@sidequest_bp.route("/quests/refresh", methods=["POST"])
+@jwt_required()
+def refresh_quests():
+    """Refresh quests for the authenticated user - mark old ones as skipped and generate new ones"""
+    try:
+        user_id = get_jwt_identity()
+        if not user_id:
+            return (
+                jsonify(
+                    {"success": False, "error": {"message": "Authentication required"}}
+                ),
+                401,
+            )
+
+        # Get and validate request data
+        data = request.get_json() or {}
+        preferences = data.get("preferences")
+        context = data.get("context")
+
+        if not preferences:
+            logger.warning("No preferences provided in refresh request")
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "User preferences are required"},
+                    }
+                ),
+                400,
+            )
+
+        # Validate preferences structure
+        if not isinstance(preferences, dict):
+            logger.warning("Preferences must be a dictionary")
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "Preferences must be a dictionary"},
+                    }
+                ),
+                400,
+            )
+
+        # Validate required preference fields
+        required_fields = ["categories", "difficulty", "max_time"]
+        for field in required_fields:
+            if field not in preferences:
+                logger.warning(f"Missing required preference field: {field}")
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": {
+                                "message": f"Missing required preference field: {field}"
+                            },
+                        }
+                    ),
+                    400,
+                )
+
+        # Validate categories
+        if (
+            not isinstance(preferences["categories"], list)
+            or not preferences["categories"]
+        ):
+            logger.warning("Categories must be a non-empty list")
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "Categories must be a non-empty list"},
+                    }
+                ),
+                400,
+            )
+
+        # Validate difficulty
+        try:
+            QuestDifficulty(preferences["difficulty"])
+        except ValueError:
+            logger.warning(f"Invalid difficulty level: {preferences['difficulty']}")
+            return (
+                jsonify(
+                    {"success": False, "error": {"message": "Invalid difficulty level"}}
+                ),
+                400,
+            )
+
+        # Validate max_time
+        if not isinstance(preferences["max_time"], int) or preferences["max_time"] <= 0:
+            logger.warning(f"Invalid max_time: {preferences['max_time']}")
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "max_time must be a positive integer"},
+                    }
+                ),
+                400,
+            )
+
+        logger.info(f"Refreshing quests for user {user_id}")
+
+        # Get OpenAI API key from config
+        openai_api_key = current_app.config.get("OPENAI_API_KEY")
+        if not openai_api_key:
+            logger.error("OPENAI_API_KEY not configured")
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": {"message": "Quest generation service unavailable"},
+                    }
+                ),
+                503,
+            )
+
+        # Refresh quests: mark old ones as skipped and generate new ones
+        quest_service = QuestService(db.session)
+        refresh_result = quest_service.refresh_user_quests(
+            user_id, preferences, context, openai_api_key
+        )
+
+        if not refresh_result["success"]:
+            return (
+                jsonify(
+                    {"success": False, "error": {"message": refresh_result["error"]}}
+                ),
+                500,
+            )
+
+        quests_data = [quest.to_dict() for quest in refresh_result["quests"]]
+
+        logger.info(f"Successfully refreshed quests for user {user_id}")
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "data": {
+                        "quests": quests_data,
+                        "metadata": {
+                            "refreshedAt": datetime.now().isoformat(),
+                            "count": len(quests_data),
+                            "user_id": user_id,
+                            "oldQuestsSkipped": refresh_result["old_quests_skipped"],
+                        },
+                    },
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logger.error(f"Error refreshing quests: {str(e)}", exc_info=True)
+        return (
+            jsonify(
+                {"success": False, "error": {"message": "Failed to refresh quests"}}
             ),
             500,
         )

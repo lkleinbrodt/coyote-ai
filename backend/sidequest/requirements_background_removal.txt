@@ -1,0 +1,4 @@
+# Background removal service dependencies
+Pillow>=10.0.0
+numpy>=1.24.0
+rembg>=2.0.0  # AI-powered background removal (optional but recommended)

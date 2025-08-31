@@ -218,6 +218,17 @@ class SideQuest(db.Model):
         """Check if quest has expired"""
         return datetime.utcnow() > self.expires_at
 
+    def is_open(self):
+        """Check if quest is open (not yet acted upon)"""
+        return not (self.selected or self.completed or self.skipped)
+
+    def is_within_generation_window(self, hours: int = 24):
+        """Check if quest is within the generation window (default 24 hours)"""
+        if not self.generated_at:
+            return False
+        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        return self.generated_at >= cutoff_time
+
     def mark_completed(
         self, feedback_rating=None, feedback_comment=None, time_spent=None
     ):

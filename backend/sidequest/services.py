@@ -26,10 +26,15 @@ logger = create_logger(__name__)
 class QuestGenerationService:
     """Service for generating personalized quests using LLM or fallback system"""
 
-    def __init__(self, db_session: Session, openai_api_key: str):
+    def __init__(self, db_session: Session, openai_api_key: str = None):
         self.db = db_session
-        self.openai_client = OpenAI(api_key=openai_api_key)
-        self.model = "gpt-4o-mini"  # Use cost-effective model for quest generation
+        from backend.src.OpenRouter import OpenRouterClient
+
+        self.model = "meta-llama/llama-3.3-70b-instruct"
+
+        self.client = OpenRouterClient(
+            default_model=self.model,
+        )
 
         # Fallback quest templates for when LLM is unavailable
         self.fallback_quests = self._initialize_fallback_quests()
@@ -258,8 +263,7 @@ class QuestGenerationService:
         prompt = self._build_quest_generation_prompt(preferences, context)
 
         try:
-            response = self.openai_client.chat.completions.create(
-                model=self.model,
+            content = self.client.chat(
                 messages=[
                     {
                         "role": "system",
@@ -271,9 +275,11 @@ class QuestGenerationService:
                 max_tokens=1000,
                 response_format={"type": "json_object"},
             )
-
-            content = response.choices[0].message.content
-            quests_data = json.loads(content)
+            try:
+                quests_data = json.loads(content)
+            except json.JSONDecodeError:
+                logger.error(f"Invalid JSON response: {content}")
+                raise Exception("Invalid JSON response from LLM")
 
             # Validate and format the response
             quests = []
@@ -512,6 +518,94 @@ class QuestService:
             query = query.filter(SideQuest.expires_at > datetime.now())
 
         return query.order_by(SideQuest.created_at.desc()).all()
+
+    def get_active_quests(self, user_id: int) -> List[SideQuest]:
+        """Get active quests for a user"""
+        return self.get_user_quests(user_id, include_expired=True)
+
+    def get_available_quests(self, user_id: int) -> List[SideQuest]:
+        """Get available quests for a user (open quests within generation window)"""
+        # Get quests that are:
+        # 1. For this user
+        # 2. Open (not selected, completed, or skipped)
+        # 3. Within the generation window (last 24 hours)
+        # 4. Not expired
+        cutoff_time = datetime.utcnow() - timedelta(hours=24)
+
+        quests = (
+            self.db.query(SideQuest)
+            .filter(
+                SideQuest.user_id == user_id,
+                SideQuest.selected == False,
+                SideQuest.completed == False,
+                SideQuest.skipped == False,
+                SideQuest.generated_at >= cutoff_time,
+                SideQuest.expires_at > datetime.utcnow(),
+            )
+            .order_by(SideQuest.generated_at.desc())
+            .all()
+        )
+
+        return quests
+
+    def refresh_user_quests(
+        self,
+        user_id: int,
+        preferences: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+        openai_api_key: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Refresh quests for a user:
+        - quests with no action (not selected, completed, or skipped) should be marked as skipped
+        - quests that are selected or completed should not be touched
+
+        """
+        try:
+            # Get current open quests for this user
+            open_quests = self.get_available_quests(user_id)
+
+            # Mark old open quests as skipped
+            old_quests_skipped = 0
+            for quest in open_quests:
+                if quest.is_open():
+                    quest.mark_skipped()
+                    old_quests_skipped += 1
+
+            # Commit the skipped quests
+            self.db.commit()
+
+            # Generate new quests
+            if openai_api_key:
+                from .services import QuestGenerationService
+
+                quest_generation_service = QuestGenerationService(
+                    self.db, openai_api_key
+                )
+                new_quests = quest_generation_service.generate_daily_quests(
+                    user_id, preferences, context
+                )
+            else:
+                # Fallback to some basic quests if no OpenAI key
+                new_quests = []
+                logger.warning(
+                    "No OpenAI API key provided for quest refresh, using fallback"
+                )
+
+            return {
+                "success": True,
+                "quests": new_quests,
+                "old_quests_skipped": old_quests_skipped,
+                "error": None,
+            }
+
+        except Exception as e:
+            logger.error(f"Error refreshing quests for user {user_id}: {str(e)}")
+            return {
+                "success": False,
+                "quests": [],
+                "old_quests_skipped": 0,
+                "error": str(e),
+            }
 
     def mark_quest_selected(self, quest_id: int, user_id: int) -> bool:
         """Mark a quest as selected by the user"""
