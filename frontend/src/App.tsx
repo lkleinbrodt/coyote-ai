@@ -5,10 +5,10 @@ import { Suspense, lazy } from "react";
 
 import AuthPage from "./pages/AuthPage";
 import { AuthProvider } from "./contexts/AuthContext";
+import FloatingNav from "./components/FloatingNav";
 // import Consulting from "./pages/Consulting";
 import Landing from "./pages/Landing";
 import Login from "./pages/LoginPage";
-import NavBar from "./components/NavBar";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import PrivateRoute from "./components/PrivateRoute";
@@ -40,7 +40,7 @@ function App() {
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <AuthProvider>
           <div className="min-h-screen bg-background">
-            <NavBar />
+            <FloatingNav />
             <main className="pt-[var(--navbar-height)]">
               <Suspense fallback={<LoadingFallback />}>
                 <Routes>

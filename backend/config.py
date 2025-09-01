@@ -10,7 +10,7 @@ load_dotenv()
 
 
 class Config:
-    ROOT_DIR = Path(os.path.abspath(os.path.dirname(__file__))).parent
+    BACKEND_DIR = Path(os.path.abspath(os.path.dirname(__file__)))
     SECRET_KEY = os.environ.get("SECRET_KEY")
     JWT_SECRET_KEY = SECRET_KEY
     if not SECRET_KEY:
@@ -21,6 +21,10 @@ class Config:
     PING_DB_API_KEY = os.environ.get("PING_DB_API_KEY")
     if not PING_DB_API_KEY:
         raise ValueError("PING_DB_API_KEY is not set")
+
+    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+    if not OPENAI_API_KEY:
+        raise ValueError("OPENAI_API_KEY is not set")
 
     ADMIN_EMAILS = ["lkleinbrodt@gmail.com"]
     MAIL_SERVER = os.environ.get("MAIL_SERVER")
@@ -37,10 +41,16 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True  # Prevent client-side JS access to cookie
 
     # JWT Configuration
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)  # Short-lived access token
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)  # Long-lived refresh token
+    # CRITICAL: This hybrid setup supports both web (cookies) and mobile (headers) clients
+    # Web apps use short-lived tokens with refresh, mobile apps use long-lived tokens
+    # DO NOT change JWT_TOKEN_LOCATION without understanding the implications
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)  # Short-lived access token for web
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)  # Long-lived refresh token for web
+
+    # Mobile tokens can override this with custom expiration in the route
 
     # Tell Flask-JWT-Extended to look for JWTs in headers and cookies
+    # Headers are for mobile apps, cookies are for web apps
     JWT_TOKEN_LOCATION = ["headers", "cookies"]
 
     # Only allow JWT cookies to be sent over HTTPS
@@ -58,6 +68,10 @@ class Config:
     # CSRF protection for cookie-based JWTs
     JWT_COOKIE_CSRF_PROTECT = True
     JWT_CSRF_IN_COOKIES = True
+
+    # Header configuration for mobile apps
+    JWT_HEADER_NAME = "Authorization"
+    JWT_HEADER_TYPE = "Bearer"
 
     LIFTER_BUCKET = "coyote-lifter"
 
@@ -80,13 +94,16 @@ class Config:
     SPEECH_APPLE_BUNDLE_ID = None  # Will be overridden in production
     SPEECH_DEVELOPMENT_MODE = True  # Will be False in production
 
+    # Character Explorer Configuration
+    EMBEDDING_MODEL = "all-MiniLM-L6-v2"  # 384 dimensions
+    EMBEDDING_DIMENSION = 384
+    DIALOGUE_EXTRACTION_MODEL = "anthropic/claude-3-haiku"
+
 
 class DevelopmentConfig(Config):
     ENV = "development"
     DEBUG = True
     FRONTEND_URL = "http://localhost:5173"
-    # SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
-    # SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(Config.ROOT_DIR, "app.db")
     SQLALCHEMY_DATABASE_URI = (
         "postgresql://coyote-user:coyote-password@localhost:5432/coyote-db-dev"
     )
@@ -134,9 +151,14 @@ class ProductionConfig(Config):
 
 class TestingConfig(Config):
     ENV = "testing"
+    TESTING = True
     DEBUG = True
     FRONTEND_URL = "http://localhost:8000"
-    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+
+    # PostgreSQL test database
+    SQLALCHEMY_DATABASE_URI = (
+        "postgresql://sidequest_user:sidequest_password@localhost:5434/sidequest_test"
+    )
 
     AUTODRAFT_BUCKET = "autodraft-test"
 
@@ -145,3 +167,19 @@ class TestingConfig(Config):
 
     STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY_TESTING")
     STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY_TESTING")
+
+    SPEECH_DEVELOPMENT_MODE = True
+    SPEECH_APPLE_BUNDLE_ID = "com.test.speechcoach"
+
+    # Fixed secret keys for testing
+    SECRET_KEY = "testing-secret-key"
+    JWT_SECRET_KEY = "testing-secret-key"
+    OPENAI_API_KEY = "test_openai_key"
+    PING_DB_API_KEY = "test_ping_db_key"
+
+    # Mail configuration for tests
+    MAIL_SERVER = "localhost"
+    MAIL_PORT = 587
+    MAIL_USERNAME = "test@example.com"
+    MAIL_PASSWORD = "test_password"
+    ADMIN_EMAILS = ["admin@example.com"]

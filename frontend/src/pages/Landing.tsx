@@ -79,6 +79,13 @@ const Landing: React.FC = () => {
       softwareType: "web",
       // category: "mobileApps",
     },
+    // {
+    //   title: "Character Explorer",
+    //   description: "Find characters who have similar speech patterns",
+    //   icon: "",
+    //   link: "/character-explorer",
+    //   softwareType: "web",
+    // },
   ];
 
   return (

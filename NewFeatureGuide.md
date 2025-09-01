@@ -100,8 +100,30 @@ This document provides guidelines and best practices for AI assistants tasked wi
 - `/backend/models.py`: Shared database models.
 - `/backend/[feature_name]/routes.py` (Pattern): Feature-specific backend routes.
 - `/backend/speech/openai_client.py` (Example): OpenAI integration pattern.
+- `/backend/sidequest/` (Reference): Complete SideQuest backend implementation example.
 
-**6. Final Checklist Before Completing Feature**
+**6. SideQuest Backend Implementation Reference**
+
+The SideQuest backend (`/backend/sidequest/`) serves as a comprehensive example of implementing a complete feature backend following the patterns outlined in this guide:
+
+**Key Implementation Highlights:**
+
+- **Blueprint Architecture**: Clean separation with `sidequest_bp` registered in main app
+- **Service Layer Pattern**: Business logic separated into dedicated service classes
+- **Database Models**: Comprehensive models with proper relationships and JSON fields
+- **External API Integration**: OpenAI integration with robust fallback systems
+- **Error Handling**: Comprehensive validation and error responses
+- **Authentication**: JWT-based protection for all user-specific endpoints
+- **Logging**: Detailed logging for debugging and monitoring
+
+**Reference Files:**
+
+- `/backend/sidequest/models.py`: Database models and enums
+- `/backend/sidequest/services.py`: Business logic and external API integration
+- `/backend/sidequest/routes.py`: REST API endpoints and request handling
+- `/backend/sidequest/__init__.py`: Package initialization and exports
+
+**7. Final Checklist Before Completing Feature**
 
 - Does the implementation meet all requirements in the PRD?
 - Is the work tracker fully updated and accurate?
