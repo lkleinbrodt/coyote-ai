@@ -45,18 +45,14 @@ def needs_refresh():
 
 
 # Get the quest board
-@sidequest_bp.route("/quests/board", methods=["GET"])
+@sidequest_bp.route("/quests/board", methods=["POST"])
 @jwt_required()
 def get_board():
     try:
         user_id = get_jwt_identity()
         # user can skip a refresh if desired
-        skip_refresh = request.args.get("skipRefresh", "false").lower() == "true"
         service = QuestService(db.session)
-        if skip_refresh:
-            board = service.get_or_create_board(user_id)
-        else:
-            board = service.get_refreshed_board(user_id)
+        board = service.top_up_or_refresh_board(user_id)
         return success_response(board.to_dict())
     except Exception as e:
         logger.error(f"Error retrieving quest board: {str(e)}")

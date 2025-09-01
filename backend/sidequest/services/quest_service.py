@@ -19,7 +19,21 @@ logger = create_logger(__name__)
 
 
 class QuestService:
-    """Service for managing quest interactions and quest board operations"""
+    """Service for managing quest interactions and quest board operations
+
+    Note on quest board refresh:
+
+    We want your quest board to refresh every day at midnight in the user's timezone
+    When we do a refresh, we first clean up all the quests on the board (potential are marked as declined, accepted are marked as failed, and completed are kept, etc)
+    THen we populate the board with new potential quests
+
+    but we also want the option to just simply top up the user's potential quests
+    Say the user didnt like their first 3 recommendations, they want to request new ones
+    THis is different from a "refresh", because we arent clearing their other board data (like their accepted quests, completed quests, etc)
+
+    I'm not fully happy with our current approach, but it's doing the job for now
+
+    """
 
     def __init__(self, db_session: Session):
         self.db = db_session
@@ -102,7 +116,8 @@ class QuestService:
 
     def populate_board(self, user_id: int):
         """Populate the quest board for a user with new quests"""
-        quest_board = self.db.query(QuestBoard).filter_by(user_id=user_id).first()
+        quest_board = self.get_or_create_board(user_id)
+
         if not quest_board:
             quest_board = QuestBoard(user_id=user_id)
             self.db.add(quest_board)
@@ -110,16 +125,34 @@ class QuestService:
             self.db.refresh(quest_board)
 
         profile = self.user_service.get_or_create_user_profile(user_id)
+        # Convert to dict to ensure datetime objects are serialized
         preferences = profile.to_dict()
 
+        # TODO: user custom prompt
+
+        quest_board_quests = quest_board.quests.all()
+        potential_quests = [
+            quest
+            for quest in quest_board_quests
+            if quest.status == QuestStatus.POTENTIAL
+        ]
+
+        n_quests_needed = 3 - len(potential_quests)
+
+        if n_quests_needed <= 0:
+            logger.info(f"No quests needed for user {user_id}, returning")
+            return
+
         quests = self.quest_generation_service.generate_quests(
-            user_id=user_id, preferences=preferences, context={}
+            user_id=user_id,
+            preferences=preferences,
+            context=self.generate_context(user_id),
+            n_quests=n_quests_needed,
         )
 
         quest_objects = []
 
         for quest_data in quests:
-            print(quest_data)
             quest = SideQuest(
                 user_id=user_id,
                 text=quest_data.get("text"),
@@ -136,7 +169,7 @@ class QuestService:
 
         user_profile = self.user_service.get_or_create_user_profile(user_id)
         user_profile.last_quest_generation = datetime.utcnow()
-        quest_board.last_refreshed = datetime.utcnow()
+
         self.db.commit()
 
         logger.info(f"Generated {len(quest_objects)} new quests for user {user_id}")
@@ -147,6 +180,23 @@ class QuestService:
         logger.info(f"Refreshing quest board for user {user_id}")
         self.cleanup_board(user_id)
         self.populate_board(user_id)
+        quest_board = self.get_board(user_id)
+        quest_board.last_refreshed = datetime.utcnow()
+        self.db.commit()
+        return quest_board
+
+    def top_up_or_refresh_board(self, user_id: int):
+        """Top up the quest board for a user or refresh it if it needs to be refreshed"""
+        if self.board_needs_refresh(user_id):
+            logger.info(f"Board needs refresh for user {user_id}, refreshing...")
+            self.refresh_board(user_id)
+        else:
+            logger.info(
+                f"Board does not need refresh for user {user_id}, top up needed"
+            )
+            self.populate_board(user_id)
+
+        return self.get_board(user_id)
 
     def get_board(self, user_id: int) -> QuestBoard:
         """Get the quest board for a user"""
@@ -218,7 +268,6 @@ class QuestService:
     def validate_ownership(self, quest_id: int, user_id: int) -> bool:
         """Validate that a quest belongs to the specified user"""
         quest = self.db.query(SideQuest).filter_by(id=quest_id).first()
-        print(f"Quest: {quest}, user_id: {user_id}")
         if not quest:
             return False
         if str(quest.user_id) != str(user_id):
