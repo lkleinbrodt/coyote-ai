@@ -49,14 +49,14 @@ class TestSideQuestUser:
         user_dict = test_sidequest_user.to_dict()
 
         assert "id" in user_dict
-        assert "user_id" in user_dict
+        assert "userId" in user_dict
         assert "categories" in user_dict
         assert "difficulty" in user_dict
-        assert "max_time" in user_dict
-        assert "notifications_enabled" in user_dict
-        assert "onboarding_completed" in user_dict
-        assert "created_at" in user_dict
-        assert "updated_at" in user_dict
+        assert "maxTime" in user_dict
+        assert "notificationsEnabled" in user_dict
+        assert "onboardingCompleted" in user_dict
+        assert "createdAt" in user_dict
+        assert "updatedAt" in user_dict
 
 
 class TestSideQuest:
@@ -186,13 +186,13 @@ class TestQuestGenerationLog:
         log_dict = test_generation_log.to_dict()
 
         assert "id" in log_dict
-        assert "user_id" in log_dict
-        assert "request_preferences" in log_dict
-        assert "quests_generated" in log_dict
-        assert "model_used" in log_dict
-        assert "fallback_used" in log_dict
-        assert "generation_time_ms" in log_dict
-        assert "created_at" in log_dict
+        assert "userId" in log_dict
+        assert "requestPreferences" in log_dict
+        assert "questsGenerated" in log_dict
+        assert "modelUsed" in log_dict
+        assert "fallbackUsed" in log_dict
+        assert "generationTimeMs" in log_dict
+        assert "createdAt" in log_dict
 
 
 class TestModelRelationships:

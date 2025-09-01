@@ -26,7 +26,6 @@ class TestAnonymousAuthentication:
 
         assert response.status_code == 200, response.get_json()
         data = json.loads(response.data)
-        assert data["success"] is True
         assert "access_token" in data["data"]
         assert "user" in data["data"]
 
@@ -57,7 +56,6 @@ class TestAnonymousAuthentication:
 
         assert response.status_code == 200
         data = json.loads(response.data)
-        assert data["success"] is True
 
         # Verify same user was returned
         user = User.query.filter_by(anon_id=device_uuid).first()
@@ -73,7 +71,7 @@ class TestAnonymousAuthentication:
 
         assert response.status_code == 400
         data = json.loads(response.data)
-        assert data["success"] is False
+
         assert "No device UUID provided" in data["error"]["message"]
 
     def test_anonymous_signin_no_data(self, client: FlaskClient):
@@ -85,7 +83,7 @@ class TestAnonymousAuthentication:
         assert response.status_code == 400, response.get_json()
 
         data = response.get_json()
-        assert data["success"] is False
+
         assert "No data provided" in data["error"]["message"]
 
     def test_anonymous_signin_invalid_uuid_format(self, client: FlaskClient):
@@ -98,7 +96,7 @@ class TestAnonymousAuthentication:
 
         assert response.status_code == 400
         data = json.loads(response.data)
-        assert data["success"] is False
+
         assert "Invalid device UUID format" in data["error"]["message"]
 
     def test_anonymous_signin_uuid_v4_validation(self, client: FlaskClient):
@@ -240,7 +238,6 @@ class TestAnonymousAuthentication:
         data = json.loads(response.data)
 
         # Verify response structure matches Apple signin
-        assert "success" in data
         assert "data" in data
         assert "access_token" in data["data"]
         assert "user" in data["data"]

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
+import pytz
 from sqlalchemy.orm import Session
 
 from backend.extensions import create_logger
@@ -82,3 +83,9 @@ class UserService:
 
         logger.info(f"Marked onboarding completed for user {user_id}")
         return profile
+
+    def get_user_time(self, user_id: int) -> str:
+        """Get the time of day for a user"""
+        profile = self.get_or_create_user_profile(user_id)
+        tz = profile.timezone
+        return datetime.now(pytz.timezone(tz))

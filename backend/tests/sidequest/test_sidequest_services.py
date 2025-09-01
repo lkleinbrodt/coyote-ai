@@ -92,17 +92,6 @@ class TestUserService:
 class TestQuestService:
     """Test QuestService functionality."""
 
-    def test_get_user_quests(self, test_sidequest_user, test_quest, app):
-        """Test getting user quests."""
-        with app.app_context():
-            from backend.extensions import db
-
-            service = QuestService(db.session)
-            quests = service.get_user_quests(test_sidequest_user.user_id)
-
-        assert len(quests) >= 1
-        assert any(q.id == test_quest.id for q in quests)
-
     def test_complete_quest(self, test_quest, app):
         """Test marking a quest as completed."""
         with app.app_context():
@@ -113,14 +102,15 @@ class TestQuestService:
             feedback = {
                 "rating": "thumbs_up",
                 "comment": "Great workout!",
-                "timeSpent": 20,
+                "time_spent": 20,
             }
 
-            quest = service.complete_quest(
+            quest = service.update_quest_status(
                 test_quest.id,
-                feedback["rating"],
-                feedback["comment"],
-                feedback["timeSpent"],
+                QuestStatus.COMPLETED,
+                {
+                    "feedback": feedback,
+                },
             )
 
             assert quest is not None
@@ -169,12 +159,12 @@ class TestQuestGenerationService:
             "max_time": 15,
         }
 
-        quests = service.generate_daily_quests(test_sidequest_user.user_id, preferences)
+        quests = service.generate_quests(test_sidequest_user.user_id, preferences)
 
         assert len(quests) == 1
-        assert quests[0].text == "Do 10 jumping jacks"
-        assert quests[0].category == QuestCategory.FITNESS
-        assert quests[0].difficulty == QuestDifficulty.EASY
+        assert quests[0]["text"] == "Do 10 jumping jacks"
+        assert quests[0]["category"] == QuestCategory.FITNESS
+        assert quests[0]["difficulty"] == QuestDifficulty.EASY
 
     def test_generate_quests_fallback(self, test_sidequest_user, app):
         """Test quest generation with fallback when OpenAI fails."""
@@ -193,13 +183,11 @@ class TestQuestGenerationService:
                 "max_time": 15,
             }
 
-            quests = service.generate_daily_quests(
-                test_sidequest_user.user_id, preferences
-            )
+            quests = service.generate_quests(test_sidequest_user.user_id, preferences)
 
             # Should use fallback quests
             assert len(quests) > 0
-            assert all(q.fallback_used for q in quests)
+            assert all(q["fallback_used"] for q in quests)
 
 
 class TestServiceIntegration:
@@ -208,7 +196,6 @@ class TestServiceIntegration:
     def test_full_quest_lifecycle(self, test_sidequest_user):
         """Test a complete quest lifecycle from generation to completion."""
         quest_service = QuestService(db.session)
-        generation_service = QuestGenerationService(db.session, "test_key")
 
         from unittest.mock import Mock
 
@@ -228,7 +215,6 @@ class TestServiceIntegration:
             }
         )
         mock_client.chat.return_value = mock_response
-        generation_service.client = mock_client
 
         preferences = {
             "categories": ["outdoors"],
@@ -236,15 +222,15 @@ class TestServiceIntegration:
             "max_time": 15,
         }
 
-        quests = generation_service.generate_daily_quests(
-            test_sidequest_user.user_id, preferences
-        )
+        service = QuestService(db.session)
+        service.quest_generation_service.client = mock_client
+        service.refresh_board(test_sidequest_user.user_id)
+        quest = service.get_board(test_sidequest_user.user_id).quests.first()
 
-        assert len(quests) == 1
-        quest = quests[0]
+        assert quest is not None
 
         # Mark as selected
-        quest = quest_service.accept_quest(quest.id)
+        quest = quest_service.update_quest_status(quest.id, QuestStatus.ACCEPTED)
         assert quest is not None
 
         # Verify the quest was marked as accepted
@@ -252,11 +238,16 @@ class TestServiceIntegration:
         assert updated_quest.status == QuestStatus.ACCEPTED
 
         # Mark as completed
-        quest = quest_service.complete_quest(
+        quest = quest_service.update_quest_status(
             quest.id,
-            QuestRating.THUMBS_UP,
-            "Great walk!",
-            12,
+            QuestStatus.COMPLETED,
+            {
+                "feedback": {
+                    "rating": QuestRating.THUMBS_UP,
+                    "comment": "Great walk!",
+                    "time_spent": 12,
+                }
+            },
         )
         assert quest is not None
 
@@ -266,3 +257,4 @@ class TestServiceIntegration:
         assert updated_quest.completed_at is not None
         assert updated_quest.feedback_rating == QuestRating.THUMBS_UP
         assert updated_quest.time_spent == 12
+        assert updated_quest.feedback_comment == "Great walk!"

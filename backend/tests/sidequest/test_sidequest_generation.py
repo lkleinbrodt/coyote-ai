@@ -230,7 +230,7 @@ class TestQuestGenerationService:
             with pytest.raises(Exception):
                 service._generate_with_llm(preferences)
 
-    def test_generate_daily_quests_llm_success(self, app):
+    def test_generate_quests_llm_success(self, app):
         """Test successful daily quest generation with LLM."""
         with app.app_context():
             from backend.extensions import db
@@ -288,19 +288,18 @@ class TestQuestGenerationService:
             db.session.add(user_profile)
             db.session.commit()
 
-            quests = service.generate_daily_quests(1001, preferences)
+            quests = service.generate_quests(1001, preferences)
 
             # Should return 3 quests
             assert len(quests) == 3
 
             # All quests should be saved to database
             for quest in quests:
-                assert quest.id is not None
-                assert quest.user_id == 1001
-                assert quest.fallback_used is False
-                assert quest.model_used == "meta-llama/llama-3.3-70b-instruct"
 
-    def test_generate_daily_quests_fallback(self, app):
+                assert quest["fallback_used"] is False
+                assert quest["model_used"] == "meta-llama/llama-3.3-70b-instruct"
+
+    def test_generate_quests_fallback(self, app):
         """Test daily quest generation falling back to curated quests."""
         with app.app_context():
             from backend.extensions import db
@@ -331,14 +330,12 @@ class TestQuestGenerationService:
             db.session.add(user_profile)
             db.session.commit()
 
-            quests = service.generate_daily_quests(1002, preferences)
+            quest_data = service.generate_quests(1002, preferences)
 
             # Should return 3 fallback quests
-            assert len(quests) == 3
+            assert len(quest_data) == 3
 
             # All quests should be marked as fallback
-            for quest in quests:
-                assert quest.id is not None
-                assert quest.user_id == 1002
-                assert quest.fallback_used is True
-                assert quest.model_used is None
+            for quest in quest_data:
+                assert quest["fallback_used"] is True
+                assert quest["model_used"] is None

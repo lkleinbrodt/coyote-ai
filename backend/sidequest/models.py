@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 
 from sqlalchemy.dialects.postgresql import JSON
+import humps
 
 from backend.extensions import db
 
@@ -112,7 +113,7 @@ class SideQuestUser(db.Model):
             self.onboarding_completed = False
 
     def to_dict(self):
-        return {
+        quest_dict = {
             "id": self.id,
             "user_id": self.user_id,
             "categories": self.categories,
@@ -137,6 +138,8 @@ class SideQuestUser(db.Model):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
+        # Convert all keys to camelCase for the API response
+        return humps.camelize(quest_dict)
 
 
 class SideQuest(db.Model):
@@ -198,29 +201,35 @@ class SideQuest(db.Model):
             )
 
     def to_dict(self):
-        return {
+        quest_dict = {
             "id": str(self.id),  # Convert to string for frontend compatibility
+            "user_id": self.user_id,
+            "quest_board_id": self.quest_board_id,
             "text": self.text,
             "category": self.category.value if self.category else None,
-            "estimatedTime": self.estimated_time,
+            "estimated_time": self.estimated_time,
             "difficulty": self.difficulty.value if self.difficulty else None,
             "tags": self.tags or [],
             "status": self.status.value if self.status else None,
-            "completedAt": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": (
+                self.completed_at.isoformat() if self.completed_at else None
+            ),
             "feedback": (
                 {
                     "rating": (
                         self.feedback_rating.value if self.feedback_rating else None
                     ),
                     "comment": self.feedback_comment,
-                    "timeSpent": self.time_spent,
+                    "time_spent": self.time_spent,
                 }
                 if self.feedback_rating or self.feedback_comment
                 else None
             ),
-            "createdAt": self.created_at.isoformat(),
-            "expiresAt": self.expires_at.isoformat(),
+            "created_at": self.created_at.isoformat(),
+            "expires_at": self.expires_at.isoformat(),
         }
+        # Convert all keys to camelCase for the API response
+        return humps.camelize(quest_dict)
 
     def is_completed(self):
         """Check if quest is completed"""
@@ -278,6 +287,9 @@ class SideQuest(db.Model):
         elif self.status == QuestStatus.ACCEPTED:
             self.fail()
 
+    def __repr__(self):
+        return f"<SideQuest {self.id}: {self.to_dict()}>"
+
 
 class QuestGenerationLog(db.Model):
     """Log of quest generation requests for analytics"""
@@ -316,7 +328,7 @@ class QuestGenerationLog(db.Model):
             self.fallback_used = False
 
     def to_dict(self):
-        return {
+        log_dict = {
             "id": self.id,
             "user_id": self.user_id,
             "request_preferences": self.request_preferences,
@@ -328,6 +340,8 @@ class QuestGenerationLog(db.Model):
             "tokens_used": self.tokens_used,
             "created_at": self.created_at.isoformat(),
         }
+        # Convert all keys to camelCase for the API response
+        return humps.camelize(log_dict)
 
 
 class QuestBoard(db.Model):
@@ -363,3 +377,16 @@ class QuestBoard(db.Model):
             self.quests.remove(quest)
         self.updated_at = datetime.utcnow()
         db.session.commit()
+
+    def to_dict(self):
+        board_dict = {
+            "id": self.id,
+            "user_id": self.user_id,
+            "last_refreshed": self.last_refreshed.isoformat(),
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "quests": [quest.to_dict() for quest in self.quests],
+        }
+        # Convert all keys to camelCase for the API response
+        return humps.camelize(board_dict)

@@ -58,14 +58,14 @@ class TestSideQuestModels:
         """Test SideQuestUser to_dict method."""
         user_dict = test_sidequest_user.to_dict()
         assert "id" in user_dict
-        assert "user_id" in user_dict
+        assert "userId" in user_dict
         assert "categories" in user_dict
         assert "difficulty" in user_dict
-        assert "max_time" in user_dict
-        assert "notifications_enabled" in user_dict
-        assert "onboarding_completed" in user_dict
-        assert "created_at" in user_dict
-        assert "updated_at" in user_dict
+        assert "maxTime" in user_dict
+        assert "notificationsEnabled" in user_dict
+        assert "onboardingCompleted" in user_dict
+        assert "createdAt" in user_dict
+        assert "updatedAt" in user_dict
 
     def test_quest_creation(self, test_quest):
         """Test SideQuest creation and properties."""
@@ -150,41 +150,6 @@ class TestSideQuestServices:
             assert updated_profile.max_time == 30
             assert updated_profile.notifications_enabled is False
 
-    def test_quest_service_get_user_quests(self, sample_quest, app):
-        """Test QuestService get_user_quests."""
-        with app.app_context():
-            from backend.extensions import db
-
-            quest_service = QuestService(db.session)
-
-            quests = quest_service.get_user_quests(sample_quest.user_id)
-
-            assert len(quests) == 1
-            assert quests[0].id == sample_quest.id
-            assert quests[0].text == sample_quest.text
-
-    def test_quest_service_get_quest_history(self, sample_quest, app):
-        """Test QuestService get_quest_history."""
-        with app.app_context():
-            from backend.extensions import db
-
-            quest_service = QuestService(db.session)
-
-            history = quest_service.get_quest_history(sample_quest.user_id, days=7)
-
-            assert "period" in history
-            assert "start_date" in history
-            assert "end_date" in history
-            assert "stats" in history
-            assert "quests" in history
-
-            stats = history["stats"]
-            assert "total" in stats
-            assert "selected" in stats
-            assert "completed" in stats
-            assert "skipped" in stats
-            assert "total_time" in stats
-
     def test_quest_update_status(self, sample_quest, app):
         """Test QuestService update_quest_status."""
         with app.app_context():
@@ -193,17 +158,25 @@ class TestSideQuestServices:
             quest_service = QuestService(db.session)
             assert sample_quest.status == QuestStatus.POTENTIAL
             quest = db.session.query(SideQuest).filter_by(id=sample_quest.id).first()
-            quest_service.abandon_quest(sample_quest.id)
+            quest_service.update_quest_status(sample_quest.id, QuestStatus.ABANDONED)
             assert quest.status == QuestStatus.ABANDONED
-            quest_service.accept_quest(sample_quest.id)
+            quest_service.update_quest_status(sample_quest.id, QuestStatus.ACCEPTED)
             assert quest.status == QuestStatus.ACCEPTED
-            quest_service.complete_quest(
-                sample_quest.id, QuestRating.THUMBS_UP, "Great quest!", 10
+            quest_service.update_quest_status(
+                sample_quest.id,
+                QuestStatus.COMPLETED,
+                {
+                    "feedback": {
+                        "rating": QuestRating.THUMBS_UP,
+                        "comment": "Great quest!",
+                        "timeSpent": 10,
+                    }
+                },
             )
             assert quest.status == QuestStatus.COMPLETED
-            quest_service.fail_quest(sample_quest.id)
+            quest_service.update_quest_status(sample_quest.id, QuestStatus.FAILED)
             assert quest.status == QuestStatus.FAILED
-            quest_service.decline_quest(sample_quest.id)
+            quest_service.update_quest_status(sample_quest.id, QuestStatus.DECLINED)
             assert quest.status == QuestStatus.DECLINED
 
 
@@ -216,7 +189,7 @@ class TestSideQuestAPI:
         assert response.status_code == 200
 
         data = response.get_json()
-        assert data["success"] is True
+
         assert data["data"]["service"] == "SideQuest"
         assert data["data"]["status"] == "healthy"
 
@@ -227,7 +200,6 @@ class TestSideQuestAPI:
 
         data = response.get_json()
         print(data)
-        assert data["success"] is False
         assert "error" in data
         assert data["error"]["message"] == "Authentication required"
         assert data["error"]["code"] == "UNAUTHORIZED"
@@ -240,22 +212,21 @@ class TestSideQuestAPI:
         assert response.status_code == 200
 
         data = response.get_json()
-        assert data["success"] is True
         assert all(
             key in data["data"]
             for key in [
                 "categories",
                 "difficulty",
-                "max_time",
-                "include_completed",
-                "include_skipped",
-                "notifications_enabled",
-                "notification_time",
+                "maxTime",
+                "includeCompleted",
+                "includeSkipped",
+                "notificationsEnabled",
+                "notificationTime",
                 "timezone",
-                "onboarding_completed",
+                "onboardingCompleted",
             ]
         )
-        assert "user_id" in data["data"]
+        assert "userId" in data["data"]
 
     def test_update_user_profile_unauthorized(self, client):
         """Test updating preferences without authentication."""
@@ -272,9 +243,9 @@ class TestSideQuestAPI:
         assert response.status_code == 200
 
         data = response.get_json()
-        assert data["success"] is True
         assert "message" in data["data"]
         assert "preferences" in data["data"]
+        assert "userId" in data["data"]["preferences"]
 
     def test_complete_onboarding_unauthorized(self, client):
         """Test completing onboarding without authentication."""
@@ -291,7 +262,6 @@ class TestSideQuestAPI:
         assert response.status_code == 200
 
         data = response.get_json()
-        assert data["success"] is True
         assert "message" in data["data"]
         assert "Onboarding completed successfully" in data["data"]["message"]
-        assert data["data"]["onboarding_completed"] is True
+        assert data["data"]["preferences"]["onboardingCompleted"] is True

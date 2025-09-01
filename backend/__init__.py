@@ -110,6 +110,67 @@ def create_app(config_class: Config):
     app.register_blueprint(base_bp)
     app.register_blueprint(api_bp)
 
+    # Global error handlers for consistent error responses
+    @app.errorhandler(404)
+    def not_found(error):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "The requested resource was not found",
+                        "code": "NOT_FOUND",
+                    },
+                }
+            ),
+            404,
+        )
+
+    @app.errorhandler(405)
+    def method_not_allowed(error):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "Method not allowed for this endpoint",
+                        "code": "METHOD_NOT_ALLOWED",
+                    },
+                }
+            ),
+            405,
+        )
+
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "An internal server error occurred",
+                        "code": "INTERNAL_SERVER_ERROR",
+                    },
+                }
+            ),
+            500,
+        )
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(error):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "An unexpected error occurred",
+                        "code": "UNEXPECTED_ERROR",
+                    },
+                }
+            ),
+            500,
+        )
+
     if not app.debug:
         mail_handler = SMTPHandler(
             mailhost=(app.config["MAIL_SERVER"], app.config["MAIL_PORT"]),
