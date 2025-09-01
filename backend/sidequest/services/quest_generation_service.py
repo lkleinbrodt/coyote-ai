@@ -2,6 +2,7 @@ import json
 import random
 import time
 from typing import Any, Dict, List, Optional
+from datetime import datetime
 
 from openai import OpenAI
 from sqlalchemy.orm import Session
@@ -14,9 +15,9 @@ from backend.sidequest.models import (
     QuestDifficulty,
     QuestGenerationLog,
 )
+import logging
 
-
-logger = create_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class QuestGenerationService:
@@ -34,6 +35,20 @@ class QuestGenerationService:
 
         # Fallback quest templates for when LLM is unavailable
         self.fallback_quests = fallback_quests
+
+    def _serialize_datetime_objects(self, data: Any) -> Any:
+        """Recursively serialize datetime objects to ISO format strings"""
+        if isinstance(data, datetime):
+            return data.isoformat()
+        elif isinstance(data, dict):
+            return {
+                key: self._serialize_datetime_objects(value)
+                for key, value in data.items()
+            }
+        elif isinstance(data, list):
+            return [self._serialize_datetime_objects(item) for item in data]
+        else:
+            return data
 
     def generate_quests(
         self,
@@ -80,10 +95,17 @@ class QuestGenerationService:
             quest_data.append(quest)
 
         generation_time_ms = int((time.time() - start_time) * 1000)
+
+        # Ensure datetime objects are serialized before storing in JSON columns
+        serialized_preferences = self._serialize_datetime_objects(preferences)
+        serialized_context = (
+            self._serialize_datetime_objects(context) if context else None
+        )
+
         log_entry = QuestGenerationLog(
             user_id=user_id,
-            request_preferences=preferences,
-            context_data=context,
+            request_preferences=serialized_preferences,
+            context_data=serialized_context,
             quests_generated=len(quest_data),
             model_used=model_used,
             fallback_used=fallback_used,
@@ -91,7 +113,6 @@ class QuestGenerationService:
             tokens_used=tokens_used,
         )
         self.db.add(log_entry)
-
         return quest_data
 
     def _generate_with_llm(
@@ -127,7 +148,6 @@ class QuestGenerationService:
             for quest in quests_data.get("quests", []):
                 if self._validate_quest_data(quest):
                     quests.append(quest)
-
             return quests[:n_quests]  # Ensure we only return n_quests quests
 
         except Exception as e:
@@ -147,39 +167,95 @@ class QuestGenerationService:
 
         context_str = ""
         if context:
+            context = self._serialize_datetime_objects(context)
             context_str = f"\nContext: {json.dumps(context, indent=2)}"
-
-        return f"""Generate {n_quests} personalized daily quests for SideQuest based on these preferences:
+        user_custom_prompt = ""
+        return f"""
+You are SideQuest’s quest designer. Generate {n_quests} personalized daily quests that feel like **meaningful side adventures** — concrete, specific, and effortful — bringing novelty, reflection, or discovery into the user’s day. Never output chores or filler.
 
 User Preferences:
+
 - Categories: {', '.join(categories)}
 - Difficulty: {difficulty}
 - Maximum time: {max_time} minutes
 
+{user_custom_prompt}
+
 {context_str}
 
-Requirements:
-1. Each quest should be achievable within {max_time} minutes
-2. Match the user's preferred difficulty level
-3. Use categories from their preferences, do not make up your own categories
-4. Make quests fun, creative, and engaging
-5. Include realistic time estimates
-6. Add relevant tags for categorization
+## Design Guide
 
-Return a JSON object with this structure:
+### Core Principles
+
+- **Concrete & specific**: no ambiguity; directly executable.
+- **Memorable effort**: feels like a mini-adventure/test.
+- **Structured reflection**: include records, constraints, or outputs.
+- **Exploration & novelty**: new places, sky, culture.
+- **Focused learning**: targeted, speak/repeat/record.
+- **Guided creativity**: provide constraints, not freeform.
+- **Assignment over choice**: model decides specifics.
+
+### Avoid
+
+- Vague/shallow (“notice the air”).
+- Trivial chores (“wash 5 dishes”).
+- Open-ended choice (“practice a skill of your choice”).
+- Contrived roleplay (“invent a superhero name”).
+- Fitness busywork (“10 lunges in hallway”).
+- Low-impact media (“listen to a random song”).
+- Sky prompts without action (“notice the moon”).
+
+### Anti-Mode-Collapse Rules
+
+1. **Mix of time scales per batch**
+   - Micro (1–5 min): ~30%
+   - Medium (10–30 min): ~50%
+   - Ambitious (1+ hr / multi-step): ~20% (`"ambitious": true`)  
+     Ambitious quests may exceed {max_time}.
+2. **Category coverage**  
+   Cover most of: fitness, social, mindfulness, chores (quest-framed), hobbies, outdoors, learning, creativity.  
+   Do not over-index on fitness/micro-mindfulness.
+3. **Boundary-pushing quota**  
+   ≥20% should feel unusual, adventurous, or experimental.
+4. **Quest chains**  
+   Occasionally create 2–3 step arcs across the day (morning → afternoon → evening).
+5. **External anchors/randomness**  
+   Tie to date, weather, dice rolls, holidays, or local context.
+6. **Assignment over choice**  
+   Always assign specifics.
+7. **No repeated skeletons**  
+   Avoid duplicate structures in a batch.
+
+### JSON Output Format
+
+Return a JSON object with exactly this structure:
+
 {{
   "quests": [
     {{
       "text": "Quest description",
-      "category": "one_of_user_categories",
+      "category": "fitness|social|mindfulness|chores|hobbies|outdoors|learning|creativity",
       "estimated_time": "X-Y minutes",
       "difficulty": "easy|medium|hard",
+      "ambitious": true|false,
       "tags": ["tag1", "tag2", "tag3"]
     }}
-  ]
+]
 }}
 
-Generate quests that will bring joy and novelty to the user's day!"""
+### Additional Instructions
+
+- Always respect the user’s selected categories; never invent new ones.
+- Match difficulty to {difficulty}.
+- Time estimates must be realistic.
+- Each quest should be fun, creative, and engaging.
+- Ensure variety, ambition, and novelty per the above rules.
+- Each quest should be achievable within {max_time} minutes
+- Match the user's preferred difficulty level
+- Add relevant tags for categorization
+
+Generate quests now.
+"""
 
     def _validate_quest_data(self, quest: Dict[str, Any]) -> bool:
         """Validate quest data from LLM response"""

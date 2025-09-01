@@ -1,14 +1,21 @@
 fallback_quests = {
     "fitness": [
         {
-            "text": "Do 10 jumping jacks and 5 push-ups",
+            "text": "Do 100 push-ups throughout the day",
             "category": "fitness",
-            "estimated_time": "3-5 minutes",
+            "estimated_time": "20 minutes",
+            "difficulty": "hard",
+            "tags": ["exercise", "energy", "fitness"],
+        },
+        {
+            "text": "Do 50 jumping jacks and 25 push-ups",
+            "category": "fitness",
+            "estimated_time": "10 minutes",
             "difficulty": "easy",
             "tags": ["exercise", "quick", "energy"],
         },
         {
-            "text": "Take a 10-minute walk around your neighborhood",
+            "text": "Take a 10-minute walk outside without your phone.",
             "category": "fitness",
             "estimated_time": "10 minutes",
             "difficulty": "easy",
