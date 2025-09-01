@@ -185,8 +185,9 @@ class QuestGenerationService:
         preferences: Dict[str, Any],
         context: Optional[Dict[str, Any]] = None,
         add_to_board: bool = True,
+        n_quests: int = 3,
     ) -> List[SideQuest]:
-        """Generate 3 personalized daily quests for a user"""
+        """Generate n_quests personalized daily quests for a user"""
         start_time = time.time()
         fallback_used = False
         model_used = None
@@ -194,7 +195,7 @@ class QuestGenerationService:
 
         try:
             # Try LLM generation first
-            quests = self._generate_with_llm(preferences, context)
+            quests = self._generate_with_llm(preferences, context, n_quests)
             model_used = self.model
             fallback_used = False
 
@@ -210,7 +211,7 @@ class QuestGenerationService:
                 f"LLM generation failed for user {user_id}: {str(e)}. Using fallback."
             )
             # Fall back to curated quests
-            quests = self._generate_fallback_quests(preferences)
+            quests = self._generate_fallback_quests(preferences, n_quests)
             fallback_used = True
             model_used = None
 
@@ -272,10 +273,13 @@ class QuestGenerationService:
         return quest_objects
 
     def _generate_with_llm(
-        self, preferences: Dict[str, Any], context: Optional[Dict[str, Any]] = None
+        self,
+        preferences: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+        n_quests: int = 3,
     ) -> List[Dict[str, Any]]:
         """Generate quests using OpenAI API"""
-        prompt = self._build_quest_generation_prompt(preferences, context)
+        prompt = self._build_quest_generation_prompt(preferences, context, n_quests)
 
         try:
             content = self.client.chat(
@@ -302,14 +306,17 @@ class QuestGenerationService:
                 if self._validate_quest_data(quest):
                     quests.append(quest)
 
-            return quests[:3]  # Ensure we only return 3 quests
+            return quests[:n_quests]  # Ensure we only return n_quests quests
 
         except Exception as e:
             logger.error(f"OpenAI API call failed: {str(e)}")
             raise
 
     def _build_quest_generation_prompt(
-        self, preferences: Dict[str, Any], context: Optional[Dict[str, Any]] = None
+        self,
+        preferences: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+        n_quests: int = 3,
     ) -> str:
         """Build the prompt for quest generation"""
         categories = preferences.get("categories", [])
@@ -320,7 +327,7 @@ class QuestGenerationService:
         if context:
             context_str = f"\nContext: {json.dumps(context, indent=2)}"
 
-        return f"""Generate 3 personalized daily quests for SideQuest based on these preferences:
+        return f"""Generate {n_quests} personalized daily quests for SideQuest based on these preferences:
 
 User Preferences:
 - Categories: {', '.join(categories)}
@@ -386,7 +393,7 @@ Generate quests that will bring joy and novelty to the user's day!"""
         return True
 
     def _generate_fallback_quests(
-        self, preferences: Dict[str, Any]
+        self, preferences: Dict[str, Any], n_quests: int = 3
     ) -> List[Dict[str, Any]]:
         """Generate quests using fallback system when LLM is unavailable"""
         categories = preferences.get("categories", list(self.fallback_quests.keys()))
@@ -408,7 +415,7 @@ Generate quests that will bring joy and novelty to the user's day!"""
                 available_quests.extend(filtered_quests)
 
         # If we don't have enough quests, add some from other categories
-        if len(available_quests) < 3:
+        if len(available_quests) < n_quests:
             all_quests = []
             for quests in self.fallback_quests.values():
                 all_quests.extend(quests)
@@ -421,11 +428,13 @@ Generate quests that will bring joy and novelty to the user's day!"""
                     and quest not in available_quests
                 ):
                     available_quests.append(quest)
-                    if len(available_quests) >= 3:
+                    if len(available_quests) >= n_quests:
                         break
 
-        # Randomly select 3 quests
-        selected_quests = random.sample(available_quests, min(3, len(available_quests)))
+        # Randomly select n_quests quests
+        selected_quests = random.sample(
+            available_quests, min(n_quests, len(available_quests))
+        )
         logger.info(f"Generated {len(selected_quests)} fallback quests")
 
         return selected_quests

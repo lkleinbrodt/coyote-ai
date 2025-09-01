@@ -10,6 +10,8 @@ from backend.extensions import db, jwt
 from backend.models import User
 from datetime import datetime, timedelta
 from flask_jwt_extended import create_access_token
+from backend.sidequest.services import QuestService
+from backend.sidequest.models import QuestStatus
 
 
 @pytest.fixture
@@ -90,3 +92,53 @@ def quest_preferences():
         "max_time": 15,
         "notifications_enabled": True,
     }
+
+
+@pytest.fixture
+def test_sidequest_user_with_board(app, test_user):
+    """Create a test SideQuest user with preferences."""
+    sidequest_user = SideQuestUser(
+        user_id=test_user.id,
+        categories=["fitness", "mindfulness"],
+        difficulty=QuestDifficulty.MEDIUM,
+        max_time=15,
+        notifications_enabled=True,
+        onboarding_completed=True,
+    )
+    db.session.add(sidequest_user)
+    db.session.commit()
+
+    service = QuestService(db.session)
+
+    quest_texts = [
+        "Do 10 push-ups",
+        "Take a 5-minute meditation break",
+        "Call a friend you haven't talked to in a while",
+        "Clean your desk for 10 minutes",
+    ]
+    quests = []
+    for i in range(3):
+        import random
+
+        category = random.choice(list(QuestCategory))
+        difficulty = random.choice(list(QuestDifficulty))
+
+        quest_board = service.get_or_create_board(sidequest_user.user_id)
+
+        quest = SideQuest(
+            user_id=sidequest_user.user_id,
+            text=random.choice(quest_texts),
+            category=category,
+            estimated_time=f"{random.randint(5, 30)} minutes",
+            difficulty=difficulty,
+            tags=[category.value, difficulty.value],
+            expires_at=datetime.now() + timedelta(days=random.randint(1, 7)),
+            status=random.choice(list(QuestStatus)),
+            quest_board_id=quest_board.id,
+        )
+        db.session.add(quest)
+        quests.append(quest)
+
+    db.session.commit()
+
+    return sidequest_user

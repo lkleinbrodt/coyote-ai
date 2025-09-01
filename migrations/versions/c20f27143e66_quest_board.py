@@ -53,6 +53,7 @@ def upgrade():
                     name="queststatus",
                 ),
                 nullable=False,
+                server_default="POTENTIAL",
             )
         )
         batch_op.create_foreign_key(

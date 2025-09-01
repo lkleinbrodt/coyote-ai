@@ -6,7 +6,7 @@ from backend.sidequest.models import (
     QuestGenerationLog,
     QuestCategory,
     QuestDifficulty,
-    QuestRating,
+    QuestStatus,
 )
 
 
@@ -79,9 +79,7 @@ class TestSideQuest:
         assert quest.estimated_time == "5-10 minutes"
         assert quest.difficulty == QuestDifficulty.EASY
         assert quest.tags == ["exercise", "strength"]
-        assert quest.selected is False
-        assert quest.completed is False
-        assert quest.skipped is False
+        assert quest.status == QuestStatus.POTENTIAL
 
     def test_quest_expiration_default(self, test_sidequest_user):
         """Test quest expiration is set to end of day by default."""
@@ -114,35 +112,6 @@ class TestSideQuest:
         )
 
         assert quest.expires_at == custom_expiry
-
-    def test_quest_mark_completed(self, test_quest):
-        """Test marking a quest as completed."""
-        feedback_rating = QuestRating.THUMBS_UP
-        feedback_comment = "Great workout!"
-        time_spent = 15
-
-        test_quest.mark_completed(feedback_rating, feedback_comment, time_spent)
-
-        assert test_quest.completed is True
-        assert test_quest.completed_at is not None
-        assert test_quest.feedback_rating == feedback_rating
-        assert test_quest.feedback_comment == feedback_comment
-        assert test_quest.time_spent == time_spent
-        assert test_quest.updated_at is not None
-
-    def test_quest_mark_skipped(self, test_quest):
-        """Test marking a quest as skipped."""
-        test_quest.mark_skipped()
-
-        assert test_quest.skipped is True
-        assert test_quest.updated_at is not None
-
-    def test_quest_mark_selected(self, test_quest):
-        """Test marking a quest as selected."""
-        test_quest.mark_selected()
-
-        assert test_quest.selected is True
-        assert test_quest.updated_at is not None
 
     def test_quest_is_expired(self, test_sidequest_user):
         """Test quest expiration check."""
@@ -180,9 +149,9 @@ class TestSideQuest:
         assert "estimatedTime" in quest_dict
         assert "difficulty" in quest_dict
         assert "tags" in quest_dict
-        assert "selected" in quest_dict
-        assert "completed" in quest_dict
-        assert "skipped" in quest_dict
+        assert "status" in quest_dict
+        assert "completedAt" in quest_dict
+        assert "feedback" in quest_dict
         assert "createdAt" in quest_dict
         assert "expiresAt" in quest_dict
 

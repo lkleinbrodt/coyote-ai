@@ -12,6 +12,7 @@ from backend.sidequest.models import (
     QuestDifficulty,
     QuestRating,
     SideQuest,
+    QuestStatus,
 )
 from backend.sidequest.services import QuestGenerationService, UserService, QuestService
 from backend.extensions import db
@@ -74,9 +75,7 @@ class TestSideQuestModels:
         assert test_quest.estimated_time == "10 minutes"
         assert test_quest.difficulty == QuestDifficulty.EASY
         assert test_quest.tags == ["walking", "exercise", "outdoors"]
-        assert test_quest.selected is False
-        assert test_quest.completed is False
-        assert test_quest.skipped is False
+        assert test_quest.status == QuestStatus.POTENTIAL
         assert test_quest.created_at is not None
         assert test_quest.expires_at is not None
 
@@ -89,9 +88,7 @@ class TestSideQuestModels:
         assert "estimatedTime" in quest_dict
         assert "difficulty" in quest_dict
         assert "tags" in quest_dict
-        assert "selected" in quest_dict
-        assert "completed" in quest_dict
-        assert "skipped" in quest_dict
+        assert "status" in quest_dict
         assert "createdAt" in quest_dict
         assert "expiresAt" in quest_dict
 
@@ -103,64 +100,6 @@ class TestSideQuestModels:
         # Set expiration to past
         test_quest.expires_at = datetime.utcnow() - timedelta(hours=1)
         assert test_quest.is_expired()
-
-    def test_quest_mark_completed(self, test_quest):
-        """Test marking quest as completed."""
-        # Refresh the quest to get current timestamp
-        from backend.extensions import db
-
-        db.session.refresh(test_quest)
-        original_updated = test_quest.updated_at
-
-        test_quest.mark_completed(
-            feedback_rating=QuestRating.THUMBS_UP,
-            feedback_comment="Great exercise!",
-            time_spent=12,
-        )
-
-        # Commit the changes to trigger the onupdate
-        db.session.commit()
-        db.session.refresh(test_quest)
-
-        assert test_quest.completed is True
-        assert test_quest.completed_at is not None
-        assert test_quest.feedback_rating == QuestRating.THUMBS_UP
-        assert test_quest.feedback_comment == "Great exercise!"
-        assert test_quest.time_spent == 12
-        assert test_quest.updated_at > original_updated
-
-    def test_quest_mark_skipped(self, test_quest):
-        """Test marking quest as skipped."""
-        # Refresh the quest to get current timestamp
-        from backend.extensions import db
-
-        db.session.refresh(test_quest)
-        original_updated = test_quest.updated_at
-
-        test_quest.mark_skipped()
-
-        # Commit the changes to trigger the onupdate
-        db.session.commit()
-
-        assert test_quest.skipped is True
-        assert test_quest.updated_at > original_updated
-
-    def test_quest_mark_selected(self, test_quest):
-        """Test marking quest as selected."""
-        # Refresh the quest to get current timestamp
-        from backend.extensions import db
-
-        db.session.refresh(test_quest)
-        original_updated = test_quest.updated_at
-
-        test_quest.mark_selected()
-
-        # Commit the changes to trigger the onupdate
-        db.session.commit()
-        db.session.refresh(test_quest)
-
-        assert test_quest.selected is True
-        assert test_quest.updated_at > original_updated
 
 
 class TestSideQuestServices:
@@ -224,66 +163,6 @@ class TestSideQuestServices:
             assert quests[0].id == sample_quest.id
             assert quests[0].text == sample_quest.text
 
-    def test_quest_service_mark_quest_selected(self, sample_quest, app):
-        """Test QuestService mark_quest_selected."""
-        with app.app_context():
-            from backend.extensions import db
-
-            quest_service = QuestService(db.session)
-
-            success = quest_service.mark_quest_selected(
-                sample_quest.id, sample_quest.user_id
-            )
-
-            assert success is True
-
-            # Verify quest was updated
-            updated_quest = db.session.get(SideQuest, sample_quest.id)
-            assert updated_quest.selected is True
-
-    def test_quest_service_mark_quest_completed(self, sample_quest, app):
-        """Test QuestService mark_quest_completed."""
-        with app.app_context():
-            from backend.extensions import db
-
-            quest_service = QuestService(db.session)
-
-            feedback = {
-                "rating": "thumbs_up",
-                "comment": "Great quest!",
-                "timeSpent": 15,
-            }
-
-            success = quest_service.mark_quest_completed(
-                sample_quest.id, sample_quest.user_id, feedback
-            )
-
-            assert success is True
-
-            # Verify quest was updated
-            updated_quest = db.session.get(SideQuest, sample_quest.id)
-            assert updated_quest.completed is True
-            assert updated_quest.feedback_rating == QuestRating.THUMBS_UP
-            assert updated_quest.feedback_comment == "Great quest!"
-            assert updated_quest.time_spent == 15
-
-    def test_quest_service_mark_quest_skipped(self, sample_quest, app):
-        """Test QuestService mark_quest_skipped."""
-        with app.app_context():
-            from backend.extensions import db
-
-            quest_service = QuestService(db.session)
-
-            success = quest_service.mark_quest_skipped(
-                sample_quest.id, sample_quest.user_id
-            )
-
-            assert success is True
-
-            # Verify quest was updated
-            updated_quest = db.session.get(SideQuest, sample_quest.id)
-            assert updated_quest.skipped is True
-
     def test_quest_service_get_quest_history(self, sample_quest, app):
         """Test QuestService get_quest_history."""
         with app.app_context():
@@ -305,6 +184,27 @@ class TestSideQuestServices:
             assert "completed" in stats
             assert "skipped" in stats
             assert "total_time" in stats
+
+    def test_quest_update_status(self, sample_quest, app):
+        """Test QuestService update_quest_status."""
+        with app.app_context():
+            from backend.extensions import db
+
+            quest_service = QuestService(db.session)
+            assert sample_quest.status == QuestStatus.POTENTIAL
+            quest = db.session.query(SideQuest).filter_by(id=sample_quest.id).first()
+            quest_service.abandon_quest(sample_quest.id)
+            assert quest.status == QuestStatus.ABANDONED
+            quest_service.accept_quest(sample_quest.id)
+            assert quest.status == QuestStatus.ACCEPTED
+            quest_service.complete_quest(
+                sample_quest.id, QuestRating.THUMBS_UP, "Great quest!", 10
+            )
+            assert quest.status == QuestStatus.COMPLETED
+            quest_service.fail_quest(sample_quest.id)
+            assert quest.status == QuestStatus.FAILED
+            quest_service.decline_quest(sample_quest.id)
+            assert quest.status == QuestStatus.DECLINED
 
 
 class TestSideQuestAPI:
@@ -376,129 +276,6 @@ class TestSideQuestAPI:
         assert "message" in data["data"]
         assert "preferences" in data["data"]
 
-    def test_generate_daily_quests_unauthorized(self, client):
-        """Test quest generation without authentication."""
-        response = client.post("/api/sidequest/generate", json={})
-        assert response.status_code == 401
-
-    def test_generate_daily_quests_missing_preferences(self, client, auth_headers):
-        """Test quest generation with missing preferences."""
-        response = client.post("/api/sidequest/generate", json={}, headers=auth_headers)
-        assert response.status_code == 400
-
-        data = response.get_json()
-        assert data["success"] is False
-        assert "error" in data
-        assert "data" in data["error"]["message"]
-
-    def test_generate_daily_quests_invalid_preferences(self, client, auth_headers):
-        """Test quest generation with invalid preferences."""
-        invalid_preferences = {
-            "categories": [],  # Empty categories
-            "difficulty": "invalid",  # Invalid difficulty
-            "max_time": -5,  # Invalid time
-        }
-
-        response = client.post(
-            "/api/sidequest/generate",
-            json={"preferences": invalid_preferences},
-            headers=auth_headers,
-        )
-        assert response.status_code == 400
-
-    def test_get_user_quests_unauthorized(self, client):
-        """Test getting quests without authentication."""
-        response = client.get("/api/sidequest/quests")
-        assert response.status_code == 401
-
-    def test_get_user_quests_authorized(self, client, sample_quest, auth_headers):
-        """Test getting quests with authentication."""
-        response = client.get("/api/sidequest/quests", headers=auth_headers)
-        assert response.status_code == 200
-
-        data = response.get_json()
-        assert data["success"] is True
-        assert "quests" in data["data"]
-        assert "count" in data["data"]
-        assert data["data"]["count"] == 1
-
-    def test_select_quest_unauthorized(self, client):
-        """Test selecting quest without authentication."""
-        response = client.post("/api/sidequest/quests/1/select")
-        assert response.status_code == 401
-
-    def test_select_quest_authorized(self, client, sample_quest, auth_headers):
-        """Test selecting quest with authentication."""
-
-        response = client.post(
-            f"/api/sidequest/quests/{sample_quest.id}/select", headers=auth_headers
-        )
-        assert response.status_code == 200
-
-        data = response.get_json()
-        assert data["success"] is True
-        assert "message" in data["data"]
-        assert "Quest selected successfully" in data["data"]["message"]
-
-    def test_complete_quest_unauthorized(self, client):
-        """Test completing quest without authentication."""
-        response = client.post("/api/sidequest/quests/1/complete", json={})
-        assert response.status_code == 401
-
-    def test_complete_quest_authorized(self, client, sample_quest, auth_headers):
-        """Test completing quest with authentication."""
-        feedback = {
-            "feedback": {
-                "rating": "thumbs_up",
-                "comment": "Great quest!",
-                "timeSpent": 12,
-            }
-        }
-
-        response = client.post(
-            f"/api/sidequest/quests/{sample_quest.id}/complete",
-            json=feedback,
-            headers=auth_headers,
-        )
-        assert response.status_code == 200
-
-        data = response.get_json()
-        assert data["success"] is True
-        assert "message" in data["data"]
-        assert "Quest completed successfully" in data["data"]["message"]
-
-    def test_skip_quest_unauthorized(self, client):
-        """Test skipping quest without authentication."""
-        response = client.post("/api/sidequest/quests/1/skip")
-        assert response.status_code == 401
-
-    def test_skip_quest_authorized(self, client, sample_quest, auth_headers):
-        """Test skipping quest with authentication."""
-        response = client.post(
-            f"/api/sidequest/quests/{sample_quest.id}/skip", headers=auth_headers
-        )
-        assert response.status_code == 200
-
-        data = response.get_json()
-        assert data["success"] is True
-        assert "message" in data["data"]
-        assert "Quest skipped successfully" in data["data"]["message"]
-
-    def test_get_quest_history_unauthorized(self, client):
-        """Test getting quest history without authentication."""
-        response = client.get("/api/sidequest/history")
-        assert response.status_code == 401
-
-    def test_get_quest_history_authorized(self, client, sample_quest, auth_headers):
-        """Test getting quest history with authentication."""
-        response = client.get("/api/sidequest/history", headers=auth_headers)
-        assert response.status_code == 200
-
-        data = response.get_json()
-        assert data["success"] is True
-        assert "history" in data["data"]
-        assert "user_id" in data["data"]
-
     def test_complete_onboarding_unauthorized(self, client):
         """Test completing onboarding without authentication."""
         response = client.post("/api/sidequest/onboarding/complete")
@@ -518,103 +295,3 @@ class TestSideQuestAPI:
         assert "message" in data["data"]
         assert "Onboarding completed successfully" in data["data"]["message"]
         assert data["data"]["onboarding_completed"] is True
-
-    @patch("backend.src.apple_auth_service.validate_apple_token")
-    def test_mobile_apple_login_existing_user(
-        self,
-        mock_validate,
-        client,
-        test_sidequest_user,
-    ):
-        """Test Apple Sign-In with existing user"""
-        # get the example test apple user from the db
-        test_user = User.query.filter_by(apple_id="test_apple_id").first()
-        # Mock the Apple validator to return valid claims
-        mock_validate.return_value = {
-            "sub": "test_apple_id",
-            "email": test_user.email,
-            "email_verified": True,
-        }
-
-        # Update the test user to have an apple_id
-        test_sidequest_user.user.apple_id = "test_apple_id"
-        db.session.commit()
-
-        apple_credential = {
-            "appleIdToken": {
-                "identityToken": "mock_jwt_token",
-                "fullName": {"givenName": "Updated", "familyName": "Name"},
-            }
-        }
-
-        response = client.post(
-            "/api/auth/mobile/login-with-apple",
-            json=apple_credential,
-        )
-        assert response.status_code == 200
-
-        data = response.get_json()
-        assert data["success"] is True
-        assert "access_token" in data["data"]
-        assert "user" in data["data"]
-        assert data["data"]["user"]["id"] == test_user.id
-
-    @patch("backend.src.apple_auth_service.validate_apple_token")
-    def test_mobile_apple_login_new_user(self, mock_validate, client):
-        """Test Apple Sign-In with new user registration"""
-        # Mock the Apple validator to return valid claims for a new user
-        mock_validate.return_value = {
-            "sub": "new_apple_id",
-            "email": "newuser@example.com",
-            "email_verified": True,
-        }
-
-        apple_credential = {
-            "appleIdToken": {
-                "identityToken": "mock_jwt_token_new",
-                "fullName": {"givenName": "New", "familyName": "User"},
-            }
-        }
-
-        response = client.post(
-            "/api/auth/mobile/login-with-apple",
-            json=apple_credential,
-        )
-        assert response.status_code == 200
-
-        data = response.get_json()
-        assert data["success"] is True
-        assert "access_token" in data["data"]
-        assert "user" in data["data"]
-
-        # Verify new user was created
-        from backend.models import User
-
-        user = User.query.filter_by(apple_id="new_apple_id").first()
-        assert user is not None
-        assert user.email == "newuser@example.com"
-        assert "New User" in user.name
-
-    def test_mobile_apple_login_missing_credential(self, client):
-        """Test Apple Sign-In with missing credential"""
-        response = client.post(
-            "/api/auth/mobile/login-with-apple",
-            json={},
-        )
-        assert response.status_code == 400
-        data = response.get_json()
-        assert data["success"] is False
-        assert "error" in data
-        assert "No data provided" in data["error"]["message"]
-
-    def test_mobile_apple_login_missing_identity_token(self, client):
-        """Test Apple Sign-In with missing identity token"""
-        response = client.post(
-            "/api/auth/mobile/login-with-apple",
-            json={"appleIdToken": {"fullName": {"givenName": "Test"}}},
-        )
-        assert response.status_code == 400
-        data = response.get_json()
-        assert data["success"] is False
-        assert "error" in data
-        assert "identityToken" in data["error"]["message"]

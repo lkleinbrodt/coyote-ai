@@ -65,6 +65,7 @@ class SideQuestUser(db.Model):
     max_time = db.Column(db.Integer, nullable=False, default=15)  # in minutes
     include_completed = db.Column(db.Boolean, nullable=False, default=True)
     include_skipped = db.Column(db.Boolean, nullable=False, default=True)
+    additional_notes = db.Column(db.Text, nullable=True)
 
     # Notification settings
     notifications_enabled = db.Column(db.Boolean, nullable=False, default=True)
@@ -125,6 +126,7 @@ class SideQuestUser(db.Model):
                 if self.notification_time
                 else None
             ),
+            "additional_notes": self.additional_notes,
             "timezone": self.timezone,
             "onboarding_completed": self.onboarding_completed,
             "last_quest_generation": (
@@ -357,3 +359,7 @@ class QuestBoard(db.Model):
         """
         for quest in self.quests:
             quest.cleanup()
+            # remove from the quest board
+            self.quests.remove(quest)
+        self.updated_at = datetime.utcnow()
+        db.session.commit()

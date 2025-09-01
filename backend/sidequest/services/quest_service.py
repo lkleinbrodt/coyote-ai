@@ -3,7 +3,13 @@ from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from zoneinfo import ZoneInfo
 
-from backend.sidequest.models import SideQuest, QuestRating, QuestBoard, SideQuestUser
+from backend.sidequest.models import (
+    SideQuest,
+    QuestStatus,
+    QuestBoard,
+    SideQuestUser,
+    QuestRating,
+)
 from backend.sidequest.services.quest_generation_service import QuestGenerationService
 from backend.sidequest.services.user_service import UserService
 from backend.extensions import create_logger
@@ -58,17 +64,6 @@ class QuestService:
 
         return query.order_by(SideQuest.created_at.desc()).all()
 
-    def mark_quest_accept(self, quest_id: int, user_id: int) -> bool:
-        """Mark a quest as accepted by the user"""
-        quest = self.db.query(SideQuest).filter_by(id=quest_id, user_id=user_id).first()
-        if not quest:
-            return False
-
-        quest.accept()
-        self.db.commit()
-        logger.info(f"Quest {quest_id} marked as accepted by user {user_id}")
-        return True
-
     def get_quest_history(self, user_id: int, days: int = 7) -> Dict[str, Any]:
         """Get quest history and statistics for a user"""
         end_date = datetime.now()
@@ -112,33 +107,54 @@ class QuestService:
 
         # Convert timezone string to tzinfo object
         try:
+            print(f"User timezone: {sidequest_user.timezone}")
             user_tz = ZoneInfo(sidequest_user.timezone)
         except Exception as e:
             # Fallback to UTC if timezone is invalid
             logger.warning(
                 f"Invalid timezone '{sidequest_user.timezone}' for user {user_id}, falling back to UTC"
             )
+            print("Falling back to UTC")
             user_tz = ZoneInfo("UTC")
-
-        # Use 7 AM in the user's timezone to determine the current calendar day
-        current_day = datetime.now(user_tz).replace(
-            hour=7, minute=0, second=0, microsecond=0
-        )
 
         quest_board = self.db.query(QuestBoard).filter_by(user_id=user_id).first()
         if not quest_board:
+            print("Quest board not found, returning True")
+            return True
+
+        # if the quest board is empty, return True
+        if not quest_board.quests.all():
+            print("Quest board is empty, returning True")
             return True
 
         # Ensure last_refreshed has timezone info for comparison
         if quest_board.last_refreshed and quest_board.last_refreshed.tzinfo is None:
             # If last_refreshed is timezone-naive, assume it's in UTC
+            print("Last refreshed is timezone-naive, assuming UTC")
             last_refreshed_tz = quest_board.last_refreshed.replace(
                 tzinfo=ZoneInfo("UTC")
             )
         else:
+            print("Last refreshed has timezone info, using it")
             last_refreshed_tz = quest_board.last_refreshed
 
-        return last_refreshed_tz < current_day
+        """
+        Quests refresh at midnight in the user's timezone.
+        So we get the user's current day (local time)
+        And we get the last refreshed day (local time)
+        if last refreshed day is < current day, then the board needs a refresh
+        otherwise, it does not need a refresh
+        """
+        current_day = datetime.now(user_tz).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        last_refreshed_day = last_refreshed_tz.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        if last_refreshed_day < current_day:
+            return True
+        else:
+            return False
 
     def cleanup_board(self, user_id: int):
         """Cleanup the quest board for a user"""
@@ -190,3 +206,65 @@ class QuestService:
         if self.board_needs_refresh(user_id):
             self.refresh_board(user_id)
         return self.db.query(QuestBoard).filter_by(user_id=user_id).first()
+
+    def complete_quest(
+        self,
+        quest_id: int,
+        feedback_rating: QuestRating,
+        feedback_comment: str,
+        time_spent: int,
+    ) -> SideQuest:
+        quest = self.db.query(SideQuest).filter_by(id=quest_id).first()
+        if not quest:
+            raise ValueError(f"Quest {quest_id} not found")
+        quest.complete(feedback_rating, feedback_comment, time_spent)
+        self.db.commit()
+        return quest
+
+    def accept_quest(self, quest_id: int) -> SideQuest:
+        quest = self.db.query(SideQuest).filter_by(id=quest_id).first()
+        if not quest:
+            raise ValueError(f"Quest {quest_id} not found")
+        quest.accept()
+        self.db.commit()
+        return quest
+
+    def abandon_quest(self, quest_id: int) -> SideQuest:
+        quest = self.db.query(SideQuest).filter_by(id=quest_id).first()
+        if not quest:
+            raise ValueError(f"Quest {quest_id} not found")
+        quest.abandon()
+        self.db.commit()
+        return quest
+
+    def decline_quest(self, quest_id: int) -> SideQuest:
+        quest = self.db.query(SideQuest).filter_by(id=quest_id).first()
+        if not quest:
+            raise ValueError(f"Quest {quest_id} not found")
+        quest.decline()
+        self.db.commit()
+        return quest
+
+    def fail_quest(self, quest_id: int) -> SideQuest:
+        quest = self.db.query(SideQuest).filter_by(id=quest_id).first()
+        if not quest:
+            raise ValueError(f"Quest {quest_id} not found")
+        quest.fail()
+        self.db.commit()
+        return quest
+
+    def cleanup_quest(self, quest_id: int) -> SideQuest:
+        quest = self.db.query(SideQuest).filter_by(id=quest_id).first()
+        if not quest:
+            raise ValueError(f"Quest {quest_id} not found")
+        quest.cleanup()
+        self.db.commit()
+        return quest
+
+    def validate_ownership(self, quest_id: int, user_id: int) -> bool:
+        quest = self.db.query(SideQuest).filter_by(id=quest_id).first()
+        if not quest:
+            return False
+        if quest.user_id != user_id:
+            return False
+        return True

@@ -10,6 +10,7 @@ from backend.sidequest.models import (
     QuestDifficulty,
     QuestGenerationLog,
     QuestRating,
+    QuestStatus,
     SideQuest,
     SideQuestUser,
 )
@@ -102,7 +103,7 @@ class TestQuestService:
         assert len(quests) >= 1
         assert any(q.id == test_quest.id for q in quests)
 
-    def test_mark_quest_completed(self, test_quest, app):
+    def test_complete_quest(self, test_quest, app):
         """Test marking a quest as completed."""
         with app.app_context():
             from backend.extensions import db
@@ -115,49 +116,22 @@ class TestQuestService:
                 "timeSpent": 20,
             }
 
-            success = service.mark_quest_completed(
-                test_quest.id, test_quest.user_id, feedback
+            quest = service.complete_quest(
+                test_quest.id,
+                feedback["rating"],
+                feedback["comment"],
+                feedback["timeSpent"],
             )
 
-            assert success is True
+            assert quest is not None
 
             # Verify quest was updated
             updated_quest = db.session.get(SideQuest, test_quest.id)
-            assert updated_quest.completed is True
+            assert updated_quest.status == QuestStatus.COMPLETED
             assert updated_quest.completed_at is not None
             assert updated_quest.feedback_rating == QuestRating.THUMBS_UP
             assert updated_quest.feedback_comment == "Great workout!"
             assert updated_quest.time_spent == 20
-
-    def test_mark_quest_skipped(self, test_quest, app):
-        """Test marking a quest as skipped."""
-        with app.app_context():
-            from backend.extensions import db
-
-            service = QuestService(db.session)
-
-            success = service.mark_quest_skipped(test_quest.id, test_quest.user_id)
-
-            assert success is True
-
-            # Verify quest was updated
-            updated_quest = db.session.get(SideQuest, test_quest.id)
-            assert updated_quest.skipped is True
-
-    def test_mark_quest_selected(self, test_quest, app):
-        """Test marking a quest as selected."""
-        with app.app_context():
-            from backend.extensions import db
-
-            service = QuestService(db.session)
-
-            success = service.mark_quest_selected(test_quest.id, test_quest.user_id)
-
-            assert success is True
-
-            # Verify quest was updated
-            updated_quest = db.session.get(SideQuest, test_quest.id)
-            assert updated_quest.selected is True
 
 
 class TestQuestGenerationService:
@@ -270,29 +244,25 @@ class TestServiceIntegration:
         quest = quests[0]
 
         # Mark as selected
-        success = quest_service.mark_quest_selected(
-            quest.id, test_sidequest_user.user_id
-        )
-        assert success is True
+        quest = quest_service.accept_quest(quest.id)
+        assert quest is not None
 
-        # Verify the quest was marked as selected
+        # Verify the quest was marked as accepted
         updated_quest = db.session.get(SideQuest, quest.id)
-        assert updated_quest.selected is True
+        assert updated_quest.status == QuestStatus.ACCEPTED
 
         # Mark as completed
-        success = quest_service.mark_quest_completed(
+        quest = quest_service.complete_quest(
             quest.id,
-            test_sidequest_user.user_id,
-            {
-                "rating": QuestRating.THUMBS_UP.value,
-                "comment": "Great walk!",
-                "timeSpent": 12,
-            },
+            QuestRating.THUMBS_UP,
+            "Great walk!",
+            12,
         )
-        assert success is True
+        assert quest is not None
 
         # Verify the quest was marked as completed
         updated_quest = db.session.get(SideQuest, quest.id)
-        assert updated_quest.completed is True
+        assert updated_quest.status == QuestStatus.COMPLETED
+        assert updated_quest.completed_at is not None
         assert updated_quest.feedback_rating == QuestRating.THUMBS_UP
         assert updated_quest.time_spent == 12

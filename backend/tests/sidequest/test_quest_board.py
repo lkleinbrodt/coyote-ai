@@ -17,6 +17,7 @@ from backend.sidequest.models import (
     QuestDifficulty,
 )
 from backend.sidequest.services import QuestService
+from backend.sidequest.routes import sidequest_bp
 
 
 class TestModels:
@@ -94,23 +95,24 @@ class TestServices:
         assert board.created_at is not None
         assert board.updated_at is not None
 
-    def test_board_refresh(self, test_sidequest_user):
+    def test_board_refresh(self, test_sidequest_user_with_board):
         """Test refreshing the quest board"""
+        user = test_sidequest_user_with_board
         service = QuestService(db.session)
-        service.get_or_create_board(test_sidequest_user.user_id)
+        board = service.get_or_create_board(user.user_id)
 
         # the board will not need a refresh
-        assert service.board_needs_refresh(test_sidequest_user.user_id) is False
+        assert service.board_needs_refresh(user.user_id) is False, board.last_refreshed
 
         # get all the existing quest ids to make sure they get cleaned up
-        quest_board = service.get_board(test_sidequest_user.user_id)
+        quest_board = service.get_board(user.user_id)
         existing_quest_ids = [quest.id for quest in quest_board.quests]
         # now adjust the last refreshed time to make the board need a refresh
 
         quest_board.last_refreshed = datetime.utcnow() - timedelta(days=1)
         db.session.commit()
 
-        assert service.board_needs_refresh(test_sidequest_user.user_id) is True
+        assert service.board_needs_refresh(user.user_id) is True
 
         # mock the LLM call to generate new quests
         from unittest.mock import Mock
@@ -134,12 +136,16 @@ class TestServices:
         mock_client.chat.return_value = mock_response
         service.quest_generation_service.client = mock_client
 
-        service.refresh_board(test_sidequest_user.user_id)
+        service.refresh_board(user.user_id)
 
         # make sure the new quests are on the board
-        board = service.get_board(test_sidequest_user.user_id)
+        board = service.get_board(user.user_id)
         quests = board.quests.all()
         assert len(quests) == 1
         assert quests[0].text == "Do 10 jumping jacks"
         assert quests[0].category == QuestCategory.FITNESS
         assert quests[0].difficulty == QuestDifficulty.EASY
+        # old quests should no longer have a board
+        for quest_id in existing_quest_ids:
+            quest = db.session.query(SideQuest).filter_by(id=quest_id).first()
+            assert quest.quest_board_id is None
