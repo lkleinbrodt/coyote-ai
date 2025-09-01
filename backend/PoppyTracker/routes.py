@@ -11,7 +11,7 @@ from flask_jwt_extended import (
 from sqlalchemy import func
 
 from backend.extensions import create_logger, db
-from backend.src.auth import apple_signin
+from backend.src.apple_auth_service import get_apple_auth_service
 
 from .models import DailyTarget, Feeding
 
@@ -312,7 +312,10 @@ def signin():
         return jsonify({"error": {"message": "No identity token provided"}}), 400
 
     try:
-        user = apple_signin(credentials)
+        # Use the consolidated Apple Auth Service
+        user = get_apple_auth_service().authenticate_with_apple(
+            credentials, app_name="PoppyTracker"
+        )
         logger.debug(f"Successfully authenticated user: {user.id}")
 
         access_token = create_access_token(

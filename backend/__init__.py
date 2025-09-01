@@ -2,30 +2,20 @@ import os
 from logging import ERROR
 from logging.handlers import SMTPHandler
 
-from flask import Blueprint, Flask, request, send_from_directory
+from flask import Blueprint, Flask, request, send_from_directory, jsonify
 from flask_cors import CORS
 
 from backend.config import Config
 from backend.extensions import db, jwt, migrate
 from flask_session import Session
 
-from .autodraft.models import *
-from .autodraft.routes import autodraft_bp
-from .explain.routes import explain_bp
-from .lifter.routes import lifter
-from .models import *
-from .poeltl.routes import poeltl
-from .PoppyTracker import poppy_bp
-from .routes import api_bp, auth_bp, base_bp, billing_bp
-from .speech.routes import speech_bp
+from backend.routes import api_bp, base_bp
 
 
 def create_app(config_class: Config):
 
     app = Flask(
         __name__,
-        # static_folder=config_class.ROOT_DIR / "dist",
-        # static_url_path="",
     )
 
     app.config.from_object(config_class)
@@ -46,22 +36,140 @@ def create_app(config_class: Config):
     db.init_app(app)
     migrate.init_app(app, db)
 
+    # JWT Error Handlers for consistent responses
+    @jwt.unauthorized_loader
+    def unauthorized_response(callback):
+        """Handle missing or invalid JWT tokens"""
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "Authentication required",
+                        "code": "UNAUTHORIZED",
+                    },
+                }
+            ),
+            401,
+        )
+
+    @jwt.invalid_token_loader
+    def invalid_token_response(callback):
+        """Handle invalid JWT tokens"""
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "Invalid authentication token",
+                        "code": "INVALID_TOKEN",
+                    },
+                }
+            ),
+            401,
+        )
+
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        """Handle expired JWT tokens"""
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "Authentication token has expired",
+                        "code": "TOKEN_EXPIRED",
+                    },
+                }
+            ),
+            401,
+        )
+
+    @jwt.revoked_token_loader
+    def revoked_token_callback(jwt_header, jwt_payload):
+        """Handle revoked JWT tokens"""
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "Authentication token has been revoked",
+                        "code": "TOKEN_REVOKED",
+                    },
+                }
+            ),
+            401,
+        )
+
     # @app.route("/", defaults={"path": ""})
     # @app.route("/<string:path>")
     # @app.route("/<path:path>")
     # def index(path):
     #     return send_from_directory(app.static_folder, "index.html")
 
-    api_bp.register_blueprint(poeltl)
-    api_bp.register_blueprint(lifter)
-    api_bp.register_blueprint(auth_bp)
-    api_bp.register_blueprint(billing_bp)
-    api_bp.register_blueprint(autodraft_bp)
-    api_bp.register_blueprint(speech_bp)
-    api_bp.register_blueprint(poppy_bp, url_prefix="/poppy")  # Add PoppyTracker routes
-    api_bp.register_blueprint(explain_bp)  # Add explain routes
     app.register_blueprint(base_bp)
     app.register_blueprint(api_bp)
+
+    # Global error handlers for consistent error responses
+    @app.errorhandler(404)
+    def not_found(error):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "The requested resource was not found",
+                        "code": "NOT_FOUND",
+                    },
+                }
+            ),
+            404,
+        )
+
+    @app.errorhandler(405)
+    def method_not_allowed(error):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "Method not allowed for this endpoint",
+                        "code": "METHOD_NOT_ALLOWED",
+                    },
+                }
+            ),
+            405,
+        )
+
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "An internal server error occurred",
+                        "code": "INTERNAL_SERVER_ERROR",
+                    },
+                }
+            ),
+            500,
+        )
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(error):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": {
+                        "message": "An unexpected error occurred",
+                        "code": "UNEXPECTED_ERROR",
+                    },
+                }
+            ),
+            500,
+        )
 
     if not app.debug:
         mail_handler = SMTPHandler(
