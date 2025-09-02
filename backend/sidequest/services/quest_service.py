@@ -4,11 +4,11 @@ from sqlalchemy.orm import Session
 from zoneinfo import ZoneInfo
 
 from backend.sidequest.models import (
-    SideQuest,
+    UserQuest,
     QuestStatus,
     QuestBoard,
+    QuestTemplate,
     SideQuestUser,
-    QuestRating,
 )
 from backend.sidequest.services.quest_generation_service import QuestGenerationService
 from backend.sidequest.services.user_service import UserService
@@ -145,7 +145,7 @@ class QuestService:
             logger.info(f"No quests needed for user {user_id}, returning")
             return
 
-        quests = self.quest_generation_service.generate_quests(
+        quests = self.quest_generation_service.generate_quest_template_data(
             user_id=user_id,
             preferences=preferences,
             context=self.generate_context(user_id),
@@ -155,8 +155,7 @@ class QuestService:
         quest_objects = []
 
         for quest_data in quests:
-            quest = SideQuest(
-                user_id=user_id,
+            template = QuestTemplate(
                 text=quest_data.get("text"),
                 category=quest_data.get("category"),
                 estimated_time=quest_data.get("estimated_time"),
@@ -164,7 +163,16 @@ class QuestService:
                 tags=quest_data.get("tags"),
                 model_used=quest_data.get("model_used"),
                 fallback_used=quest_data.get("fallback_used"),
+                owner_user_id=user_id,
+            )
+            self.db.add(template)
+            self.db.flush()  # Get the template ID
+
+            quest = UserQuest(
+                user_id=user_id,
+                quest_template_id=template.id,
                 quest_board_id=quest_board.id,
+                resolved_text=quest_data.get("text"),
             )
             quest_objects.append(quest)
             self.db.add(quest)
@@ -221,24 +229,24 @@ class QuestService:
             self.refresh_board(user_id)
         return self.db.query(QuestBoard).filter_by(user_id=user_id).first()
 
-    def cleanup_quest(self, quest_id: int) -> SideQuest:
-        quest = self.db.query(SideQuest).filter_by(id=quest_id).first()
+    def cleanup_quest(self, quest_id: int) -> UserQuest:
+        quest = self.db.query(UserQuest).filter_by(id=quest_id).first()
         if not quest:
             raise ValueError(f"Quest {quest_id} not found")
         quest.cleanup()
         self.db.commit()
         return quest
 
-    def get_quest(self, quest_id: int) -> Optional[SideQuest]:
+    def get_quest(self, quest_id: int) -> Optional[UserQuest]:
         """Helper to get a single quest."""
-        return self.db.query(SideQuest).filter_by(id=quest_id).first()
+        return self.db.query(UserQuest).filter_by(id=quest_id).first()
 
     def update_quest_status(
         self,
         quest_id: int,
         status: str,
         data: Dict[str, Any] = {},
-    ) -> Optional[SideQuest]:
+    ) -> Optional[UserQuest]:
         """Generic method to update a quest's status."""
         quest = self.get_quest(quest_id)
         if not quest:
@@ -269,7 +277,7 @@ class QuestService:
 
     def validate_ownership(self, quest_id: int, user_id: int) -> bool:
         """Validate that a quest belongs to the specified user"""
-        quest = self.db.query(SideQuest).filter_by(id=quest_id).first()
+        quest = self.db.query(UserQuest).filter_by(id=quest_id).first()
         if not quest:
             return False
         if str(quest.user_id) != str(user_id):

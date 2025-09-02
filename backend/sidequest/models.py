@@ -181,24 +181,25 @@ class SideQuestUser(db.Model):
         return self
 
 
-class SideQuest(db.Model):
+class UserQuest(db.Model):
     """Individual quest instances"""
 
     __table_args__ = {"schema": "sidequest"}
-    __tablename__ = "sidequest_quests"
+    __tablename__ = "sidequest_user_quests"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     quest_board_id = db.Column(
         db.Integer, db.ForeignKey("sidequest.sidequest_quest_boards.id"), nullable=True
     )
+    quest_template_id = db.Column(
+        db.Integer,
+        db.ForeignKey("sidequest.sidequest_quest_templates.id"),
+        nullable=True,
+    )
 
     # Quest content
-    text = db.Column(db.Text, nullable=False)
-    category = db.Column(db.Enum(QuestCategory), nullable=False)
-    estimated_time = db.Column(db.String(50), nullable=False)  # e.g., "5-10 minutes"
-    difficulty = db.Column(db.Enum(QuestDifficulty), nullable=False)
-    tags = db.Column(JSON, nullable=False, default=[])
+    resolved_text = db.Column(db.Text, nullable=True)
 
     # Quest state
     status = db.Column(
@@ -206,20 +207,15 @@ class SideQuest(db.Model):
     )
 
     # Completion details
+    accepted_at = db.Column(db.DateTime, nullable=True)
     completed_at = db.Column(db.DateTime, nullable=True)
+    failed_at = db.Column(db.DateTime, nullable=True)
+    abandoned_at = db.Column(db.DateTime, nullable=True)
+    declined_at = db.Column(db.DateTime, nullable=True)
+
     feedback_rating = db.Column(db.Enum(QuestRating), nullable=True)
     feedback_comment = db.Column(db.Text, nullable=True)
     time_spent = db.Column(db.Integer, nullable=True)  # in minutes
-
-    # Generation metadata
-    generated_at = db.Column(
-        db.DateTime,
-        nullable=False,
-        default=datetime.utcnow,
-    )
-    expires_at = db.Column(db.DateTime, nullable=False)
-    model_used = db.Column(db.String(100), nullable=True)  # LLM model used
-    fallback_used = db.Column(db.Boolean, nullable=False, default=False)
 
     # Timestamps
     created_at = db.Column(
@@ -234,32 +230,33 @@ class SideQuest(db.Model):
         onupdate=datetime.utcnow,
     )
 
+    # Relationships
+    user = db.relationship("User", backref="user_quests")
+    quest_template = db.relationship("QuestTemplate", backref="user_quests")
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Ensure mutable defaults are properly initialized
-        if self.tags is None:
-            self.tags = []
-        if self.status is None:
-            self.status = QuestStatus.POTENTIAL
-        if self.fallback_used is None:
-            self.fallback_used = False
-        # Set expiration to end of day if not specified
-        if not self.expires_at:
-            tomorrow = datetime.utcnow() + timedelta(days=1)
-            self.expires_at = tomorrow.replace(
-                hour=23, minute=59, second=59, microsecond=0
-            )
+        # Ensure resolved_text is set if not provided
+        if self.resolved_text is None and self.quest_template_id:
+            # This will be set when the quest_template relationship is loaded
+            pass
 
     def to_dict(self):
+        template_info = self.quest_template.to_dict() if self.quest_template else None
+
         quest_dict = {
             "id": str(self.id),  # Convert to string for frontend compatibility
             "user_id": self.user_id,
+            "text": self.resolved_text
+            or (self.quest_template.text if self.quest_template else None),
             "quest_board_id": self.quest_board_id,
-            "text": self.text,
-            "category": self.category.value if self.category else None,
-            "estimated_time": self.estimated_time,
-            "difficulty": self.difficulty.value if self.difficulty else None,
-            "tags": self.tags or [],
+            "quest_template_id": self.quest_template_id,
+            "accepted_at": (self.accepted_at.isoformat() if self.accepted_at else None),
+            "failed_at": (self.failed_at.isoformat() if self.failed_at else None),
+            "abandoned_at": (
+                self.abandoned_at.isoformat() if self.abandoned_at else None
+            ),
+            "declined_at": (self.declined_at.isoformat() if self.declined_at else None),
             "status": self.status.value if self.status else None,
             "completed_at": (
                 self.completed_at.isoformat() if self.completed_at else None
@@ -276,29 +273,21 @@ class SideQuest(db.Model):
                 else None
             ),
             "created_at": self.created_at.isoformat(),
-            "expires_at": self.expires_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
         }
+        if template_info:
+            quest_dict["category"] = template_info["category"]
+            quest_dict["difficulty"] = template_info["difficulty"]
+            quest_dict["tags"] = template_info["tags"]
+            quest_dict["estimated_time"] = template_info["estimatedTime"]
+            quest_dict["owner_user_id"] = template_info["ownerUserId"]
+            quest_dict["parent_template_id"] = template_info["parentTemplateId"]
         # Convert all keys to camelCase for the API response
         return humps.camelize(quest_dict)
 
     def is_completed(self):
         """Check if quest is completed"""
         return self.status == QuestStatus.COMPLETED
-
-    def is_expired(self):
-        """Check if quest has expired"""
-        return datetime.utcnow() > self.expires_at
-
-    def is_open(self):
-        """Check if quest is open (not yet acted upon)"""
-        return not (self.status == QuestStatus.POTENTIAL)
-
-    def is_within_generation_window(self, hours: int = 24):
-        """Check if quest is within the generation window (default 24 hours)"""
-        if not self.generated_at:
-            return False
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
-        return self.generated_at >= cutoff_time
 
     def complete(self, feedback_rating=None, feedback_comment=None, time_spent=None):
         """Mark quest as completed with feedback"""
@@ -338,7 +327,7 @@ class SideQuest(db.Model):
             self.fail()
 
     def __repr__(self):
-        return f"<SideQuest {self.id}: {self.to_dict()}>"
+        return f"<UserQuest {self.id}: {self.to_dict()}>"
 
 
 class QuestGenerationLog(db.Model):
@@ -430,13 +419,14 @@ class QuestBoard(db.Model):
 
     # Relationships
     user = db.relationship("User", backref=db.backref("quest_boards", uselist=False))
-    quests = db.relationship("SideQuest", backref="quest_board", lazy="dynamic")
+    quests = db.relationship("UserQuest", backref="quest_board", lazy="dynamic")
 
     def cleanup(self):
         """
         Cleanup old quests.
         """
-        for quest in self.quests:
+        quests = self.quests.all()
+        for quest in quests:
             quest.cleanup()
             # remove from the quest board
             self.quests.remove(quest)
@@ -455,3 +445,56 @@ class QuestBoard(db.Model):
         }
         # Convert all keys to camelCase for the API response
         return humps.camelize(board_dict)
+
+
+class QuestTemplate(db.Model):
+    """Template for a quest"""
+
+    __table_args__ = {"schema": "sidequest"}
+    __tablename__ = "sidequest_quest_templates"
+
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.Text, nullable=False)
+    category = db.Column(db.Enum(QuestCategory), nullable=False)
+    difficulty = db.Column(db.Enum(QuestDifficulty), nullable=False)
+    tags = db.Column(JSON, nullable=False, default=[])
+    estimated_time = db.Column(db.String(50), nullable=False)
+
+    owner_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    parent_template_id = db.Column(
+        db.Integer,
+        db.ForeignKey("sidequest.sidequest_quest_templates.id"),
+        nullable=True,
+    )
+
+    model_used = db.Column(db.String(100), nullable=True)  # LLM model used
+    fallback_used = db.Column(db.Boolean, nullable=False, default=False)
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
+    updated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+    )
+
+    def to_dict(self):
+        template_dict = {
+            "id": self.id,
+            "text": self.text,
+            "category": self.category.value if self.category else None,
+            "difficulty": self.difficulty.value if self.difficulty else None,
+            "tags": self.tags or [],
+            "estimated_time": self.estimated_time,
+            "owner_user_id": self.owner_user_id,
+            "parent_template_id": self.parent_template_id,
+            "model_used": self.model_used,
+            "fallback_used": self.fallback_used,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+        }
+        return humps.camelize(template_dict)

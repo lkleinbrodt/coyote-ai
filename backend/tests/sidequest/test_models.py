@@ -12,7 +12,7 @@ from backend.sidequest.models import (
     QuestDifficulty,
     QuestRating,
     QuestStatus,
-    SideQuest,
+    UserQuest,
     SideQuestUser,
 )
 from backend.extensions import db
@@ -63,26 +63,8 @@ class TestSideQuestUser:
     #         assert test_sidequest_user.updated_at > original_updated
 
 
-class TestSideQuest:
-    """Test SideQuest model behavior."""
-
-    def test_quest_creation_with_expiration(self, test_sidequest_user):
-        """Test that quests are created with proper expiration logic."""
-        quest = SideQuest(
-            user_id=test_sidequest_user.user_id,
-            text="Test quest",
-            category=QuestCategory.FITNESS,
-            estimated_time="5 minutes",
-            difficulty=QuestDifficulty.EASY,
-            tags=["test"],
-            expires_at=datetime.utcnow() + timedelta(hours=1),
-        )
-
-        assert not quest.is_expired()
-
-        # Test expiration
-        quest.expires_at = datetime.utcnow() - timedelta(hours=1)
-        assert quest.is_expired()
+class TestUserQuest:
+    """Test UserQuest model behavior."""
 
     def test_quest_serialization(self, test_quest):
         """Test that quest serializes correctly for API responses."""
@@ -91,7 +73,6 @@ class TestSideQuest:
         # Test camelCase conversion
         assert "estimatedTime" in quest_dict
         assert "createdAt" in quest_dict
-        assert "expiresAt" in quest_dict
         assert quest_dict["text"] == "Take a 10-minute walk"
 
     def test_quest_status_transitions(self, test_quest):

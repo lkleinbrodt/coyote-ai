@@ -6,15 +6,15 @@ from .models import (
     QuestDifficulty,
     QuestGenerationLog,
     QuestRating,
-    SideQuest,
+    UserQuest,
     SideQuestUser,
 )
 from .routes import sidequest_bp
-from .services import QuestGenerationService, QuestService, UserService
+from .services import QuestGenerationService, QuestService, UserService, HistoryService
 
 __all__ = [
     # Models
-    "SideQuest",
+    "UserQuest",
     "SideQuestUser",
     "QuestGenerationLog",
     "QuestCategory",
@@ -24,6 +24,7 @@ __all__ = [
     "QuestGenerationService",
     "UserService",
     "QuestService",
+    "HistoryService",
     # Routes
     "sidequest_bp",
 ]

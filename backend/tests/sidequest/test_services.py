@@ -9,14 +9,10 @@ import pytest
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
-from backend.models import User
 from backend.sidequest.models import (
-    QuestCategory,
     QuestDifficulty,
     QuestRating,
     QuestStatus,
-    SideQuest,
-    SideQuestUser,
 )
 from backend.extensions import db
 from backend.sidequest.services import QuestGenerationService, QuestService, UserService

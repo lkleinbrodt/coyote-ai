@@ -50,7 +50,7 @@ class QuestGenerationService:
         else:
             return data
 
-    def generate_quests(
+    def generate_quest_template_data(
         self,
         user_id: int,
         preferences: Dict[str, Any],
@@ -171,13 +171,16 @@ class QuestGenerationService:
             context_str = f"\nContext: {json.dumps(context, indent=2)}"
         user_custom_prompt = ""
         return f"""
-You are SideQuest’s quest designer. Generate {n_quests} personalized daily quests that feel like **meaningful side adventures** — concrete, specific, and effortful — bringing novelty, reflection, or discovery into the user’s day. Never output chores or filler.
+You are SideQuest’s quest designer. Generate {n_quests} personalized daily quests to display to the user.
+
+Questions Should:
+- Feel like meaningful side adventures - concrete, specific, and effortful
+- Quests can be mundane *if* they are productive, positive, and meaningful (for example a specific and tailored chore)
+- The majority of quests though should bring novelty, reflection, or discovery into the user’s day.
 
 User Preferences:
 
 - Categories: {', '.join(categories)}
-- Difficulty: {difficulty}
-- Maximum time: {max_time} minutes
 
 {user_custom_prompt}
 
@@ -189,9 +192,7 @@ User Preferences:
 
 - **Concrete & specific**: no ambiguity; directly executable.
 - **Memorable effort**: feels like a mini-adventure/test.
-- **Structured reflection**: include records, constraints, or outputs.
-- **Exploration & novelty**: new places, sky, culture.
-- **Focused learning**: targeted, speak/repeat/record.
+- **Focused learning**: targeted, fun, meaningful
 - **Guided creativity**: provide constraints, not freeform.
 - **Assignment over choice**: model decides specifics.
 
@@ -218,9 +219,7 @@ User Preferences:
 3. **Boundary-pushing quota**  
    ≥20% should feel unusual, adventurous, or experimental.
 4. **Quest chains**  
-   Occasionally create 2–3 step arcs across the day (morning → afternoon → evening).
-5. **External anchors/randomness**  
-   Tie to date, weather, dice rolls, holidays, or local context.
+   Occasionally create 2–3 step arcs across the day (morning → afternoon → evening)..
 6. **Assignment over choice**  
    Always assign specifics.
 7. **No repeated skeletons**  
@@ -246,12 +245,9 @@ Return a JSON object with exactly this structure:
 ### Additional Instructions
 
 - Always respect the user’s selected categories; never invent new ones.
-- Match difficulty to {difficulty}.
-- Time estimates must be realistic.
 - Each quest should be fun, creative, and engaging.
 - Ensure variety, ambition, and novelty per the above rules.
 - Each quest should be achievable within {max_time} minutes
-- Match the user's preferred difficulty level
 - Add relevant tags for categorization
 
 Generate quests now.

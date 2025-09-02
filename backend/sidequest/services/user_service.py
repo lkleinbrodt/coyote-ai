@@ -13,9 +13,6 @@ from backend.extensions import create_logger
 from backend.sidequest.models import (
     QuestCategory,
     QuestDifficulty,
-    QuestGenerationLog,
-    QuestRating,
-    SideQuest,
     SideQuestUser,
 )
 from backend.models import User
@@ -94,7 +91,7 @@ class UserService:
         tz = profile.timezone
         return datetime.now(pytz.timezone(tz))
 
-    def create_user(self, user_id: int, data: Dict[str, Any]) -> SideQuestUser:
+    def create_user(self, user_id: int, data: Dict[str, Any] = {}) -> SideQuestUser:
         """Create a new user"""
         exiting_user = SideQuestUser.query.filter_by(user_id=user_id).first()
         if exiting_user:

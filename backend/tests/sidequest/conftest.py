@@ -10,7 +10,6 @@ from flask_jwt_extended import create_access_token
 
 from backend.sidequest.models import (
     SideQuestUser,
-    SideQuest,
     QuestDifficulty,
     QuestCategory,
     QuestStatus,
@@ -18,6 +17,7 @@ from backend.sidequest.models import (
 from backend.extensions import db
 from backend.models import User
 from backend.sidequest.services import QuestService
+from backend.sidequest.models import QuestTemplate, UserQuest
 
 
 @pytest.fixture
@@ -37,16 +37,28 @@ def test_sidequest_user(app, test_user):
 
 
 @pytest.fixture
-def test_quest(app, test_sidequest_user):
-    """Create a test quest for testing."""
-    quest = SideQuest(
-        user_id=test_sidequest_user.user_id,
+def test_quest_template(app):
+
+    template = QuestTemplate(
         text="Take a 10-minute walk",
         category=QuestCategory.FITNESS,
         estimated_time="10 minutes",
         difficulty=QuestDifficulty.EASY,
         tags=["walking", "exercise", "outdoors"],
-        expires_at=datetime.utcnow() + timedelta(days=1),
+    )
+    db.session.add(template)
+    db.session.commit()
+    return template
+
+
+@pytest.fixture
+def test_quest(app, test_sidequest_user, test_quest_template):
+    """Create a test quest for testing."""
+
+    quest = UserQuest(
+        user_id=test_sidequest_user.user_id,
+        quest_template_id=test_quest_template.id,
+        status=QuestStatus.POTENTIAL,
     )
     db.session.add(quest)
     db.session.commit()
@@ -78,14 +90,16 @@ def test_sidequest_user_with_board(app, test_user):
     ]
 
     for i, text in enumerate(quest_texts):
-        quest = SideQuest(
-            user_id=sidequest_user.user_id,
+        template = QuestTemplate(
             text=text,
             category=QuestCategory.FITNESS if i == 0 else QuestCategory.MINDFULNESS,
             estimated_time=f"{5 + i * 5} minutes",
             difficulty=QuestDifficulty.EASY,
             tags=["test"],
-            expires_at=datetime.utcnow() + timedelta(days=1),
+        )
+        quest = UserQuest(
+            user_id=sidequest_user.user_id,
+            quest_template_id=template.id,
             status=QuestStatus.POTENTIAL,
             quest_board_id=quest_board.id,
         )

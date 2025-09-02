@@ -129,7 +129,7 @@ class User(db.Model):
     )
 
     # SideQuest relationships
-    sidequest_quests = relationship("SideQuest", backref="user", lazy="dynamic")
+    # Note: UserQuest relationship is defined in sidequest/models.py
 
     def __repr__(self):
         return f"<User {self.id}>"

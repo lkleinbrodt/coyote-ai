@@ -3,7 +3,8 @@ import random
 from backend.models import User, UserBalance
 from backend.sidequest.models import (
     SideQuestUser,
-    SideQuest,
+    UserQuest,
+    QuestTemplate,
     QuestGenerationLog,
     QuestStatus,
 )
@@ -76,26 +77,35 @@ def init_test_db(db):
         "Practice deep breathing for 5 minutes",
     ]
 
+    templates = []
+    for text in quest_texts:
+        template = QuestTemplate(
+            text=text,
+            category=random.choice(list(QuestCategory)),
+            estimated_time=f"{random.randint(5, 30)} minutes",
+            difficulty=random.choice(list(QuestDifficulty)),
+        )
+        db.session.add(template)
+        templates.append(template)
+
+    db.session.flush()
+
     quests = []
     service = QuestService(db.session)
     for i in range(20):
         user = random.choice(sidequest_users)
-        category = random.choice(list(QuestCategory))
-        difficulty = random.choice(list(QuestDifficulty))
-
         quest_board = service.get_or_create_board(user.user_id)
-
-        quest = SideQuest(
+        template = random.choice(templates)
+        quest = UserQuest(
             user_id=user.user_id,
-            text=random.choice(quest_texts),
-            category=category,
-            estimated_time=f"{random.randint(5, 30)} minutes",
-            difficulty=difficulty,
-            tags=[category.value, difficulty.value],
-            expires_at=datetime.now() + timedelta(days=random.randint(1, 7)),
-            status=random.choice(list(QuestStatus)),
+            quest_template_id=template.id,
+            status=QuestStatus.POTENTIAL,
             quest_board_id=quest_board.id,
+            resolved_text=template.text,  # Use template text as resolved text
         )
+        db.session.add(quest)
+
+        quests.append(quest)
 
         # Add completion details for completed quests
         if quest.is_completed():

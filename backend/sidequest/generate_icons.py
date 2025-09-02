@@ -15,7 +15,7 @@ import time
 import sys
 import os
 
-from backend.sidequest.models import QuestCategory, SideQuest
+from backend.sidequest.models import QuestCategory, UserQuest
 from backend.sidequest.services import QuestGenerationService
 from backend.sidequest.background_removal import BackgroundRemovalService
 from backend.extensions import db
@@ -198,7 +198,7 @@ def get_all_categories():
 
 def get_enough_example_quests_for_category(category: QuestCategory):
     """Get enough example quests for the category"""
-    existing_quests = SideQuest.query.filter_by(category=category).all()
+    existing_quests = UserQuest.query.filter_by(category=category).all()
     if len(existing_quests) >= 3:
         return existing_quests
     else:

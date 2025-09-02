@@ -13,7 +13,12 @@ from backend.extensions import create_logger, db
 from backend.sidequest.services import QuestService
 from backend.sidequest.routes import sidequest_bp
 from backend.sidequest.utils.response import success_response, error_response
-from backend.sidequest.models import SideQuest
+from backend.sidequest.models import (
+    UserQuest,
+    QuestStatus,
+    QuestCategory,
+    QuestTemplate,
+)
 
 logger = create_logger(__name__)
 
@@ -111,16 +116,18 @@ def get_quest_history():
         category = request.args.get("category")
 
         # Get quests from the database
-        query = quest_service.db.query(SideQuest).filter_by(user_id=user_id)
+        query = quest_service.db.query(UserQuest).filter_by(user_id=user_id)
 
         if status:
-            query = query.filter(SideQuest.status == status)
+            status = QuestStatus(status)
+            query = query.filter(UserQuest.status == status)
         if category:
-            query = query.filter(SideQuest.category == category)
+            category = QuestCategory(category)
+            query = query.join(QuestTemplate).filter(QuestTemplate.category == category)
 
         # Order by creation date (newest first) and apply pagination
         quests = (
-            query.order_by(SideQuest.created_at.desc())
+            query.order_by(UserQuest.created_at.desc())
             .offset(offset)
             .limit(limit)
             .all()

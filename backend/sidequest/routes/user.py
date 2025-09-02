@@ -55,7 +55,7 @@ def signin():
         sidequest_user = SideQuestUser.query.filter_by(user_id=user.id).first()
         if not sidequest_user:
             user_service = UserService(db.session)
-            sidequest_user = user_service.create_user(user.id)
+            sidequest_user = user_service.create_user(user.id, {})
             logger.debug(f"SideQuest profile created for user {user.id}")
 
         # Create long-lived access token (1 year) - simpler for mobile
@@ -125,7 +125,7 @@ def anonymous_signin():
                     "Invalid device UUID format", "INVALID_UUID_FORMAT", 400
                 )
 
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
             print("Invalid device UUID format")
             print(e)
             return error_response(
@@ -153,7 +153,7 @@ def anonymous_signin():
 
             logger.info(f"Creating new SideQuest profile for anonymous user {user.id}")
 
-            sidequest_user = user_service.create_user(user.id)
+            sidequest_user = user_service.create_user(user.id, {})
             logger.debug(f"SideQuest profile created for anonymous user {user.id}")
 
         profile_data = data.get("profile", {})
