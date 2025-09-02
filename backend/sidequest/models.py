@@ -80,9 +80,18 @@ class SideQuestUser(db.Model):
     last_quest_generation = db.Column(db.DateTime, nullable=True)
 
     # Timestamps
-    created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
+    from sqlalchemy import func
+
     updated_at = db.Column(
-        db.DateTime, nullable=False, default=db.func.now(), onupdate=db.func.now()
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=func.now(),
     )
 
     # Relationships
@@ -173,15 +182,26 @@ class SideQuest(db.Model):
     time_spent = db.Column(db.Integer, nullable=True)  # in minutes
 
     # Generation metadata
-    generated_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    generated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
     expires_at = db.Column(db.DateTime, nullable=False)
     model_used = db.Column(db.String(100), nullable=True)  # LLM model used
     fallback_used = db.Column(db.Boolean, nullable=False, default=False)
 
     # Timestamps
-    created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
     updated_at = db.Column(
-        db.DateTime, nullable=False, default=db.func.now(), onupdate=db.func.now()
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     def __init__(self, **kwargs):
@@ -316,7 +336,11 @@ class QuestGenerationLog(db.Model):
     tokens_used = db.Column(db.Integer, nullable=True)
 
     # Timestamps
-    created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
 
     # Relationships
     user = db.relationship("User", backref="sidequest_generation_logs")
@@ -354,13 +378,24 @@ class QuestBoard(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     # Board metadata
-    last_refreshed = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    last_refreshed = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
     is_active = db.Column(db.Boolean, nullable=False, default=True)
 
     # Timestamps
-    created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
     updated_at = db.Column(
-        db.DateTime, nullable=False, default=db.func.now(), onupdate=db.func.now()
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
     )
 
     # Relationships
