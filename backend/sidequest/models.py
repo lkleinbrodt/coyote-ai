@@ -498,3 +498,39 @@ class QuestTemplate(db.Model):
             "updated_at": self.updated_at.isoformat(),
         }
         return humps.camelize(template_dict)
+
+
+class QuestTemplateVote(db.Model):
+    """Vote on a quest template"""
+
+    __table_args__ = {"schema": "sidequest"}
+    __tablename__ = "sidequest_quest_template_votes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    quest_template_id = db.Column(
+        db.Integer,
+        db.ForeignKey("sidequest.sidequest_quest_templates.id"),
+        nullable=False,
+    )
+    vote = db.Column(db.Enum(QuestRating), nullable=False)  # thumbs_up or thumbs_down
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
+
+    # Relationships
+    user = db.relationship("User", backref="quest_template_votes")
+    quest_template = db.relationship("QuestTemplate", backref="votes")
+
+    def to_dict(self):
+        vote_dict = {
+            "id": self.id,
+            "user_id": self.user_id,
+            "quest_template_id": self.quest_template_id,
+            "vote": self.vote.value if self.vote else None,
+            "created_at": self.created_at.isoformat(),
+        }
+        return humps.camelize(vote_dict)

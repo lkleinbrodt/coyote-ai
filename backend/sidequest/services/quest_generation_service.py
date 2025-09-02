@@ -101,18 +101,18 @@ class QuestGenerationService:
         serialized_context = (
             self._serialize_datetime_objects(context) if context else None
         )
-
-        log_entry = QuestGenerationLog(
-            user_id=user_id,
-            request_preferences=serialized_preferences,
-            context_data=serialized_context,
-            quests_generated=len(quest_data),
-            model_used=model_used,
-            fallback_used=fallback_used,
-            generation_time_ms=generation_time_ms,
-            tokens_used=tokens_used,
-        )
-        self.db.add(log_entry)
+        if user_id is not None:
+            log_entry = QuestGenerationLog(
+                user_id=user_id,
+                request_preferences=serialized_preferences,
+                context_data=serialized_context,
+                quests_generated=len(quest_data),
+                model_used=model_used,
+                fallback_used=fallback_used,
+                generation_time_ms=generation_time_ms,
+                tokens_used=tokens_used,
+            )
+            self.db.add(log_entry)
         return quest_data
 
     def _generate_with_llm(
