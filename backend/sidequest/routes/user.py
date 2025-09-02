@@ -341,7 +341,9 @@ def get_user_profile():
         user_service = UserService(db.session)
         profile = user_service.get_or_create_user_profile(user_id)
         logger.info(f"Profile fetched for user {user_id}: {profile.to_dict()}")
-        return success_response(profile.to_dict())
+
+        data = profile.to_dict()
+        return success_response(data)
 
     except Exception as e:
         logger.error(f"Error fetching preferences: {str(e)}", exc_info=True)
@@ -414,3 +416,14 @@ def complete_onboarding():
     except Exception as e:
         logger.error(f"Error completing onboarding: {str(e)}", exc_info=True)
         return error_response("Failed to complete onboarding", "INTERNAL_ERROR", 500)
+
+
+@sidequest_bp.route("/local-time", methods=["GET"])
+@jwt_required()
+def get_local_time():
+    """Get user's local time"""
+    user_id = get_jwt_identity()
+    user_service = UserService(db.session)
+    return success_response(
+        {"localTime": user_service.get_user_time(user_id).isoformat()}
+    )
