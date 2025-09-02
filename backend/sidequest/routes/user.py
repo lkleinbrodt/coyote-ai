@@ -54,13 +54,8 @@ def signin():
         # Check if user needs a SideQuest profile created
         sidequest_user = SideQuestUser.query.filter_by(user_id=user.id).first()
         if not sidequest_user:
-            logger.info(f"Creating new SideQuest profile for user {user.id}")
-            sidequest_user = SideQuestUser(
-                user_id=user.id,
-                onboarding_completed=False,  # New users need to complete onboarding
-            )
-            db.session.add(sidequest_user)
-            db.session.commit()
+            user_service = UserService(db.session)
+            sidequest_user = user_service.create_user(user.id)
             logger.debug(f"SideQuest profile created for user {user.id}")
 
         # Create long-lived access token (1 year) - simpler for mobile
@@ -125,11 +120,14 @@ def anonymous_signin():
 
             # Specifically reject anything not version 4
             if parsed_uuid.version != 4:
+                print(parsed_uuid.version)
                 return error_response(
                     "Invalid device UUID format", "INVALID_UUID_FORMAT", 400
                 )
 
         except (ValueError, TypeError):
+            print("Invalid device UUID format")
+            print(e)
             return error_response(
                 "Invalid device UUID format", "INVALID_UUID_FORMAT", 400
             )
@@ -149,15 +147,18 @@ def anonymous_signin():
 
         # Check if user needs a SideQuest profile created
         sidequest_user = SideQuestUser.query.filter_by(user_id=user.id).first()
+        user_service = UserService(db.session)
         if not sidequest_user:
+            # If they provide initial profile data, use it
+
             logger.info(f"Creating new SideQuest profile for anonymous user {user.id}")
-            sidequest_user = SideQuestUser(
-                user_id=user.id,
-                onboarding_completed=False,  # New users need to complete onboarding
-            )
-            db.session.add(sidequest_user)
-            db.session.commit()
+
+            sidequest_user = user_service.create_user(user.id)
             logger.debug(f"SideQuest profile created for anonymous user {user.id}")
+
+        profile_data = data.get("profile", {})
+        if profile_data:
+            sidequest_user = user_service.update_user_profile(user.id, profile_data)
 
         # Create long-lived access token (1 year) - same as Apple users
         access_token = create_access_token(
@@ -191,107 +192,6 @@ def anonymous_signin():
         logger.error(f"Anonymous signin error: {str(e)}", exc_info=True)
         print(e)
         return error_response("Anonymous signin failed", "INTERNAL_ERROR", 500)
-
-
-@sidequest_bp.route("/auth/anonymous/create-with-preferences", methods=["POST"])
-def create_user_with_preferences():
-    """Create anonymous user with preferences (for new users completing onboarding)"""
-    logger.info("Create user with preferences route accessed")
-
-    try:
-        data = request.get_json(silent=True)
-        if not data:
-            return error_response("No data provided", "MISSING_DATA", 400)
-
-        # Extract device UUID from request
-        device_uuid = data.get("device_uuid")
-        if not device_uuid:
-            return error_response("No device UUID provided", "MISSING_DEVICE_UUID", 400)
-
-        # Validate UUID format - only accept UUID v4
-        try:
-            import uuid
-
-            parsed_uuid = uuid.UUID(device_uuid)
-            if parsed_uuid.version != 4:
-                return error_response(
-                    "Invalid device UUID format", "INVALID_UUID_FORMAT", 400
-                )
-        except (ValueError, TypeError):
-            return error_response(
-                "Invalid device UUID format", "INVALID_UUID_FORMAT", 400
-            )
-
-        # Check if user already exists
-        existing_user = User.query.filter_by(anon_id=device_uuid).first()
-        if existing_user:
-            return error_response("User already exists", "USER_EXISTS", 400)
-
-        # Create new anonymous user
-        logger.info(f"Creating new anonymous user with device UUID: {device_uuid}")
-        user = User(anon_id=device_uuid)
-        db.session.add(user)
-        db.session.commit()
-        logger.debug(f"Anonymous user created with ID: {user.id}")
-
-        # Create SideQuest profile with preferences
-        preferences = data.get("preferences", {})
-        notifications_enabled = data.get("notifications_enabled", True)
-        notification_time = data.get("notification_time", "07:00")
-        timezone = data.get("timezone", "UTC")
-
-        sidequest_user = SideQuestUser(
-            user_id=user.id,
-            categories=preferences.get(
-                "categories", ["fitness", "social", "mindfulness"]
-            ),
-            difficulty=QuestDifficulty(preferences.get("difficulty", "easy")),
-            max_time=preferences.get("max_time", 15),
-            include_completed=preferences.get("include_completed", True),
-            include_skipped=preferences.get("include_skipped", False),
-            notifications_enabled=notifications_enabled,
-            notification_time=datetime.strptime(notification_time, "%H:%M").time(),
-            timezone=timezone,
-            onboarding_completed=True,  # User has completed onboarding
-        )
-        db.session.add(sidequest_user)
-        db.session.commit()
-        logger.debug(f"SideQuest profile created for user {user.id} with preferences")
-
-        # Create long-lived access token (1 year)
-        access_token = create_access_token(
-            identity=str(user.id),
-            additional_claims={
-                "anon_id": user.anon_id,
-                "name": user.name,
-                "email": user.email,
-                "image": user.image,
-                "role": getattr(user, "role", "user"),
-            },
-            expires_delta=timedelta(days=365),  # 1 year token
-        )
-
-        logger.info(f"User created with preferences successful for user {user.id}")
-
-        return success_response(
-            {
-                "access_token": access_token,
-                "user": {
-                    "id": str(user.id),
-                    "name": user.name,
-                    "email": user.email,
-                    "image": user.image,
-                    "role": getattr(user, "role", "user"),
-                },
-            },
-        )
-
-    except Exception as e:
-        logger.error(f"Create user with preferences error: {str(e)}", exc_info=True)
-        print(e)
-        return error_response(
-            "Create user with preferences failed", "INTERNAL_ERROR", 500
-        )
 
 
 @sidequest_bp.route("/health", methods=["GET"])
@@ -427,3 +327,13 @@ def get_local_time():
     return success_response(
         {"localTime": user_service.get_user_time(user_id).isoformat()}
     )
+
+
+@sidequest_bp.route("/me/reset", methods=["POST"])
+@jwt_required()
+def reset_user_profile():
+    """Reset user profile"""
+    user_id = get_jwt_identity()
+    user_service = UserService(db.session)
+    user_service.reset_user_profile(user_id)
+    return success_response({"message": "User profile reset successfully"})

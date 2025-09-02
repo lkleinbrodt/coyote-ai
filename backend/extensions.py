@@ -10,7 +10,7 @@ jwt = JWTManager()
 migrate = Migrate(render_as_batch=True)
 
 
-def create_logger(name, level="INFO"):
+def create_logger(name, level="DEBUG"):
     # Create a logger instance
     logger = logging.getLogger(name)
 

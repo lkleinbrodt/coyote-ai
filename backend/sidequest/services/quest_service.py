@@ -45,6 +45,7 @@ class QuestService:
 
         A board needs refreshing if it has not been refreshed during the user's current calendar day
         """
+        logger.debug(f"Checking if board needs refresh for user {user_id}")
         sidequest_user = self.db.query(SideQuestUser).filter_by(user_id=user_id).first()
         if not sidequest_user:
             raise ValueError(f"SideQuestUser not found for user {user_id}")
@@ -92,6 +93,7 @@ class QuestService:
         last_refreshed_day = last_refreshed_tz.replace(
             hour=0, minute=0, second=0, microsecond=0
         )
+        last_refreshed_day = last_refreshed_day.replace(tzinfo=user_tz)
 
         needs_refresh = last_refreshed_day < current_day
         logger.debug(
@@ -192,7 +194,7 @@ class QuestService:
             self.refresh_board(user_id)
         else:
             logger.info(
-                f"Board does not need refresh for user {user_id}, top up needed"
+                f"Board does not need refresh for user {user_id}, checking if board needs top up"
             )
             self.populate_board(user_id)
 

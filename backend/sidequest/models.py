@@ -150,6 +150,36 @@ class SideQuestUser(db.Model):
         # Convert all keys to camelCase for the API response
         return humps.camelize(quest_dict)
 
+    def set_categories(self, categories: list[QuestCategory]):
+        assert isinstance(categories, list)
+        assert all(isinstance(category, QuestCategory) for category in categories)
+        self.categories = categories
+        self.updated_at = datetime.utcnow()
+        db.session.commit()
+        return self
+
+    def set_difficulty(self, difficulty: QuestDifficulty):
+        assert isinstance(difficulty, QuestDifficulty)
+        self.difficulty = difficulty
+        self.updated_at = datetime.utcnow()
+        db.session.commit()
+        return self
+
+    def reset(self):
+        """Reset user profile"""
+        self.categories = []
+        self.difficulty = QuestDifficulty.MEDIUM
+        self.max_time = 15
+        self.include_completed = True
+        self.include_skipped = True
+        self.notifications_enabled = True
+        self.notification_time = datetime.strptime("07:00", "%H:%M").time()
+        self.timezone = "UTC"
+        self.onboarding_completed = False
+        self.updated_at = datetime.utcnow()
+        db.session.commit()
+        return self
+
 
 class SideQuest(db.Model):
     """Individual quest instances"""
