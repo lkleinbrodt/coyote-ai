@@ -155,7 +155,7 @@ class QuestGenerationService:
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a creative quest generator for SideQuest, an app that provides personalized daily challenges. Generate fun, achievable quests that match user preferences.",
+                        "content": "You are a creative quest generator for SideQuest, an app that provides personalized daily challenges. Generate fun, achievable quests that match user preferences. Always keep a quest to a single idea.",
                     },
                     {"role": "user", "content": prompt},
                 ],
@@ -249,19 +249,20 @@ Here are some examples of quests that users have liked:
 1. **Mix of time scales per batch**
    - Micro (1–5 min): ~30%
    - Medium (10–30 min): ~50%
-   - Ambitious (1+ hr / multi-step): ~20% (`"ambitious": true`)  
-     Ambitious quests may exceed {max_time}.
+   - Ambitious (1+ hr / multi-step): ~20% 
 2. **Category coverage**  
    Cover most of: fitness, social, mindfulness, chores (quest-framed), hobbies, outdoors, learning, creativity.  
    Do not over-index on fitness/micro-mindfulness.
 3. **Boundary-pushing quota**  
    ≥20% should feel unusual, adventurous, or experimental.
-4. **Quest chains**  
-   Occasionally create 2–3 step arcs across the day (morning → afternoon → evening)..
+4. **One Item per Quest**
+   Each quest should be a single idea. Do not ask the user to do one thing and then another after that.
 6. **Assignment over choice**  
-   Always assign specifics.
+   Always assign specifics (ex. if you mention the user to research a topic, you must provide the topic).
 7. **No repeated skeletons**  
    Avoid duplicate structures in a batch.
+8. **Fun and variety are key**
+   Try to make your quests different from the examples. They must be actually fun for a human to do.
 
 ### JSON Output Format
 
