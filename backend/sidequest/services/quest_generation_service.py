@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from backend.extensions import create_logger
 from backend.sidequest.fallback_quests import fallback_quests
+from backend.sidequest.good_quests import GOOD_QUESTS
 
 from backend.sidequest.models import (
     QuestCategory,
@@ -27,7 +28,7 @@ class QuestGenerationService:
         self.db = db_session
         from backend.src.OpenRouter import OpenRouterClient
 
-        self.model = "meta-llama/llama-3.3-70b-instruct"
+        self.model = "openai/gpt-5"
 
         self.client = OpenRouterClient(
             default_model=self.model,
@@ -165,6 +166,9 @@ class QuestGenerationService:
         difficulty = preferences.get("difficulty", "medium")
         max_time = preferences.get("max_time", 15)
 
+        # TODO: tailor examples to the user's preferences
+        examples = random.sample(GOOD_QUESTS, min(len(GOOD_QUESTS), 4))
+
         context_str = ""
         if context:
             context = self._serialize_datetime_objects(context)
@@ -185,6 +189,9 @@ User Preferences:
 {user_custom_prompt}
 
 {context_str}
+
+Here are some examples of quests that users have liked:
+{', '.join(examples)}
 
 ## Design Guide
 
