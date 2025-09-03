@@ -41,9 +41,10 @@ class VotingService:
         ).filter_by(user_id=user_id)
 
         available_templates = (
-            self.db.query(QuestTemplate)
-            .filter(not_(QuestTemplate.id.in_(voted_template_ids)))
-            .limit(limit)
+            self.db.query(QuestTemplate).filter(
+                not_(QuestTemplate.id.in_(voted_template_ids))
+            )
+            # .limit(limit)
             .all()
         )
 
@@ -57,7 +58,8 @@ class VotingService:
             new_templates = self._generate_voting_templates(n_needed)
             available_templates.extend(new_templates)
 
-        return available_templates[:limit]
+        # randomly choose limit templates
+        return random.sample(available_templates, limit)
 
     def _generate_voting_templates(self, n_quests: int) -> List[QuestTemplate]:
         """Generate new quest templates specifically for voting

@@ -41,7 +41,7 @@ def test_board_generation_and_completion(app, test_sidequest_user):
             {
                 "quests": [
                     {
-                        "text": "Walk",
+                        "text": "Walk the dog for 5 minutes",
                         "category": "fitness",
                         "estimated_time": "5 minutes",
                         "difficulty": "easy",
@@ -51,7 +51,8 @@ def test_board_generation_and_completion(app, test_sidequest_user):
             }
         )
         service.quest_generation_service.client = mock_client
-        board = service.top_up_or_refresh_board(test_sidequest_user.user_id)
+        board = service.refresh_board(test_sidequest_user.user_id)
+        print(board.quests.all())
         quest = board.quests.first()
         quest = service.update_quest_status(quest.id, "accepted")
         quest = service.update_quest_status(
@@ -67,6 +68,7 @@ def test_board_generation_and_completion(app, test_sidequest_user):
         )
         assert quest.status == QuestStatus.COMPLETED
         assert quest.feedback_rating == QuestRating.THUMBS_UP
+        assert quest.text == "Walk the dog for 5 minutes"
 
 
 def test_health_endpoint(client):

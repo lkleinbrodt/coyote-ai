@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from zoneinfo import ZoneInfo
 
@@ -109,13 +110,6 @@ class QuestService:
 
         quest_board.cleanup()
 
-    def generate_context(self, user_id: int):
-        """Generate the context for the quest generation"""
-        return {
-            "timeOfDay": self.user_service.get_user_time(user_id),
-            "dayOfWeek": self.user_service.get_user_time(user_id).strftime("%A"),
-        }
-
     def populate_board(self, user_id: int):
         """Populate the quest board for a user with new quests"""
         logger.info(f"Populating quest board with new quests for user {user_id}")
@@ -147,36 +141,44 @@ class QuestService:
             logger.info(f"No quests needed for user {user_id}, returning")
             return
 
-        quests = self.quest_generation_service.generate_quest_template_data(
-            user_id=user_id,
-            preferences=preferences,
-            context=self.generate_context(user_id),
-            n_quests=n_quests_needed,
-        )
+        new_templates = []
 
-        quest_objects = []
+        # before we generate new quests, we should see if there are any potential templates that are not already on the board
+        potential_templates = self.get_potential_templates(user_id, n_quests_needed)
 
-        for quest_data in quests:
-            template = QuestTemplate(
-                text=quest_data.get("text"),
-                category=quest_data.get("category"),
-                estimated_time=quest_data.get("estimated_time"),
-                difficulty=quest_data.get("difficulty"),
-                tags=quest_data.get("tags"),
-                model_used=quest_data.get("model_used"),
-                fallback_used=quest_data.get("fallback_used"),
-                owner_user_id=user_id,
+        new_templates.extend(potential_templates)
+
+        n_quests_needed = n_quests_needed - len(potential_templates)
+
+        if n_quests_needed > 0:
+            quests = self.quest_generation_service.generate_quest_template_data(
+                user_id=user_id,
+                preferences=preferences,
+                n_quests=n_quests_needed,
             )
-            self.db.add(template)
-            self.db.flush()  # Get the template ID
+            for quest_data in quests:
+                template = QuestTemplate(
+                    text=quest_data.get("text"),
+                    category=quest_data.get("category"),
+                    estimated_time=quest_data.get("estimated_time"),
+                    difficulty=quest_data.get("difficulty"),
+                    tags=quest_data.get("tags"),
+                    model_used=quest_data.get("model_used"),
+                    fallback_used=quest_data.get("fallback_used"),
+                    owner_user_id=user_id,
+                )
+                self.db.add(template)
+                self.db.flush()  # Get the template ID
 
+                new_templates.append(template)
+
+        for template in new_templates:
             quest = UserQuest(
                 user_id=user_id,
                 quest_template_id=template.id,
                 quest_board_id=quest_board.id,
-                resolved_text=quest_data.get("text"),
+                resolved_text=template.text,
             )
-            quest_objects.append(quest)
             self.db.add(quest)
 
         user_profile = self.user_service.get_or_create_user_profile(user_id)
@@ -184,7 +186,6 @@ class QuestService:
 
         self.db.commit()
 
-        logger.info(f"Generated {len(quest_objects)} new quests for user {user_id}")
         return True
 
     def refresh_board(self, user_id: int):
@@ -288,3 +289,28 @@ class QuestService:
             )
             return False
         return True
+
+    def get_potential_templates(
+        self, user_id: int, n_templates: int = 3
+    ) -> List[QuestTemplate]:
+        """Get the potential templates for a user.
+        To be potential we shouuld grab all quest tempaltes that are:
+        1) have never been shown to the user before (they have no user quests associated with them)
+        2) are either owned by the user or have no owner
+
+        """
+
+        valid_templates = self.db.query(QuestTemplate).filter(
+            or_(
+                QuestTemplate.owner_user_id == user_id,
+                QuestTemplate.owner_user_id is None,
+            )
+        )
+
+        valid_templates = valid_templates.filter(
+            QuestTemplate.id.notin_(
+                self.db.query(UserQuest.quest_template_id).filter_by(user_id=user_id)
+            )
+        )
+
+        return valid_templates.limit(n_templates).all()

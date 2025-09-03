@@ -30,6 +30,7 @@ def test_sidequest_user(app, test_user):
         max_time=15,
         notifications_enabled=True,
         onboarding_completed=True,
+        additional_notes="I like to go for walks in the morning.",
     )
     db.session.add(sidequest_user)
     db.session.commit()

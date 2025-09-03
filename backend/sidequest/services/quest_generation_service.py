@@ -27,6 +27,9 @@ class QuestGenerationService:
     def __init__(self, db_session: Session, openai_api_key: str = None):
         self.db = db_session
         from backend.src.OpenRouter import OpenRouterClient
+        from backend.sidequest.services.user_service import UserService
+
+        self.user_service = UserService(db_session)
 
         self.model = Config.QUEST_GENERATION_MODEL
 
@@ -51,11 +54,24 @@ class QuestGenerationService:
         else:
             return data
 
+    def generate_context(self, user_id: int):
+        """Generate the context for the quest generation"""
+        return {
+            "timeOfDay": self.user_service.get_user_time(user_id),
+            "dayOfWeek": self.user_service.get_user_time(user_id).strftime("%A"),
+        }
+
+    def generate_user_string(self, user_id: int):
+        """Generate the user string for the quest generation"""
+        user_additional_notes = self.user_service.get_or_create_user_profile(
+            user_id
+        ).additional_notes
+        return user_additional_notes
+
     def generate_quest_template_data(
         self,
         user_id: int,
         preferences: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
         n_quests: int = 3,
     ) -> List[Dict[str, Any]]:
         """Generate n_quests personalized daily quests for a user"""
@@ -64,8 +80,13 @@ class QuestGenerationService:
         model_used = None
         tokens_used = None
 
+        context = self.generate_context(user_id)
+        user_string = self.generate_user_string(user_id)
+
         try:
-            quests = self._generate_with_llm(preferences, context, n_quests)
+            quests = self._generate_with_llm(
+                preferences, context, user_string, n_quests
+            )
             # Try LLM generation first
             model_used = self.model
             fallback_used = False
@@ -81,7 +102,7 @@ class QuestGenerationService:
             logger.warning(
                 f"LLM generation failed for user {user_id}: {str(e)}. Using fallback."
             )
-            raise e
+
             # Fall back to curated quests
             quests = self._generate_fallback_quests(preferences, n_quests)
             fallback_used = True
@@ -121,10 +142,13 @@ class QuestGenerationService:
         self,
         preferences: Dict[str, Any],
         context: Optional[Dict[str, Any]] = None,
+        user_string: Optional[str] = None,
         n_quests: int = 3,
     ) -> List[Dict[str, Any]]:
         """Generate quests using OpenAI API"""
-        prompt = self._build_quest_generation_prompt(preferences, context, n_quests)
+        prompt = self._build_quest_generation_prompt(
+            preferences, context, user_string, n_quests
+        )
 
         try:
             content = self.client.chat(
@@ -161,6 +185,7 @@ class QuestGenerationService:
         self,
         preferences: Dict[str, Any],
         context: Optional[Dict[str, Any]] = None,
+        user_string: Optional[str] = None,
         n_quests: int = 3,
     ) -> str:
         """Build the prompt for quest generation"""
@@ -176,6 +201,8 @@ class QuestGenerationService:
             context = self._serialize_datetime_objects(context)
             context_str = f"\nContext: {json.dumps(context, indent=2)}"
         user_custom_prompt = ""
+        if user_string:
+            user_custom_prompt = f"{user_string}"
         return f"""
 You are SideQuest’s quest designer. Generate {n_quests} personalized daily quests to display to the user.
 
@@ -188,8 +215,10 @@ User Preferences:
 
 - Categories: {', '.join(categories)}
 
+Additional information about the user:
 {user_custom_prompt}
 
+Context at time of generation:
 {context_str}
 
 Here are some examples of quests that users have liked:
