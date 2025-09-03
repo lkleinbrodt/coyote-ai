@@ -36,11 +36,9 @@ class VotingService:
         logger.debug(f"Getting {limit} quest templates to vote on for user {user_id}")
 
         # Get quest templates the user hasn't voted on
-        voted_template_ids = (
-            self.db.query(QuestTemplateVote.quest_template_id)
-            .filter_by(user_id=user_id)
-            .subquery()
-        )
+        voted_template_ids = self.db.query(
+            QuestTemplateVote.quest_template_id
+        ).filter_by(user_id=user_id)
 
         available_templates = (
             self.db.query(QuestTemplate)

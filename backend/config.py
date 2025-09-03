@@ -99,6 +99,10 @@ class Config:
     EMBEDDING_DIMENSION = 384
     DIALOGUE_EXTRACTION_MODEL = "anthropic/claude-3-haiku"
 
+    # SideQuest Config
+    QUEST_GENERATION_MODEL = "mistralai/mistral-large"
+    QUEST_METADATA_EXTRACTION_MODEL = "meta-llama/llama-3.3-70b-instruct"
+
 
 class DevelopmentConfig(Config):
     ENV = "development"

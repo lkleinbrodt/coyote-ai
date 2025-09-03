@@ -241,14 +241,39 @@ class UserQuest(db.Model):
             # This will be set when the quest_template relationship is loaded
             pass
 
+    @property
+    def text(self):
+        return self.resolved_text or (
+            self.quest_template.text if self.quest_template else None
+        )
+
+    @property
+    def category(self):
+        return self.quest_template.category if self.quest_template else None
+
+    @property
+    def difficulty(self):
+        return self.quest_template.difficulty if self.quest_template else None
+
+    @property
+    def tags(self):
+        return self.quest_template.tags if self.quest_template else None
+
+    @property
+    def estimated_time(self):
+        return self.quest_template.estimated_time if self.quest_template else None
+
     def to_dict(self):
         template_info = self.quest_template.to_dict() if self.quest_template else None
 
         quest_dict = {
             "id": str(self.id),  # Convert to string for frontend compatibility
             "user_id": self.user_id,
-            "text": self.resolved_text
-            or (self.quest_template.text if self.quest_template else None),
+            "text": self.text,
+            "category": self.category,
+            "difficulty": self.difficulty,
+            "tags": self.tags,
+            "estimated_time": self.estimated_time,
             "quest_board_id": self.quest_board_id,
             "quest_template_id": self.quest_template_id,
             "accepted_at": (self.accepted_at.isoformat() if self.accepted_at else None),

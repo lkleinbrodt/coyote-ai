@@ -4,9 +4,9 @@ import time
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-from openai import OpenAI
 from sqlalchemy.orm import Session
 
+from backend.config import Config
 from backend.extensions import create_logger
 from backend.sidequest.fallback_quests import fallback_quests
 from backend.sidequest.good_quests import GOOD_QUESTS
@@ -28,7 +28,7 @@ class QuestGenerationService:
         self.db = db_session
         from backend.src.OpenRouter import OpenRouterClient
 
-        self.model = "openai/gpt-5"
+        self.model = Config.QUEST_GENERATION_MODEL
 
         self.client = OpenRouterClient(
             default_model=self.model,
@@ -65,8 +65,8 @@ class QuestGenerationService:
         tokens_used = None
 
         try:
-            # Try LLM generation first
             quests = self._generate_with_llm(preferences, context, n_quests)
+            # Try LLM generation first
             model_used = self.model
             fallback_used = False
 
@@ -81,6 +81,7 @@ class QuestGenerationService:
             logger.warning(
                 f"LLM generation failed for user {user_id}: {str(e)}. Using fallback."
             )
+            raise e
             # Fall back to curated quests
             quests = self._generate_fallback_quests(preferences, n_quests)
             fallback_used = True
@@ -141,7 +142,8 @@ class QuestGenerationService:
             try:
                 quests_data = json.loads(content)
             except json.JSONDecodeError:
-                logger.error(f"Invalid JSON response: {content}")
+                logger.exception(f"Invalid JSON response: {content}")
+                logger.error(f"Content: {content}")
                 raise Exception("Invalid JSON response from LLM")
 
             # Validate and format the response

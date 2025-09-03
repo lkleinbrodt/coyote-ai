@@ -118,6 +118,8 @@ class QuestService:
 
     def populate_board(self, user_id: int):
         """Populate the quest board for a user with new quests"""
+        logger.info(f"Populating quest board with new quests for user {user_id}")
+
         quest_board = self.get_or_create_board(user_id)
 
         if not quest_board:
