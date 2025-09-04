@@ -275,13 +275,7 @@ def update_user_profile():
         user_service = UserService(db.session)
         profile = user_service.update_user_profile(user_id, snake_case_data)
 
-        return success_response(
-            {
-                "message": "Preferences updated successfully",
-                "preferences": profile.to_dict(),
-                "userId": user_id,
-            }
-        )
+        return success_response(profile.to_dict())
 
     except Exception as e:
         logger.error(f"Error updating preferences: {str(e)}", exc_info=True)
