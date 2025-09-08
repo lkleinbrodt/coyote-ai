@@ -117,6 +117,7 @@ class QuestService:
         quest_board = self.get_or_create_board(user_id)
 
         if not quest_board:
+            logger.info(f"Quest board not found for user {user_id}, creating...")
             quest_board = QuestBoard(user_id=user_id)
             self.db.add(quest_board)
             self.db.commit()
@@ -125,8 +126,6 @@ class QuestService:
         profile = self.user_service.get_or_create_user_profile(user_id)
         # Convert to dict to ensure datetime objects are serialized
         preferences = profile.to_dict()
-
-        # TODO: user custom prompt
 
         quest_board_quests = quest_board.quests.all()
         potential_quests = [
@@ -140,23 +139,36 @@ class QuestService:
         if n_quests_needed <= 0:
             logger.info(f"No quests needed for user {user_id}, returning")
             return
+        logger.info(f"User {user_id} needs {n_quests_needed} quests")
 
-        new_templates = []
+        """
+        We have 2 sources of quests:
+        - Creating a new quest template for the user and assigning it to them
+        - grabbing an existing quest template from the db and assigning it to the user
+        
+        If user only needs 1 quest:
+            We generate 1 new quest template and 0 existing quest templates
+        If user needs 2 or more quests:
+            We generate 1 new quest template for sure
+        And then half of all remaining templates are split between new and existing (if existing are available)
+        """
 
-        # before we generate new quests, we should see if there are any potential templates that are not already on the board
-        potential_templates = self.get_potential_templates(user_id, n_quests_needed)
+        if n_quests_needed == 1:
+            n_new_quests_needed = 1
+            n_existing_quests_needed = 0
+        else:
+            n_new_quests_needed = n_quests_needed // 2
+            n_existing_quests_needed = n_quests_needed - n_new_quests_needed
 
-        new_templates.extend(potential_templates)
-
-        n_quests_needed = n_quests_needed - len(potential_templates)
-
-        if n_quests_needed > 0:
-            quests = self.quest_generation_service.generate_quest_template_data(
+        templates_for_user = []
+        if n_new_quests_needed > 0:
+            new_quest_data = self.quest_generation_service.generate_quest_template_data(
                 user_id=user_id,
                 preferences=preferences,
-                n_quests=n_quests_needed,
+                n_quests=n_new_quests_needed,
             )
-            for quest_data in quests:
+            for quest_data in new_quest_data:
+                logger.info(f"Generating new quest for user {user_id}")
                 template = QuestTemplate(
                     text=quest_data.get("text"),
                     category=quest_data.get("category"),
@@ -170,15 +182,23 @@ class QuestService:
                 self.db.add(template)
                 self.db.flush()  # Get the template ID
 
-                new_templates.append(template)
+                templates_for_user.append(template)
 
-        for template in new_templates:
+        if n_existing_quests_needed > 0:
+            potential_templates = self.get_potential_templates(
+                user_id, n_existing_quests_needed
+            )
+            templates_for_user.extend(potential_templates)
+
+        for template in templates_for_user:
+            logger.info(f"Adding new quest to user {user_id}")
             quest = UserQuest(
                 user_id=user_id,
                 quest_template_id=template.id,
                 quest_board_id=quest_board.id,
                 resolved_text=template.text,
             )
+
             self.db.add(quest)
 
         user_profile = self.user_service.get_or_create_user_profile(user_id)
@@ -299,18 +319,23 @@ class QuestService:
         2) are either owned by the user or have no owner
 
         """
-
         valid_templates = self.db.query(QuestTemplate).filter(
             or_(
                 QuestTemplate.owner_user_id == user_id,
-                QuestTemplate.owner_user_id is None,
+                QuestTemplate.owner_user_id.is_(None),
             )
+        )
+        logger.info(
+            f"Found {valid_templates.count()} valid templates for user {user_id}"
         )
 
         valid_templates = valid_templates.filter(
             QuestTemplate.id.notin_(
                 self.db.query(UserQuest.quest_template_id).filter_by(user_id=user_id)
             )
+        )
+        logger.info(
+            f"Found {valid_templates.count()} valid templates for user {user_id} after filtering"
         )
 
         return valid_templates.limit(n_templates).all()
