@@ -34,17 +34,72 @@ const Privacy: React.FC = () => {
         <hr />
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">1. Apps covered</h2>
-          <p className="mb-4">
-            This policy applies to all apps published under my name, including
-            but not limited to SpeechWise.
+          <h2 className="text-2xl font-semibold mb-4">
+            1. App-Specific Privacy Policies
+          </h2>
+
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <h3 className="text-lg font-semibold text-green-800 mb-2">
+              Slate iOS App
+            </h3>
+            <p className="text-green-700 mb-2">
+              The Slate iOS app collects <strong>zero data whatsoever</strong>.
+              It operates entirely offline and does not collect, store, or
+              transmit any personal information, usage data, or analytics. This
+              app is completely privacy-focused with no data collection.
+            </p>
+            <p className="text-green-700 text-sm">
+              <strong>Data Collection:</strong> None
+              <br />
+              <strong>Data Storage:</strong> None
+              <br />
+              <strong>Data Sharing:</strong> None
+              <br />
+              <strong>Analytics:</strong> None
+            </p>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h3 className="text-lg font-semibold text-blue-800 mb-2">
+              SpeechWise & Web Applications
+            </h3>
+            <p className="text-blue-700 mb-2">
+              These applications may collect and process data as described in
+              the general privacy policy below.
+            </p>
+            <p className="text-blue-700 text-sm">
+              <strong>Data Collection:</strong> Personal data, usage data,
+              cookies
+              <br />
+              <strong>Data Storage:</strong> As needed for service provision
+              <br />
+              <strong>Data Sharing:</strong> With service providers, as required
+              by law
+              <br />
+              <strong>Analytics:</strong> Usage analytics for service
+              improvement
+            </p>
+          </div>
+        </section>
+
+        <hr />
+
+        <section>
+          <h2 className="text-2xl font-semibold mb-4">
+            2. General Privacy Policy
+          </h2>
+          <p className="mb-4 text-sm text-gray-600">
+            <em>
+              This section applies to all other apps not specifically mentioned
+              above.
+            </em>
           </p>
         </section>
 
         <hr />
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">2. What I collect</h2>
+          <h2 className="text-2xl font-semibold mb-4">3. What I collect</h2>
           <ul className="list-disc pl-6 space-y-2 mb-4">
             <li>
               <strong>Personal Data:</strong> e.g., name, email address if you
@@ -65,7 +120,7 @@ const Privacy: React.FC = () => {
 
         <section>
           <h2 className="text-2xl font-semibold mb-4">
-            3. How I use your data
+            4. How I use your data
           </h2>
           <ul className="list-disc pl-6 space-y-2 mb-4">
             <li>Provide, maintain, and improve my apps and website.</li>
@@ -79,7 +134,7 @@ const Privacy: React.FC = () => {
         <hr />
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">4. Sharing your data</h2>
+          <h2 className="text-2xl font-semibold mb-4">5. Sharing your data</h2>
           <ul className="list-disc pl-6 space-y-2 mb-4">
             <li>
               With trusted service providers (e.g., analytics tools) to help run
@@ -98,7 +153,7 @@ const Privacy: React.FC = () => {
 
         <section>
           <h2 className="text-2xl font-semibold mb-4">
-            5. Data storage & security
+            6. Data storage & security
           </h2>
           <p className="mb-4">
             I keep your data only as long as needed for the purposes above. I
@@ -109,12 +164,12 @@ const Privacy: React.FC = () => {
         <hr />
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">6. Your choices</h2>
+          <h2 className="text-2xl font-semibold mb-4">7. Your choices</h2>
           <ul className="list-disc pl-6 space-y-2 mb-4">
             <li>You can usually manage cookies in your browser settings.</li>
             <li>
               You may contact me to access, correct, or delete your data (unless
-              I’m legally required to keep it).
+              I'm legally required to keep it).
             </li>
           </ul>
         </section>
@@ -122,7 +177,7 @@ const Privacy: React.FC = () => {
         <hr />
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">7. Children’s privacy</h2>
+          <h2 className="text-2xl font-semibold mb-4">8. Children's privacy</h2>
           <p className="mb-4">
             My services are not intended for children under 13. I do not
             knowingly collect personal data from children under 13. If you think
@@ -133,17 +188,17 @@ const Privacy: React.FC = () => {
         <hr />
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">8. External links</h2>
+          <h2 className="text-2xl font-semibold mb-4">9. External links</h2>
           <p className="mb-4">
-            My services may link to other sites I don’t control. Please review
-            their privacy policies — I’m not responsible for them.
+            My services may link to other sites I don't control. Please review
+            their privacy policies — I'm not responsible for them.
           </p>
         </section>
 
         <hr />
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">9. Changes</h2>
+          <h2 className="text-2xl font-semibold mb-4">10. Changes</h2>
           <p className="mb-4">
             I may update this Privacy Policy from time to time. Changes will be
             posted here with an updated date. Please review periodically.
@@ -153,7 +208,7 @@ const Privacy: React.FC = () => {
         <hr />
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">10. Contact</h2>
+          <h2 className="text-2xl font-semibold mb-4">11. Contact</h2>
           <p className="mb-4">Questions? Contact me:</p>
           <ul className="list-disc pl-6 space-y-2 mb-4">
             <li>
@@ -181,37 +236,7 @@ const Privacy: React.FC = () => {
 
         <hr />
 
-        <section>
-          <h2 className="text-xl font-semibold mb-2">How to adapt</h2>
-          <ul className="list-disc pl-6 space-y-2 mb-4">
-            <li>Add/remove apps in the “Apps covered” section.</li>
-            <li>
-              If one app does something unique (e.g., uses location, mic, or has
-              accounts) — add a line for that under “What I collect”.
-            </li>
-            <li>
-              Keep it hosted at a stable URL. Link to it in all your App Store
-              listings.
-            </li>
-          </ul>
-        </section>
-
         <hr />
-
-        <section>
-          <h2 className="text-xl font-semibold mb-2">Bottom line</h2>
-          <ol className="list-decimal pl-6 space-y-2 mb-4">
-            <li>Much clearer. Plain English &gt; legalese for solo devs.</li>
-            <li>
-              Easy to maintain. Just tweak the list of apps &amp; data types if
-              you launch more.
-            </li>
-            <li>
-              Covers your ass enough for the App Store and for basic privacy law
-              compliance.
-            </li>
-          </ol>
-        </section>
       </div>
     </div>
   );
