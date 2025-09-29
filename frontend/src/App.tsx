@@ -7,6 +7,7 @@ import AuthPage from "./pages/AuthPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import FloatingNav from "./components/FloatingNav";
 // import Consulting from "./pages/Consulting";
+import Help from "./pages/Help";
 import Landing from "./pages/Landing";
 import Login from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
@@ -47,6 +48,7 @@ function App() {
                   <Route path="/" element={<Landing />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/help" element={<Help />} />
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/terms" element={<Terms />} />
                   {/* <Route path="/consulting" element={<Consulting />} /> */}
