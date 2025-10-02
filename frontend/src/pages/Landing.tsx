@@ -28,7 +28,6 @@ const Landing: React.FC = () => {
       icon: theme === "dark" ? "icons/games-dark.png" : "icons/games-light.png",
       link: "/games",
       softwareType: "web",
-      // category: "games",
     },
     {
       title: "AutoDraft",
@@ -39,7 +38,6 @@ const Landing: React.FC = () => {
           : "icons/drafting-compass-light.png",
       link: "/autodraft",
       softwareType: "web",
-      // category: "aiTools",
     },
     {
       title: "Cheffrey",
@@ -51,7 +49,14 @@ const Landing: React.FC = () => {
           : "icons/chef_hat_stamp_light.png",
       link: "https://www.cheffrey.org/",
       softwareType: "mobile",
-      // category: "mobileApps",
+    },
+    {
+      title: "Slate",
+      description:
+        "Everyone loves a to-do app. I made one specifically for me.",
+      icon: theme === "dark" ? "icons/slate.png" : "icons/slate.png",
+      link: "https://apps.apple.com/us/app/slateplanner/id6752905295",
+      softwareType: "mobile",
     },
     {
       title: "CopyCat Bundler",
@@ -77,7 +82,6 @@ const Landing: React.FC = () => {
           : "icons/reminder-light.png",
       link: "https://reminder-mate.vercel.app/",
       softwareType: "web",
-      // category: "mobileApps",
     },
     // {
     //   title: "Character Explorer",

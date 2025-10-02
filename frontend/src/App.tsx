@@ -42,7 +42,7 @@ function App() {
         <AuthProvider>
           <div className="min-h-screen bg-background">
             <FloatingNav />
-            <main className="pt-[var(--navbar-height)]">
+            <main>
               <Suspense fallback={<LoadingFallback />}>
                 <Routes>
                   <Route path="/" element={<Landing />} />
