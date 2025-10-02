@@ -53,7 +53,7 @@ const Landing: React.FC = () => {
     {
       title: "Slate",
       description:
-        "Everyone loves a to-do app. I made one specifically for me.",
+        "Everyone loves a to-do app. I made one that works best for me.",
       icon: theme === "dark" ? "icons/slate.png" : "icons/slate.png",
       link: "https://apps.apple.com/us/app/slateplanner/id6752905295",
       softwareType: "mobile",
