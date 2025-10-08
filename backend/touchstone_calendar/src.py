@@ -25,6 +25,8 @@ from zoneinfo import ZoneInfo
 from typing import List, Dict, Any, Optional, Set
 from functools import lru_cache
 import openai
+import subprocess
+import os
 from backend.config import Config
 
 TOUCHSTONE_DIR = Config.BACKEND_DIR / "touchstone_calendar"
@@ -63,6 +65,9 @@ OUTPUT_ICS = TOUCHSTONE_DIR / "touchstone_calendar.ics"
 # Discovery caching configuration
 DISCOVERY_TTL_SECONDS = 24 * 60 * 60  # 1 day
 DISCOVERY_FILE = TOUCHSTONE_DIR / "touchstone_discovery.json"
+
+# Playwright browser configuration
+BROWSERS_PATH = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "/app/ms-playwright")
 
 # ---------- GraphQL ----------
 CAL_Q = """
@@ -103,57 +108,76 @@ def discover_for_gym(gym: str, page_url: str) -> dict:
     """
     logger.info(f"Discovering plan IDs and hashes for {gym} from {page_url}")
     from playwright.sync_api import sync_playwright
+    from playwright._impl._errors import Error as PWError
 
     plan_ids: Set[str] = set()
     hashes: Set[str] = set()
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+    def run_discovery():
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"]
+            )
+            page = browser.new_page()
 
-        def on_request(req):
-            if req.url.endswith("/graphql-public") and req.method == "POST":
-                try:
-                    body = req.post_data_json
-                    q = (body or {}).get("query", "")
-                    vars = (body or {}).get("variables") or {}
-                    if "StorefrontCalendarPlanQuery" in q:
-                        ids = vars.get("ids") or []
-                        logger.debug(f"Found {len(ids)} plan IDs in request for {gym}")
-                        for pid in ids:
-                            plan_ids.add(pid)
-                except Exception as e:
-                    logger.debug(f"Error parsing request for {gym}: {e}")
+            def on_request(req):
+                if req.url.endswith("/graphql-public") and req.method == "POST":
+                    try:
+                        body = req.post_data_json
+                        q = (body or {}).get("query", "")
+                        vars = (body or {}).get("variables") or {}
+                        if "StorefrontCalendarPlanQuery" in q:
+                            ids = vars.get("ids") or []
+                            logger.debug(
+                                f"Found {len(ids)} plan IDs in request for {gym}"
+                            )
+                            for pid in ids:
+                                plan_ids.add(pid)
+                    except Exception as e:
+                        logger.debug(f"Error parsing request for {gym}: {e}")
 
-        def on_response(resp):
-            if resp.url.endswith("/graphql-public") and resp.request.method == "POST":
-                try:
-                    j = resp.json()
-                    cal = ((j or {}).get("data") or {}).get("calendar") or []
-                    logger.debug(
-                        f"Found {len(cal)} calendar entries in response for {gym}"
-                    )
-                    for it in cal:
-                        h = it.get("sessionFacilityHash")
-                        if h:
-                            hashes.add(h)
-                except Exception as e:
-                    logger.debug(f"Error parsing response for {gym}: {e}")
+            def on_response(resp):
+                if (
+                    resp.url.endswith("/graphql-public")
+                    and resp.request.method == "POST"
+                ):
+                    try:
+                        j = resp.json()
+                        cal = ((j or {}).get("data") or {}).get("calendar") or []
+                        logger.debug(
+                            f"Found {len(cal)} calendar entries in response for {gym}"
+                        )
+                        for it in cal:
+                            h = it.get("sessionFacilityHash")
+                            if h:
+                                hashes.add(h)
+                    except Exception as e:
+                        logger.debug(f"Error parsing response for {gym}: {e}")
 
-        page.on("request", on_request)
-        page.on("response", on_response)
+            page.on("request", on_request)
+            page.on("response", on_response)
 
-        # Load and nudge a bit so the app fires its queries
-        logger.debug(f"Loading page for {gym}")
-        page.goto(page_url, wait_until="networkidle")
-        page.wait_for_timeout(800)
-        # Try paging a week to force additional loads
-        logger.debug(f"Triggering additional loads for {gym}")
-        page.keyboard.press("PageDown")
-        page.wait_for_timeout(800)
+            # Load and nudge a bit so the app fires its queries
+            logger.debug(f"Loading page for {gym}")
+            page.goto(page_url, wait_until="networkidle")
+            page.wait_for_timeout(800)
+            # Try paging a week to force additional loads
+            logger.debug(f"Triggering additional loads for {gym}")
+            page.keyboard.press("PageDown")
+            page.wait_for_timeout(800)
 
-        page.close()
-        browser.close()
+            page.close()
+            browser.close()
+
+    try:
+        run_discovery()
+    except PWError as e:
+        if "Executable doesn't exist" in str(e):
+            logger.warning("Chromium not found, installing...")
+            ensure_chromium()
+            run_discovery()
+        else:
+            raise
 
     logger.info(
         f"Discovery complete for {gym}: {len(plan_ids)} plan IDs, {len(hashes)} hashes"
@@ -315,6 +339,19 @@ def refresh_discovery() -> dict:
         gyms[gym] = discover_for_gym(gym, url)
         time.sleep(0.3)
     return _save_discovery({"gyms": gyms})
+
+
+# ---------- Playwright Browser Management ----------
+
+
+def ensure_chromium():
+    """Install Chromium if it's missing."""
+    logger.info("Installing Chromium browser...")
+    subprocess.check_call(
+        ["python", "-m", "playwright", "install", "chromium"],
+        env={**os.environ, "PLAYWRIGHT_BROWSERS_PATH": BROWSERS_PATH},
+    )
+    logger.info("Chromium installation complete")
 
 
 def categorize_title(title: str, cache: Dict[str, str]) -> str:
