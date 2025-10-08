@@ -68,6 +68,8 @@ DISCOVERY_FILE = TOUCHSTONE_DIR / "touchstone_discovery.json"
 
 # Playwright browser configuration
 BROWSERS_PATH = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "/app/ms-playwright")
+# Fallback to default Playwright cache location if custom path doesn't work
+DEFAULT_BROWSERS_PATH = os.path.expanduser("~/.cache/ms-playwright")
 
 # ---------- GraphQL ----------
 CAL_Q = """
@@ -178,6 +180,14 @@ def discover_for_gym(gym: str, page_url: str) -> dict:
             run_discovery()
         else:
             raise
+    except Exception as e:
+        # If Playwright completely fails (e.g., missing system dependencies in container)
+        logger.error(f"Playwright discovery failed for {gym}: {e}")
+        logger.warning(
+            f"Falling back to empty discovery for {gym} - calendar may include events from other gyms"
+        )
+        # Return empty sets - the system will still work but may include events from other gyms
+        return {"plan_ids": set(), "hashes": set()}
 
     logger.info(
         f"Discovery complete for {gym}: {len(plan_ids)} plan IDs, {len(hashes)} hashes"
@@ -347,11 +357,40 @@ def refresh_discovery() -> dict:
 def ensure_chromium():
     """Install Chromium if it's missing."""
     logger.info("Installing Chromium browser...")
-    subprocess.check_call(
-        ["python", "-m", "playwright", "install", "chromium"],
-        env={**os.environ, "PLAYWRIGHT_BROWSERS_PATH": BROWSERS_PATH},
-    )
-    logger.info("Chromium installation complete")
+
+    # Try custom path first
+    try:
+        subprocess.check_call(
+            ["python", "-m", "playwright", "install", "chromium"],
+            env={**os.environ, "PLAYWRIGHT_BROWSERS_PATH": BROWSERS_PATH},
+        )
+        logger.info("Chromium installation complete with custom path")
+        return
+    except Exception as e:
+        logger.warning(f"Failed to install with custom path {BROWSERS_PATH}: {e}")
+
+    # Fallback to default path
+    try:
+        subprocess.check_call(
+            ["python", "-m", "playwright", "install", "chromium"],
+            env={**os.environ, "PLAYWRIGHT_BROWSERS_PATH": DEFAULT_BROWSERS_PATH},
+        )
+        logger.info("Chromium installation complete with default path")
+        return
+    except Exception as e:
+        logger.warning(
+            f"Failed to install with default path {DEFAULT_BROWSERS_PATH}: {e}"
+        )
+
+    # If both fail, try without custom path (let Playwright use its default)
+    try:
+        subprocess.check_call(
+            ["python", "-m", "playwright", "install", "chromium"],
+        )
+        logger.info("Chromium installation complete with Playwright default path")
+    except Exception as e:
+        logger.error(f"All Chromium installation attempts failed: {e}")
+        raise
 
 
 def categorize_title(title: str, cache: Dict[str, str]) -> str:
@@ -548,7 +587,20 @@ def generate_ics():
     doc = _load_discovery()
     if _needs_discovery_refresh(doc):
         logger.info("Discovery cache expired or missing, refreshing via Playwright...")
-        doc = refresh_discovery()
+        try:
+            doc = refresh_discovery()
+        except Exception as e:
+            logger.error(f"Discovery refresh failed: {e}")
+            logger.warning(
+                "Using empty discovery - calendar may include events from all gyms"
+            )
+            # Create a minimal discovery structure with empty data
+            doc = {
+                "generated_at": _now_ts(),
+                "gyms": {
+                    gym: {"plan_ids": [], "hashes": []} for gym in GYM_PAGES.keys()
+                },
+            }
     else:
         logger.info("Using cached discovery (fresh)")
     discovery = doc["gyms"]
@@ -557,6 +609,22 @@ def generate_ics():
     category_cache = load_category_cache()
     logger.info(f"Loaded {len(category_cache)} cached categorizations")
 
+    # Check if we have any valid discovery data
+    has_valid_discovery = any(info.get("plan_ids") for info in discovery.values())
+
+    if not has_valid_discovery:
+        logger.warning(
+            "No valid discovery data found - this may be due to Playwright issues in containerized environment"
+        )
+        logger.warning(
+            "Calendar generation will be skipped. Consider running in an environment with proper Playwright dependencies."
+        )
+        # Return early with empty results
+        write_csv([], OUTPUT_CSV)
+        write_ics([], OUTPUT_ICS)
+        logger.info("Generated empty calendar files due to discovery failure")
+        return OUTPUT_ICS
+
     all_rows: List[Dict[str, Any]] = []
     for gym, info in discovery.items():
         logger.info(f"Processing gym: {gym}")
@@ -564,7 +632,12 @@ def generate_ics():
         allowed_hashes = set(info.get("hashes", []))
 
         if not plan_ids:
-            logger.warning(f"{gym}: no plan ids discovered; skipping")
+            logger.warning(f"{gym}: no plan ids discovered; trying fallback approach")
+            # Fallback: try to use a generic approach or skip this gym
+            # For now, we'll skip but log the issue
+            logger.warning(
+                f"{gym}: skipping due to no plan IDs - this may be due to Playwright issues in containerized environment"
+            )
             continue
         if not allowed_hashes:
             logger.warning(

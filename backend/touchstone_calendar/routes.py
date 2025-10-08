@@ -56,7 +56,11 @@ def ics_direct():
             generate_ics()  # make sure this is atomic (temp file + rename) inside the function
         except Exception as e:
             logger.exception("Initial generate failed")
-            abort(503, description="Calendar not available yet")
+            # Provide more specific error information
+            error_msg = "Calendar not available yet"
+            if "Playwright" in str(e) or "Chromium" in str(e):
+                error_msg = "Calendar generation failed due to browser dependencies. This may be a containerized environment issue."
+            abort(503, description=error_msg)
     return _serve_ics(OUTPUT_ICS)
 
 
@@ -99,6 +103,9 @@ def rebuild():
             jsonify({"message": "ICS rebuilt", "discovery_refreshed": force_discovery}),
             200,
         )
-    except Exception:
+    except Exception as e:
         logger.exception("Rebuild failed")
-        return jsonify({"error": "Rebuild failed"}), 500
+        error_msg = "Rebuild failed"
+        if "Playwright" in str(e) or "Chromium" in str(e):
+            error_msg = "Rebuild failed due to browser dependencies. This may be a containerized environment issue."
+        return jsonify({"error": error_msg}), 500
