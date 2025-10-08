@@ -12,6 +12,7 @@ from backend.billing.routes import billing_bp
 from backend.sidequest.models import *
 from backend.sidequest.routes import sidequest_bp
 from backend.speech.routes import speech_bp
+from backend.touchstone_calendar.routes import touchstone_calendar
 
 
 logger = create_logger(__name__, level="DEBUG")
@@ -28,6 +29,7 @@ api_bp.register_blueprint(speech_bp)
 api_bp.register_blueprint(poppy_bp, url_prefix="/poppy")
 api_bp.register_blueprint(explain_bp)
 api_bp.register_blueprint(sidequest_bp)
+api_bp.register_blueprint(touchstone_calendar)
 
 
 @base_bp.route("/")

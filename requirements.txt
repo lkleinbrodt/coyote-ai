@@ -34,3 +34,6 @@ aiohttp==3.12.15
 aiobotocore==2.13.3
 pyhumps==3.8.0
 pytest-docker==3.2.3
+requests
+playwright
+openai

@@ -1,3 +1,5 @@
+*.csv
+*.ics
 credentials.json
 icons/
 icons_processed/
