@@ -35,5 +35,7 @@ aiobotocore==2.13.3
 pyhumps==3.8.0
 pytest-docker==3.2.3
 requests
-playwright
 openai
+playwright
+# Note: Playwright is only needed for the discovery script (backend/touchstone_calendar/discovery_script.py)
+# Install with: pip install -r backend/touchstone_calendar/requirements_discovery.txt

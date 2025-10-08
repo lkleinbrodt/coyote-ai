@@ -56,11 +56,7 @@ def ics_direct():
             generate_ics()  # make sure this is atomic (temp file + rename) inside the function
         except Exception as e:
             logger.exception("Initial generate failed")
-            # Provide more specific error information
-            error_msg = "Calendar not available yet"
-            if "Playwright" in str(e) or "Chromium" in str(e):
-                error_msg = "Calendar generation failed due to browser dependencies. This may be a containerized environment issue."
-            abort(503, description=error_msg)
+            abort(503, description="Calendar not available yet")
     return _serve_ics(OUTPUT_ICS)
 
 
@@ -80,32 +76,12 @@ def rebuild():
         # 403 is fine for token mismatch
         return jsonify({"error": "Forbidden"}), 403
 
-    # Check for force discovery refresh
-    force_discovery = request.args.get("refresh") == "discovery"
-    if not force_discovery:
-        try:
-            json_data = request.get_json()
-            if json_data:
-                force_discovery = json_data.get("refresh") == "discovery"
-        except Exception:
-            pass  # Ignore JSON parsing errors
-
     try:
-        if force_discovery:
-            # Run the daily step now
-            from backend.touchstone_calendar.src import refresh_discovery
-
-            refresh_discovery()
-            logger.info("Discovery refreshed via webhook")
-
         generate_ics()  # ensure atomic write inside
         return (
-            jsonify({"message": "ICS rebuilt", "discovery_refreshed": force_discovery}),
+            jsonify({"message": "ICS rebuilt"}),
             200,
         )
-    except Exception as e:
+    except Exception:
         logger.exception("Rebuild failed")
-        error_msg = "Rebuild failed"
-        if "Playwright" in str(e) or "Chromium" in str(e):
-            error_msg = "Rebuild failed due to browser dependencies. This may be a containerized environment issue."
-        return jsonify({"error": error_msg}), 500
+        return jsonify({"error": "Rebuild failed"}), 500

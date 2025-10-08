@@ -1,9 +1,8 @@
 from io import BytesIO
 import boto3
-from ..config import Config
+from backend.config import Config
 import json
 import s3fs
-from llama_index.core import VectorStoreIndex
 
 
 def create_s3_client() -> boto3.client:
