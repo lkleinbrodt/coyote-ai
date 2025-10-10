@@ -265,8 +265,37 @@ def get_gym_url_slug(gym_name: str) -> str:
     return GYM_URL_SLUGS.get(gym_name, gym_name.lower().replace(" ", ""))
 
 
+def generate_class_slug(title: str, category: str, instructor_text: str) -> str:
+    """Generate URL slug for class registration based on category-specific rules."""
+    if category == "Yoga" and instructor_text:
+        # For yoga classes: first two words + instructor's first name
+        # Extract instructor's first name
+        instructor_first_name = instructor_text.split()[0].lower()
+
+        # Get first two words from title
+        title_words = title.lower().split()
+        if len(title_words) >= 2:
+            first_two_words = "-".join(title_words[:2])
+            return f"{first_two_words}-{instructor_first_name}"
+        elif len(title_words) == 1:
+            return f"{title_words[0]}-{instructor_first_name}"
+        else:
+            return instructor_first_name
+    else:
+        # Default behavior for non-yoga classes: use entire title
+        slug = re.sub(r"[^a-z0-9\s-]", "", title.lower())
+        slug = re.sub(r"\s+", "-", slug.strip())
+        return slug
+
+
 def generate_registration_link(
-    gym: str, title: str, start_local: str, course_id: str, session_id: str
+    gym: str,
+    title: str,
+    start_local: str,
+    course_id: str,
+    session_id: str,
+    category: str = "",
+    instructor_text: str = "",
 ) -> str:
     if not all([gym, title, start_local, course_id, session_id]):
         return ""
@@ -277,8 +306,7 @@ def generate_registration_link(
             return ""
 
         gym_slug = get_gym_url_slug(gym)
-        slug = re.sub(r"[^a-z0-9\s-]", "", title.lower())
-        slug = re.sub(r"\s+", "-", slug.strip())
+        slug = generate_class_slug(title, category, instructor_text)
 
         base_url = f"https://portal.touchstoneclimbing.com/{gym_slug}/programs/{slug}"
         params = f"date={date_str}&course={course_id}&session={session_id}"
@@ -446,7 +474,13 @@ def generate_ics():
                 session_id = r.get("sessionGraphId", "")
                 start_local = r.get("startLocal", "")
                 registration_link = generate_registration_link(
-                    gym, title, start_local, course_id, session_id
+                    gym,
+                    title,
+                    start_local,
+                    course_id,
+                    session_id,
+                    category,
+                    r.get("instructorText", ""),
                 )
                 r["registrationLink"] = registration_link
 

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, RefreshCw, User } from "lucide-react";
+import { Clock, ExternalLink, RefreshCw, User } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import {
   Select,
@@ -53,6 +53,14 @@ const CATEGORY_COLORS = {
   "Gym Events":
     "bg-indigo-100 text-indigo-800 hover:bg-indigo-100 hover:text-indigo-800",
   Unknown: "bg-gray-100 text-gray-800 hover:bg-gray-100 hover:text-gray-800",
+};
+
+const GYM_CALENDAR_URLS = {
+  Ironworks: "https://portal.touchstoneclimbing.com/ironworks/n/calendar",
+  "Pacific Pipe":
+    "https://portal.touchstoneclimbing.com/pacificpipe/n/calendar",
+  "Great Western Power":
+    "https://portal.touchstoneclimbing.com/power/n/calendar",
 };
 
 const TouchstoneCalendar: React.FC = () => {
@@ -222,9 +230,9 @@ const TouchstoneCalendar: React.FC = () => {
           Calendars for my local gyms.
         </p>
 
-        {/* Refresh Button */}
-        {showRefreshButton && (
-          <div className="flex justify-center mb-6">
+        {/* Action Buttons */}
+        <div className="flex justify-center gap-4 mb-6">
+          {showRefreshButton && (
             <Button
               onClick={refreshCalendarData}
               disabled={refreshing || loading}
@@ -236,8 +244,33 @@ const TouchstoneCalendar: React.FC = () => {
               />
               {refreshing ? "Refreshing..." : "Refresh Calendar Data"}
             </Button>
+          )}
+
+          <div className="relative group">
+            <Button variant="outline" className="flex items-center gap-2">
+              <ExternalLink className="h-4 w-4" />
+              Go to Touchstone Site
+            </Button>
+            <div className="absolute left-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+              <div className="p-3">
+                <div className="text-sm font-medium text-gray-700 mb-2">
+                  Choose Gym Calendar
+                </div>
+                {Object.entries(GYM_CALENDAR_URLS).map(([gymName, url]) => (
+                  <a
+                    key={gymName}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                  >
+                    {gymName}
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Filters */}
         <div className="flex gap-4 mb-6">
@@ -341,7 +374,9 @@ const TouchstoneCalendar: React.FC = () => {
                 <CardContent className="pt-0">
                   <div className="space-y-3">
                     {events.length === 0 ? (
-                      <p className="text-sm text-gray-400 italic">No events</p>
+                      <p className="text-sm text-gray-400 italic">
+                        No events remaining
+                      </p>
                     ) : (
                       events.map((event, eventIndex) => (
                         <motion.div
@@ -399,7 +434,7 @@ const TouchstoneCalendar: React.FC = () => {
                                 }
                               >
                                 {event.capacityText
-                                  ? `${event.capacityText}`
+                                  ? `Register: ${event.capacityText}`
                                   : "Register"}
                               </Button>
                             )}
@@ -413,31 +448,6 @@ const TouchstoneCalendar: React.FC = () => {
             </motion.div>
           );
         })}
-      </div>
-
-      {/* Summary */}
-      <div className="mt-8">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Calendar Summary</h3>
-              <p className="text-gray-600">
-                Showing{" "}
-                {
-                  calendarData.events.filter((event) => {
-                    const gymMatch =
-                      selectedGym === "all" || event.gym === selectedGym;
-                    const categoryMatch =
-                      selectedCategory === "all" ||
-                      event.category === selectedCategory;
-                    return gymMatch && categoryMatch;
-                  }).length
-                }{" "}
-                events across {calendarData.gyms.length} gyms
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
