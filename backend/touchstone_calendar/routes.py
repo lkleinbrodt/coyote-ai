@@ -1,9 +1,14 @@
-import os
 import hashlib
+import csv
 from pathlib import Path
 from flask import Blueprint, Response, jsonify, request, send_file, abort
 from backend.extensions import create_logger
-from backend.touchstone_calendar.src import generate_ics, OUTPUT_ICS  # OUTPUT_ICS: Path
+from backend.config import Config
+from backend.touchstone_calendar.src import (
+    generate_ics,
+    OUTPUT_ICS,
+    OUTPUT_CSV,
+)  # OUTPUT_ICS: Path
 
 logger = create_logger(__name__, level="DEBUG")
 
@@ -11,7 +16,7 @@ touchstone_calendar = Blueprint(
     "touchstone_calendar", __name__, url_prefix="/touchstone_calendar"
 )
 
-REBUILD_TOKEN = os.getenv("TOUCHSTONE_TOKEN")
+# Token is now managed through Config class
 
 
 def _file_etag(p: Path) -> str:
@@ -72,7 +77,7 @@ def rebuild():
         except Exception:
             pass  # Ignore JSON parsing errors
 
-    if not REBUILD_TOKEN or token != REBUILD_TOKEN:
+    if not Config.TOUCHSTONE_TOKEN or token != Config.TOUCHSTONE_TOKEN:
         # 403 is fine for token mismatch
         return jsonify({"error": "Forbidden"}), 403
 
@@ -85,3 +90,51 @@ def rebuild():
     except Exception:
         logger.exception("Rebuild failed")
         return jsonify({"error": "Rebuild failed"}), 500
+
+
+# JSON API endpoint for frontend consumption
+@touchstone_calendar.route("/events", methods=["GET"])
+def get_events():
+    """Return calendar events as JSON for frontend consumption."""
+    try:
+        # Ensure calendar data exists
+        if not OUTPUT_CSV.exists():
+            try:
+                generate_ics()  # This will generate both CSV and ICS
+            except Exception as e:
+                logger.exception("Failed to generate calendar data")
+                return jsonify({"error": "Calendar data not available"}), 503
+
+        # Read CSV data and convert to JSON
+        events = []
+        with open(OUTPUT_CSV, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                events.append(
+                    {
+                        "gym": row.get("gym", ""),
+                        "startLocal": row.get("startLocal", ""),
+                        "endLocal": row.get("endLocal", ""),
+                        "publicTitle": row.get("publicTitle", ""),
+                        "category": row.get("category", ""),
+                        "capacityText": row.get("capacityText", ""),
+                        "instructorText": row.get("instructorText", ""),
+                        "registrationLink": row.get("registrationLink", ""),
+                        "calendarLink": row.get("calendarLink", ""),
+                    }
+                )
+
+        return jsonify(
+            {
+                "events": events,
+                "total": len(events),
+                "gyms": list(set(event["gym"] for event in events if event["gym"])),
+                "categories": list(
+                    set(event["category"] for event in events if event["category"])
+                ),
+            }
+        )
+
+    except Exception as e:
+        logger.exception("Failed to read calendar data")
+        return jsonify({"error": "Failed to read calendar data"}), 500

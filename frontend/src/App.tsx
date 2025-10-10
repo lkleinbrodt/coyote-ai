@@ -27,6 +27,7 @@ const Poeltl = lazy(() => import("./poeltl/pages/Poeltl"));
 const ShootTheCreeps = lazy(
   () => import("./games/ShootTheCreeps/ShootTheCreeps")
 );
+const TouchstoneCalendar = lazy(() => import("./pages/TouchstoneCalendar"));
 
 // Loading component
 const LoadingFallback = () => (
@@ -52,6 +53,7 @@ function App() {
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/terms" element={<Terms />} />
                   {/* <Route path="/consulting" element={<Consulting />} /> */}
+                  <Route path="/touchstone" element={<TouchstoneCalendar />} />
                   <Route element={<PrivateRoute />}>
                     <Route path="/explain" element={<ExplainPage />} />
                     <Route path="/autodraft" element={<Autodraft />} />

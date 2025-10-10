@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 interface ProductCardProps {
   title: string;
   description: string;
-  icon: string;
+  icon: string | React.ComponentType<{ className?: string }>;
   link: string;
   category?: string;
   featured?: boolean;
@@ -34,12 +34,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <motion.div
         whileHover={{ scale: 1.1 }}
         transition={{ type: "spring", stiffness: 300 }}
+        className="w-24 h-24 flex items-center justify-center mx-auto mb-4"
       >
-        <img
-          src={icon}
-          alt={title}
-          className="w-24 h-24 object-contain mx-auto mb-4"
-        />
+        {typeof icon === "string" ? (
+          <img src={icon} alt={title} className="w-24 h-24 object-contain" />
+        ) : (
+          React.createElement(icon, {
+            className: "w-24 h-24 text-primary",
+          })
+        )}
       </motion.div>
     );
   };

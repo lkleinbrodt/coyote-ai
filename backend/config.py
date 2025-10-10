@@ -26,6 +26,10 @@ class Config:
     if not OPENAI_API_KEY:
         raise ValueError("OPENAI_API_KEY is not set")
 
+    TOUCHSTONE_TOKEN = os.environ.get("TOUCHSTONE_TOKEN")
+    if not TOUCHSTONE_TOKEN:
+        raise ValueError("TOUCHSTONE_TOKEN is not set")
+
     ADMIN_EMAILS = ["lkleinbrodt@gmail.com"]
     MAIL_SERVER = os.environ.get("MAIL_SERVER")
     MAIL_PORT = os.environ.get("MAIL_PORT")

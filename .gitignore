@@ -1,3 +1,8 @@
+.env.development
+.env.production
+touchstone_categories.json
+memory-bank/
+notebook.ipynb
 *.csv
 *.ics
 credentials.json

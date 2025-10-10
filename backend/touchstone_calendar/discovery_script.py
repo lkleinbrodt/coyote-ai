@@ -2,8 +2,12 @@
 """
 Standalone Touchstone Discovery Script
 
-This script uses Playwright to discover plan IDs and session hashes from Touchstone gym pages
+This script uses Playwright to discover facility IDs and plan IDs from Touchstone gym pages
 and stores the results to S3. This is designed to run as a cron job on your local machine.
+
+The script captures:
+- facility_id: Unique identifier for each gym (used in API queries)
+- plan_ids: List of plan IDs for classes/programs at that gym
 
 Usage:
     python discovery_script.py [--bucket BUCKET_NAME] [--key S3_KEY]
@@ -11,7 +15,6 @@ Usage:
 Environment Variables:
     AWS_ACCESS_KEY_ID: AWS access key
     AWS_SECRET_ACCESS_KEY: AWS secret key
-    OPENAI_API_KEY: OpenAI API key for categorization (optional)
 """
 
 import json
@@ -21,14 +24,14 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import List, Dict, Any, Set
+from typing import List, Dict, Any
 from datetime import datetime
 
 # Add the backend directory to the path so we can import our modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.s3 import S3
-from config import Config
+from backend.src.s3 import S3
+from backend.config import Config
 
 # Configure logging
 logging.basicConfig(
@@ -38,10 +41,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 # Gym pages configuration
 GYM_PAGES = {
     "ironworks": "https://portal.touchstoneclimbing.com/ironworks/n/calendar",
-    "power": "https://portal.touchstoneclimbing.com/power/n/calendar",
     "pacificpipe": "https://portal.touchstoneclimbing.com/pacificpipe/n/calendar",
 }
 
@@ -53,16 +56,16 @@ DEFAULT_S3_KEY = "touchstone/discovery.json"
 def discover_for_gym(gym: str, page_url: str) -> dict:
     """
     Open the gym page, intercept network:
+      - collect the facilityId from StorefrontCalendarPlanQuery
       - collect the 'ids' array sent with StorefrontCalendarPlanQuery (plan IDs)
-      - collect all sessionFacilityHash values returned by StorefrontCalendarQuery
-    Returns {'plan_ids': set(...), 'hashes': set(...)}
+    Returns {'facility_id': str, 'plan_ids': list}
     """
-    logger.info(f"Discovering plan IDs and hashes for {gym} from {page_url}")
+    logger.info(f"Discovering facility ID and plan IDs for {gym} from {page_url}")
     from playwright.sync_api import sync_playwright
     from playwright._impl._errors import Error as PWError
 
-    plan_ids: Set[str] = set()
-    hashes: Set[str] = set()
+    facility_id: str = ""
+    plan_ids: List[str] = []
 
     def run_discovery():
         with sync_playwright() as p:
@@ -78,42 +81,34 @@ def discover_for_gym(gym: str, page_url: str) -> dict:
                         q = (body or {}).get("query", "")
                         vars = (body or {}).get("variables") or {}
                         if "StorefrontCalendarPlanQuery" in q:
+                            # Capture facility ID
+                            nonlocal facility_id
+                            input_data = vars.get("input") or {}
+                            fid = input_data.get("facilityId")
+                            if fid and not facility_id:
+                                facility_id = fid
+                                logger.info(f"Found facility ID for {gym}: {fid}")
+
+                            # Capture plan IDs
                             ids = vars.get("ids") or []
-                            logger.debug(
+                            logger.info(
                                 f"Found {len(ids)} plan IDs in request for {gym}"
                             )
                             for pid in ids:
-                                plan_ids.add(pid)
+                                if pid not in plan_ids:
+                                    plan_ids.append(pid)
                     except Exception as e:
-                        logger.debug(f"Error parsing request for {gym}: {e}")
+                        logger.info(f"Error parsing request for {gym}: {e}")
 
-            def on_response(resp):
-                if (
-                    resp.url.endswith("/graphql-public")
-                    and resp.request.method == "POST"
-                ):
-                    try:
-                        j = resp.json()
-                        cal = ((j or {}).get("data") or {}).get("calendar") or []
-                        logger.debug(
-                            f"Found {len(cal)} calendar entries in response for {gym}"
-                        )
-                        for it in cal:
-                            h = it.get("sessionFacilityHash")
-                            if h:
-                                hashes.add(h)
-                    except Exception as e:
-                        logger.debug(f"Error parsing response for {gym}: {e}")
-
+            # Only need to listen to requests now, not responses
             page.on("request", on_request)
-            page.on("response", on_response)
 
             # Load and nudge a bit so the app fires its queries
-            logger.debug(f"Loading page for {gym}")
+            logger.info(f"Loading page for {gym}")
             page.goto(page_url, wait_until="networkidle")
             page.wait_for_timeout(800)
             # Try paging a week to force additional loads
-            logger.debug(f"Triggering additional loads for {gym}")
+            logger.info(f"Triggering additional loads for {gym}")
             page.keyboard.press("PageDown")
             page.wait_for_timeout(800)
 
@@ -131,9 +126,9 @@ def discover_for_gym(gym: str, page_url: str) -> dict:
             raise
 
     logger.info(
-        f"Discovery complete for {gym}: {len(plan_ids)} plan IDs, {len(hashes)} hashes"
+        f"Discovery complete for {gym}: facility_id={facility_id}, {len(plan_ids)} plan IDs"
     )
-    return {"plan_ids": plan_ids, "hashes": hashes}
+    return {"facility_id": facility_id, "plan_ids": plan_ids}
 
 
 def ensure_chromium():
@@ -158,8 +153,8 @@ def refresh_discovery() -> dict:
         "generated_at": int(time.time()),
         "gyms": {
             gym: {
+                "facility_id": info.get("facility_id", ""),
                 "plan_ids": sorted(list(info.get("plan_ids", []))),
-                "hashes": sorted(list(info.get("hashes", []))),
             }
             for gym, info in gyms.items()
         },
@@ -201,7 +196,7 @@ def main():
         logger.info(f"Discovery completed for {len(discovery_data['gyms'])} gyms")
         for gym, info in discovery_data["gyms"].items():
             logger.info(
-                f"  {gym}: {len(info['plan_ids'])} plan IDs, {len(info['hashes'])} hashes"
+                f"  {gym}: facility_id={info['facility_id']}, {len(info['plan_ids'])} plan IDs"
             )
 
         if args.dry_run:
@@ -220,4 +215,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()

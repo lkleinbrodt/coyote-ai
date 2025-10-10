@@ -1,5 +1,6 @@
 import "./Landing.css";
 
+import { Calendar } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import React from "react";
 import { motion } from "framer-motion";
@@ -50,6 +51,7 @@ const Landing: React.FC = () => {
       link: "https://www.cheffrey.org/",
       softwareType: "mobile",
     },
+
     {
       title: "Slate",
       description:
@@ -57,6 +59,13 @@ const Landing: React.FC = () => {
       icon: theme === "dark" ? "icons/slate.png" : "icons/slate.png",
       link: "https://apps.apple.com/us/app/slateplanner/id6752905295",
       softwareType: "mobile",
+    },
+    {
+      title: "Touchstone Calendar",
+      description: "View gym classes and events from Touchstone climbing gyms",
+      icon: Calendar,
+      link: "/calendar",
+      softwareType: "web",
     },
     {
       title: "CopyCat Bundler",
