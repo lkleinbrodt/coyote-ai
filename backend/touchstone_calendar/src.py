@@ -1,28 +1,13 @@
 # touchstone_consolidate.py
 #
-# Configuration:
-# - DAYS_AHEAD: Number of days to fetch ahead from today (default: 7)
-# - CATEGORIES: List of categories for LLM classification
-# - GYM_PAGES: Dictionary of gym names to their calendar page URLs
-# - OUTPUT_CSV: Name of the output CSV file (default: touchstone_calendar.csv)
-# - OUTPUT_ICS: Name of the output ICS file (default: touchstone_calendar.ics)
-# - S3_BUCKET: S3 bucket for discovery data (default: landon-general-storage)
-# - S3_DISCOVERY_KEY: S3 key for discovery data (default: touchstone/discovery.json)
-#
-# Features:
-# - Fetches calendar events from multiple Touchstone gyms using facility IDs
-# - Each gym has a unique facility_id that ensures gym-specific data
-# - Categorizes events using OpenAI API (Yoga, Climbing, Fitness, etc.)
-# - Generates direct registration links for each event
-# - Includes backup calendar links for each gym location
-# - Exports to CSV and ICS formats
-# - Loads discovery data from S3 (facility_id + plan_ids per gym)
+# Fetches calendar events from multiple Touchstone gyms using facility IDs
+# Categorizes events using OpenAI API and generates registration links
+# Exports to CSV and ICS formats, loads discovery data from S3
 #
 # Requirements:
 # - Set OPENAI_API_KEY environment variable for categorization
 # - Set AWS credentials for S3 access
 # - Run discovery_script.py to populate S3 with facility IDs and plan IDs
-# - Install dependencies: pip install -r requirements.txt
 
 import json, time, csv, re, requests, logging
 from pathlib import Path
@@ -34,6 +19,7 @@ import openai
 import os
 from backend.config import Config
 from backend.src.s3 import S3
+from backend.touchstone_calendar.gym_config import get_gym_pages, get_gym_url_slugs
 
 TOUCHSTONE_DIR = Config.BACKEND_DIR / "touchstone_calendar"
 
@@ -45,34 +31,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ---------- Config ----------
 URL = "https://portal.touchstoneclimbing.com/graphql-public"
-
-GYM_PAGES = {
-    "ironworks": "https://portal.touchstoneclimbing.com/ironworks/n/calendar",
-    "pacificpipe": "https://portal.touchstoneclimbing.com/pacificpipe/n/calendar",
-}
-
-# Categories for classification
+GYM_PAGES = get_gym_pages()
 CATEGORIES = ["Yoga", "Climbing", "Fitness", "Youth Programs", "Gym Events"]
-
-# Cache file for categorizations
-CATEGORY_CACHE_FILE = TOUCHSTONE_DIR / "touchstone_categories.json"
-
-# Date range configuration
-DAYS_AHEAD = 7  # Number of days to fetch ahead from today
-
-# Output file configuration
+DAYS_AHEAD = 7
 OUTPUT_CSV = TOUCHSTONE_DIR / "touchstone_calendar.csv"
 OUTPUT_ICS = TOUCHSTONE_DIR / "touchstone_calendar.ics"
 
-# S3 configuration for discovery data
 S3_BUCKET = os.environ.get("TOUCHSTONE_S3_BUCKET", "landon-general-storage")
 S3_DISCOVERY_KEY = os.environ.get(
     "TOUCHSTONE_S3_DISCOVERY_KEY", "touchstone/discovery.json"
 )
-
-# ---------- GraphQL ----------
+S3_CATEGORY_CACHE_KEY = os.environ.get(
+    "TOUCHSTONE_S3_CATEGORY_CACHE_KEY", "touchstone/category_cache.json"
+)
+MAX_CACHE_EVENTS = 200
 CAL_Q = """
 query StorefrontCalendarQuery($input: CalendarFilter) {
   calendar(input: $input) {
@@ -103,10 +76,6 @@ def gql(query: str, variables: Dict[str, Any]) -> Dict[str, Any]:
 
 # ---------- S3 Discovery Loading ----------
 def load_discovery_from_s3() -> dict:
-    """
-    Load discovery data from S3.
-    Returns discovery data with gym facility IDs and plan IDs.
-    """
     logger.info(f"Loading discovery data from s3://{S3_BUCKET}/{S3_DISCOVERY_KEY}")
 
     try:
@@ -171,10 +140,6 @@ def fetch_calendar_window(
 def fetch_calendar_for_gym(
     gym: str, start_d: str, end_d: str, discovery_data: dict
 ) -> List[Dict[str, Any]]:
-    """
-    Fetch calendar data for a specific gym using facility ID and plan IDs.
-    The API returns only gym-specific data when given the correct facility ID.
-    """
     if gym not in discovery_data.get("gyms", {}):
         logger.error(f"Gym '{gym}' not found in discovery data")
         return []
@@ -194,8 +159,6 @@ def fetch_calendar_for_gym(
     logger.info(
         f"Fetching calendar for {gym} (facility: {facility_id}) with {len(plan_ids)} plan IDs"
     )
-
-    # Fetch data using facility ID and plan IDs - API handles gym filtering
     rows = fetch_calendar_window(start_d, end_d, facility_id, plan_ids)
     logger.info(f"Fetched {len(rows)} entries for {gym}")
 
@@ -210,45 +173,54 @@ def daterange_weeks(start: date, end: date):
         cur = nxt + timedelta(days=1)
 
 
-def load_category_cache() -> Dict[str, str]:
-    """Load the category cache from file."""
-    cache_path = Path(CATEGORY_CACHE_FILE)
-    if cache_path.exists():
-        try:
-            with open(cache_path, "r") as f:
-                return json.load(f)
-        except Exception as e:
-            logger.warning(f"Error loading category cache: {e}")
-    return {}
+def load_category_cache_from_s3() -> Dict[str, str]:
+    logger.info(f"Loading category cache from s3://{S3_BUCKET}/{S3_CATEGORY_CACHE_KEY}")
 
-
-def save_category_cache(cache: Dict[str, str]):
-    """Save the category cache to file."""
     try:
-        with open(CATEGORY_CACHE_FILE, "w") as f:
-            json.dump(cache, f, indent=2)
+        s3 = S3(S3_BUCKET)
+        if s3.exists(S3_CATEGORY_CACHE_KEY):
+            cache_data = s3.load_json(S3_CATEGORY_CACHE_KEY)
+            logger.info(f"Loaded {len(cache_data)} cached categorizations from S3")
+            return cache_data
+        else:
+            logger.info("No category cache found in S3, starting with empty cache")
+            return {}
     except Exception as e:
-        logger.warning(f"Error saving category cache: {e}")
+        logger.warning(f"Error loading category cache from S3: {e}")
+        return {}
+
+
+def save_category_cache_to_s3(cache: Dict[str, str]):
+    try:
+        if len(cache) > MAX_CACHE_EVENTS:
+            logger.info(
+                f"Cache has {len(cache)} entries, pruning to {MAX_CACHE_EVENTS}"
+            )
+            cache_items = list(cache.items())
+            cache_items.sort(key=lambda x: x[0])
+            pruned_items = cache_items[-MAX_CACHE_EVENTS:]
+            cache = dict(pruned_items)
+            logger.info(f"Pruned cache to {len(cache)} entries")
+
+        s3 = S3(S3_BUCKET)
+        s3.save_json(cache, S3_CATEGORY_CACHE_KEY)
+        logger.info(f"Saved {len(cache)} categorizations to S3 cache")
+    except Exception as e:
+        logger.warning(f"Error saving category cache to S3: {e}")
 
 
 # ---------- Discovery Management ----------
 
 
 def categorize_title(title: str, cache: Dict[str, str]) -> str:
-    """
-    Categorize a publicTitle using OpenAI API with caching.
-    Returns one of the predefined categories.
-    """
     default_category = "Unknown"
     if not title or not title.strip():
-        return default_category  # Default category
+        return default_category
 
-    # Check cache first
     if title in cache:
         return cache[title]
 
     try:
-        # Initialize OpenAI client (you'll need to set OPENAI_API_KEY environment variable)
         client = openai.OpenAI()
 
         prompt = f"""
@@ -269,7 +241,6 @@ def categorize_title(title: str, cache: Dict[str, str]) -> str:
 
         category = response.choices[0].message.content.strip()
 
-        # Validate category
         if category in CATEGORIES:
             cache[title] = category
             logger.debug(f"Categorized '{title}' as '{category}'")
@@ -287,31 +258,30 @@ def categorize_title(title: str, cache: Dict[str, str]) -> str:
         return default_category
 
 
+GYM_URL_SLUGS = get_gym_url_slugs()
+
+
+def get_gym_url_slug(gym_name: str) -> str:
+    return GYM_URL_SLUGS.get(gym_name, gym_name.lower().replace(" ", ""))
+
+
 def generate_registration_link(
     gym: str, title: str, start_local: str, course_id: str, session_id: str
 ) -> str:
-    """
-    Generate a registration link for a Touchstone event.
-    Format: https://portal.touchstoneclimbing.com/{gym}/programs/{slug}?date={date}&course={course}&session={session}
-    """
     if not all([gym, title, start_local, course_id, session_id]):
         return ""
 
     try:
-        # Extract date from start_local (format: "2025-10-07 10:00:00")
         date_str = start_local[:10] if start_local else ""
         if not date_str:
             return ""
 
-        # Create a URL-friendly slug from the title
-        # Convert to lowercase, replace spaces with hyphens, remove special chars
+        gym_slug = get_gym_url_slug(gym)
         slug = re.sub(r"[^a-z0-9\s-]", "", title.lower())
         slug = re.sub(r"\s+", "-", slug.strip())
 
-        # Build the registration link
-        base_url = f"https://portal.touchstoneclimbing.com/{gym}/programs/{slug}"
+        base_url = f"https://portal.touchstoneclimbing.com/{gym_slug}/programs/{slug}"
         params = f"date={date_str}&course={course_id}&session={session_id}"
-
         return f"{base_url}?{params}"
 
     except Exception as e:
@@ -320,11 +290,8 @@ def generate_registration_link(
 
 
 def generate_calendar_link(gym: str) -> str:
-    """
-    Generate a backup calendar link for a Touchstone gym.
-    Format: https://portal.touchstoneclimbing.com/{gym}/n/calendar
-    """
-    return f"https://portal.touchstoneclimbing.com/{gym}/n/calendar"
+    gym_slug = get_gym_url_slug(gym)
+    return f"https://portal.touchstoneclimbing.com/{gym_slug}/n/calendar"
 
 
 # ---------- Writers ----------
@@ -433,11 +400,11 @@ def generate_ics():
         raise RuntimeError(f"Could not load discovery data from S3: {e}")
 
     # 2) Load category cache and fetch sessions per gym with those plan IDs
-    category_cache = load_category_cache()
+    category_cache = load_category_cache_from_s3()
     logger.info(f"Loaded {len(category_cache)} cached categorizations")
 
     all_rows: List[Dict[str, Any]] = []
-    # Only process gyms we want (exclude power)
+    # Process all gyms defined in GYM_PAGES
     for gym in GYM_PAGES.keys():
         if gym not in discovery:
             logger.warning(f"Gym '{gym}' not found in discovery data, skipping")
@@ -527,9 +494,9 @@ def generate_ics():
 
     all_rows.sort(key=keyer)
 
-    # Save category cache
-    save_category_cache(category_cache)
-    logger.info(f"Saved {len(category_cache)} categorizations to cache")
+    # Save category cache to S3
+    save_category_cache_to_s3(category_cache)
+    logger.info(f"Saved {len(category_cache)} categorizations to S3 cache")
 
     write_csv(all_rows, OUTPUT_CSV)
     write_ics(all_rows, OUTPUT_ICS)

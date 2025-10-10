@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
 """
-Standalone Touchstone Discovery Script
+Touchstone Discovery Script
 
-This script uses Playwright to discover facility IDs and plan IDs from Touchstone gym pages
-and stores the results to S3. This is designed to run as a cron job on your local machine.
-
-The script captures:
-- facility_id: Unique identifier for each gym (used in API queries)
-- plan_ids: List of plan IDs for classes/programs at that gym
+Uses Playwright to discover facility IDs and plan IDs from Touchstone gym pages
+and stores the results to S3. Designed to run as a cron job.
 
 Usage:
     python discovery_script.py [--bucket BUCKET_NAME] [--key S3_KEY]
-
-Environment Variables:
-    AWS_ACCESS_KEY_ID: AWS access key
-    AWS_SECRET_ACCESS_KEY: AWS secret key
 """
 
 import json
@@ -32,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from backend.src.s3 import S3
 from backend.config import Config
+from backend.touchstone_calendar.gym_config import get_gym_pages
 
 # Configure logging
 logging.basicConfig(
@@ -42,25 +35,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Gym pages configuration
-GYM_PAGES = {
-    "Ironworks": "https://portal.touchstoneclimbing.com/ironworks/n/calendar",
-    "Pacific Pipe": "https://portal.touchstoneclimbing.com/pacificpipe/n/calendar",
-    "Great Western Power": "https://portal.touchstoneclimbing.com/power/n/calendar",
-}
-
-# Default S3 configuration
+GYM_PAGES = get_gym_pages()
 DEFAULT_BUCKET = "landon-general-storage"
 DEFAULT_S3_KEY = "touchstone/discovery.json"
 
 
 def discover_for_gym(gym: str, page_url: str) -> dict:
-    """
-    Open the gym page, intercept network:
-      - collect the facilityId from StorefrontCalendarPlanQuery
-      - collect the 'ids' array sent with StorefrontCalendarPlanQuery (plan IDs)
-    Returns {'facility_id': str, 'plan_ids': list}
-    """
+    """Discover facility ID and plan IDs for a gym."""
     logger.info(f"Discovering facility ID and plan IDs for {gym} from {page_url}")
     from playwright.sync_api import sync_playwright
     from playwright._impl._errors import Error as PWError
@@ -133,23 +114,20 @@ def discover_for_gym(gym: str, page_url: str) -> dict:
 
 
 def ensure_chromium():
-    """Install Chromium if it's missing."""
-    logger.info("Installing Chromium browser...")
     import subprocess
 
+    logger.info("Installing Chromium browser...")
     subprocess.check_call(["python", "-m", "playwright", "install", "chromium"])
     logger.info("Chromium installation complete")
 
 
 def refresh_discovery() -> dict:
-    """Refresh discovery data using Playwright."""
     logger.info("Refreshing discovery via Playwright…")
     gyms = {}
     for gym, url in GYM_PAGES.items():
         gyms[gym] = discover_for_gym(gym, url)
         time.sleep(0.3)
 
-    # Convert sets to lists for JSON serialization
     result = {
         "generated_at": int(time.time()),
         "gyms": {
@@ -160,7 +138,6 @@ def refresh_discovery() -> dict:
             for gym, info in gyms.items()
         },
     }
-
     return result
 
 
