@@ -6,7 +6,7 @@ GYM_CONFIG = {
         "slug": "ironworks",
     },
     "Pacific Pipe": {
-        "url": "https://portal.touchstoneclimbing.com/pacific/n/calendar",
+        "url": "https://portal.touchstoneclimbing.com/pacificpipe/n/calendar",
         "slug": "pacific",
     },
     "Great Western Power": {
