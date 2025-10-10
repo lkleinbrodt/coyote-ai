@@ -34,10 +34,12 @@ interface CalendarData {
 }
 
 const GYM_COLORS = {
-  ironworks:
+  Ironworks:
     "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100 hover:text-blue-800",
-  pacificpipe:
+  "Pacific Pipe":
     "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-100 hover:text-purple-800",
+  "Great Western Power":
+    "bg-green-100 text-green-800 border-green-200 hover:bg-green-100 hover:text-green-800",
 };
 
 const CATEGORY_COLORS = {

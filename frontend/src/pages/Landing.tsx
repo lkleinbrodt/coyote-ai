@@ -64,7 +64,7 @@ const Landing: React.FC = () => {
       title: "Touchstone Calendar",
       description: "View gym classes and events from Touchstone climbing gyms",
       icon: Calendar,
-      link: "/calendar",
+      link: "/touchstone",
       softwareType: "web",
     },
     {

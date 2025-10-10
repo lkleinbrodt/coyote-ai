@@ -44,8 +44,9 @@ logger = logging.getLogger(__name__)
 
 # Gym pages configuration
 GYM_PAGES = {
-    "ironworks": "https://portal.touchstoneclimbing.com/ironworks/n/calendar",
-    "pacificpipe": "https://portal.touchstoneclimbing.com/pacificpipe/n/calendar",
+    "Ironworks": "https://portal.touchstoneclimbing.com/ironworks/n/calendar",
+    "Pacific Pipe": "https://portal.touchstoneclimbing.com/pacificpipe/n/calendar",
+    "Great Western Power": "https://portal.touchstoneclimbing.com/power/n/calendar",
 }
 
 # Default S3 configuration
