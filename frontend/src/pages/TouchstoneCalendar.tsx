@@ -11,6 +11,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import axiosInstance from "@/utils/axiosInstance";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -76,12 +77,8 @@ const TouchstoneCalendar: React.FC = () => {
   const fetchCalendarData = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/touchstone_calendar/events");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setCalendarData(data);
+      const response = await axiosInstance.get("/touchstone_calendar/events");
+      setCalendarData(response.data);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch calendar data"
@@ -100,27 +97,10 @@ const TouchstoneCalendar: React.FC = () => {
         throw new Error("Touchstone token not configured");
       }
 
-      // Call the rebuild endpoint to force refresh
-      const rebuildResponse = await fetch("/api/touchstone_calendar/rebuild", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: token,
-        }),
+      await axiosInstance.post("/touchstone_calendar/rebuild", {
+        token: token,
       });
 
-      if (!rebuildResponse.ok) {
-        const errorData = await rebuildResponse.json().catch(() => ({}));
-        throw new Error(
-          `Failed to refresh calendar: ${rebuildResponse.status} - ${
-            errorData.error || "Unknown error"
-          }`
-        );
-      }
-
-      // Wait a moment for the rebuild to complete, then fetch fresh data
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await fetchCalendarData();
     } catch (err) {
